@@ -25,7 +25,7 @@
     .card{background:var(--surface);border:1px solid rgba(23,52,47,.08);border-radius:18px;padding:18px;box-shadow:0 7px 20px rgba(31,54,48,.05);margin-top:16px}
     .section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.section-title h2{font-size:19px;margin:0}
     .grid{display:grid;gap:12px}.weather-grid{grid-template-columns:repeat(4,1fr)}
-    .stat{background:var(--surface2);border-radius:14px;padding:13px;min-height:88px}.stat-label{font-size:12px;color:var(--muted);margin-bottom:6px}.stat-value{font-size:19px;font-weight:700}.stat-sub{font-size:12px;color:var(--muted);margin-top:5px}
+    .stat{background:var(--surface2);border-radius:14px;padding:13px;min-height:88px}.stat-label{font-size:12px;color:var(--muted);margin-bottom:6px}.stat-value{font-size:19px;font-weight:700}.stat-sub{font-size:12px;color:var(--muted);margin-top:5px}.pressure-stability-stat .stat-value{font-size:16px;line-height:1.25}.pressure-stability-stat .stat-sub{line-height:1.4}
     .btn{border:0;border-radius:12px;padding:11px 15px;cursor:pointer;background:var(--accent);color:white;font-weight:700}.btn:hover{background:var(--accent2)}
     .btn.secondary{background:#e7efea;color:var(--accent2);border:1px solid #cedbd4}.btn.danger{background:#f6e8e4;color:var(--danger);border:1px solid #ead1ca}
     .status{font-size:13px;color:var(--muted);margin-top:12px;min-height:18px}
@@ -41,7 +41,7 @@
     .annual-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
     .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px;max-height:560px;background:white}
     table{border-collapse:collapse;width:100%;min-width:820px;font-size:13px}th,td{padding:9px 10px;border-bottom:1px solid #ecefe9;text-align:left;vertical-align:top}th{position:sticky;top:0;background:var(--yellow);color:#111;z-index:1;font-weight:700}td.num{text-align:right}.yes-badge,.no-badge{display:inline-block;border-radius:999px;padding:3px 8px;font-weight:700;font-size:12px}.yes-badge{background:#dfeee8;color:#0f5148}.no-badge{background:#f0eee8;color:#6c6554}
-    .result-cell{min-width:230px}.weather-cell{min-width:260px;color:var(--muted)}.comment-cell{color:var(--text)}.city-hint{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.35}
+    .result-cell{min-width:230px}.weather-cell{min-width:260px;color:var(--muted)}.pressure-journal-cell{min-width:255px}.pressure-journal-cell b{display:block;margin-bottom:3px}.pressure-journal-meta{font-size:11px;color:var(--muted);line-height:1.4}.pressure-journal-loading{color:var(--muted);font-size:12px}.comment-cell{color:var(--text)}.city-hint{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.35}
     .sync-box{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end}.sync-note{font-size:12px;color:var(--muted);line-height:1.45;margin-top:10px}
     .bite-toolbar{display:grid;grid-template-columns:180px 220px auto;gap:10px;align-items:end}
     .bite-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
@@ -66,7 +66,7 @@
 <body>
 <main class="wrap">
   <section class="hero">
-    <div class="version-badge">Версия 24</div>
+    <div class="version-badge">Версия 27</div>
     <small>Дневник рыболова</small>
     <h1>Рыболовный день</h1>
     <p>Учёт каждого дня года, улова, города, комментариев и погоды по выбранному городу.</p>
@@ -91,7 +91,11 @@
       <div class="stat"><div class="stat-label">Порывы</div><div class="stat-value" id="gustValue">—</div></div>
       <div class="stat"><div class="stat-label">Влажность</div><div class="stat-value" id="humidityValue">—</div></div>
       <div class="stat"><div class="stat-label">Давление</div><div class="stat-value" id="pressureValue">—</div><div class="stat-sub" id="pressureMmValue"></div></div>
-      <div class="stat"><div class="stat-label">Осадки</div><div class="stat-value" id="precipValue">—</div></div>
+      <div class="stat pressure-stability-stat">
+        <div class="stat-label">Стабильность давления</div>
+        <div class="stat-value" id="pressureStabilityValue">Загрузка…</div>
+        <div class="stat-sub" id="pressureStabilitySub">Тренд за 12 ч и стабильность за 24 ч</div>
+      </div>
     </div>
     <div class="status" id="weatherStatus"></div>
   </section>
@@ -260,7 +264,7 @@
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Дата</th><th>День</th><th>Рыбалка</th><th>Результат дня</th><th>Комментарий</th><th>Погода</th><th></th></tr></thead>
+        <thead><tr><th>Дата</th><th>День</th><th>Рыбалка</th><th>Результат дня</th><th>Комментарий</th><th>Погода</th><th>Стабильность давления</th><th></th></tr></thead>
         <tbody id="yearTableBody"></tbody>
       </table>
     </div>
@@ -338,9 +342,50 @@ function weatherText(code){
 function windDirection(deg){const dirs=["С","СВ","В","ЮВ","Ю","ЮЗ","З","СЗ"];return dirs[Math.round((Number(deg)||0)/45)%8]}
 function escapeHtml(value){return String(value??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
 
+
+function renderSelectedDayPressureStability(){
+  const day=ensureDay(selectedDateKey);
+  const p=day.pressureStability;
+
+  if(!p){
+    $("pressureStabilityValue").textContent="Загрузка…";
+    $("pressureStabilityValue").className="stat-value";
+    $("pressureStabilitySub").textContent="Тренд за 12 ч и стабильность за 24 ч";
+    return;
+  }
+
+  const trend=[p.trendLabel||"Нет данных",p.trendArrow||""].filter(Boolean).join(" ");
+  $("pressureStabilityValue").textContent=trend;
+  $("pressureStabilityValue").className=`stat-value ${p.trendClass||""}`;
+
+  const parts=[];
+
+  if(Number.isFinite(Number(p.delta12))){
+    const delta=Number(p.delta12);
+    parts.push(`${delta>0?"+":""}${delta.toFixed(1)} мм за 12 ч`);
+  }
+
+  if(p.dayLabel){
+    parts.push(p.dayLabel);
+  }
+
+  if(Number.isFinite(Number(p.range24))){
+    parts.push(`диапазон 24 ч: ${Number(p.range24).toFixed(1)} мм`);
+  }
+
+  if(p.referenceTime){
+    parts.push(`на ${p.referenceTime}`);
+  }
+
+  $("pressureStabilitySub").textContent=parts.length
+    ?parts.join(" · ")
+    :"Недостаточно данных для расчёта";
+}
+
 function renderWeather(){
   const day=ensureDay(selectedDateKey),w=day.weather;
   $("dateValue").textContent=formatDate(selectedDateKey);
+  renderSelectedDayPressureStability();
   $("refreshWeather").disabled=false;
   $("refreshWeather").textContent=selectedDateKey===todayKey?"Обновить погоду":"Обновить историческую погоду";
   if(!w){
@@ -1272,8 +1317,10 @@ function renderCatches(){
   list.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>startCatchEditing(b.dataset.edit));
   list.querySelectorAll("[data-delete]").forEach(b=>b.onclick=()=>{
     day.catches=day.catches.filter(c=>c.id!==b.dataset.delete);
+    day.pressureStability=null;
     if(editingCatchId===b.dataset.delete)cancelCatchEditing();
     saveData();renderAll();
+    fillJournalPressureStability(Number(selectedDateKey.slice(0,4)),true);
   });
 }
 function selectDay(key,scrollToEditor=true){
@@ -1292,6 +1339,7 @@ function selectDay(key,scrollToEditor=true){
     $("biteDate").value=selectedDateKey;
     fetchBiteForecast();
   }
+  fillJournalPressureStability(year);
   if(selectedDateKey===todayKey){
     if(!ensureDay(selectedDateKey).weather) fetchWeather();
   }else{
@@ -1331,11 +1379,220 @@ function buildYearSelect(){
   select.innerHTML=years.map(y=>`<option value="${y}">${y}</option>`).join("");
   select.value=years.includes(currentValue)?String(currentValue):String(new Date().getFullYear());
 }
+
+function journalPressureReferenceTime(day){
+  const times=(day?.catches||[])
+    .map(c=>String(c.time||"").trim())
+    .filter(t=>/^\d{2}:\d{2}$/.test(t))
+    .sort();
+  return times[0]||"03:30";
+}
+
+function isoLocalMinutes(value){
+  const m=String(value||"").match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if(!m)return null;
+  return Date.UTC(Number(m[1]),Number(m[2])-1,Number(m[3]),Number(m[4]),Number(m[5]))/60000;
+}
+
+function pressureAtLocalTime(hours,date,time){
+  const target=isoLocalMinutes(`${date}T${time}`);
+  if(target===null)return null;
+
+  const points=(hours||[])
+    .map(h=>({minute:isoLocalMinutes(h.time),pressure:pressureHpaToMm(h.pressure)}))
+    .filter(p=>p.minute!==null&&Number.isFinite(p.pressure))
+    .sort((a,b)=>a.minute-b.minute);
+
+  if(!points.length)return null;
+
+  for(let i=0;i<points.length;i++){
+    if(points[i].minute===target)return points[i].pressure;
+    if(points[i].minute>target){
+      if(i===0)return null;
+      const a=points[i-1],b=points[i];
+      const ratio=(target-a.minute)/(b.minute-a.minute);
+      return a.pressure+(b.pressure-a.pressure)*ratio;
+    }
+  }
+  return null;
+}
+
+function pressureRangeForPeriod(hours,date,time,hoursBack){
+  const end=isoLocalMinutes(`${date}T${time}`);
+  if(end===null)return null;
+  const start=end-hoursBack*60;
+
+  const points=(hours||[])
+    .map(h=>({minute:isoLocalMinutes(h.time),pressure:pressureHpaToMm(h.pressure)}))
+    .filter(p=>p.minute!==null&&Number.isFinite(p.pressure)&&p.minute>=start&&p.minute<=end)
+    .map(p=>p.pressure);
+
+  const startPressure=pressureAtLocalTime(hours,shiftDateKey(date,-1),time);
+  const endPressure=pressureAtLocalTime(hours,date,time);
+
+  if(Number.isFinite(startPressure))points.push(startPressure);
+  if(Number.isFinite(endPressure))points.push(endPressure);
+
+  if(!points.length)return null;
+  return Math.max(...points)-Math.min(...points);
+}
+
+function calculateJournalPressureStability(hourlyData,referenceTime){
+  const allHours=hourlyData?.calculationHours||[];
+  const date=hourlyData?.date;
+  if(!date||!allHours.length)return null;
+
+  const current=pressureAtLocalTime(allHours,date,referenceTime);
+  const date12=shiftDateKey(date,-1);
+  const refMinutes=Number(referenceTime.slice(0,2))*60+Number(referenceTime.slice(3,5));
+  const twelveMinutes=refMinutes-12*60;
+  const twelveDate=twelveMinutes<0?shiftDateKey(date,-1):date;
+  const twelveTimeMinutes=(twelveMinutes+24*60)%(24*60);
+  const twelveTime=`${String(Math.floor(twelveTimeMinutes/60)).padStart(2,"0")}:${String(twelveTimeMinutes%60).padStart(2,"0")}`;
+  const before12=pressureAtLocalTime(allHours,twelveDate,twelveTime);
+
+  const date24=shiftDateKey(date,-1);
+  const before24=pressureAtLocalTime(allHours,date24,referenceTime);
+
+  const delta12=Number.isFinite(current)&&Number.isFinite(before12)?current-before12:null;
+  const delta24=Number.isFinite(current)&&Number.isFinite(before24)?current-before24:null;
+  const range24=pressureRangeForPeriod(allHours,date,referenceTime,24);
+  const trend=pressureTrendInfo(delta12);
+
+  let dayLabel="Недостаточно данных";
+  let dayClass="pressure-unknown";
+
+  if(Number.isFinite(range24)){
+    if(range24<=3){
+      dayLabel="Очень хорошо: стабильно 24 ч";
+      dayClass="pressure-good";
+    }else if(trend.label==="Стабильное"){
+      dayLabel="Хорошо: стабильно 12 ч";
+      dayClass="pressure-good";
+    }else{
+      const sixMinutes=refMinutes-6*60;
+      const sixDate=sixMinutes<0?shiftDateKey(date,-1):date;
+      const sixTimeMinutes=(sixMinutes+24*60)%(24*60);
+      const sixTime=`${String(Math.floor(sixTimeMinutes/60)).padStart(2,"0")}:${String(sixTimeMinutes%60).padStart(2,"0")}`;
+      const before6=pressureAtLocalTime(allHours,sixDate,sixTime);
+      const delta6=Number.isFinite(current)&&Number.isFinite(before6)?current-before6:null;
+      if(Number.isFinite(delta6)&&Math.abs(delta6)<=2){
+        dayLabel="Недостаточно: стабильно только 6 ч";
+        dayClass="pressure-warn";
+      }else{
+        dayLabel="Нестабильно за 24 ч";
+        dayClass="pressure-bad";
+      }
+    }
+  }else if(trend.label==="Стабильное"){
+    dayLabel="Хорошо: стабильно 12 ч";
+    dayClass="pressure-good";
+  }
+
+  return {
+    referenceTime,
+    pressureMm:current,
+    delta12,
+    delta24,
+    range24,
+    trendLabel:trend.label,
+    trendArrow:trend.arrow,
+    trendClass:trend.className,
+    dayLabel,
+    dayClass,
+    calculatedAt:new Date().toISOString()
+  };
+}
+
+function journalPressureHtml(day){
+  const p=day?.pressureStability;
+  if(!p){
+    return `<span class="pressure-journal-loading">Загрузка…</span>`;
+  }
+  const delta12=Number.isFinite(Number(p.delta12))
+    ?`${Number(p.delta12)>0?"+":""}${Number(p.delta12).toFixed(1)} мм / 12ч`
+    :"нет данных за 12 ч";
+  const range24=Number.isFinite(Number(p.range24))
+    ?`диапазон 24ч: ${Number(p.range24).toFixed(1)} мм`
+    :"24ч: недостаточно данных";
+  const pressure=Number.isFinite(Number(p.pressureMm))
+    ?`${Math.round(Number(p.pressureMm))} мм`
+    :"—";
+
+  return `<b class="${p.trendClass||""}">${escapeHtml(p.trendLabel||"Нет данных")} ${escapeHtml(p.trendArrow||"")}</b>
+    <div>${escapeHtml(pressure)} · ${escapeHtml(delta12)}</div>
+    <div class="pressure-journal-meta ${p.dayClass||""}">${escapeHtml(p.dayLabel||"")}</div>
+    <div class="pressure-journal-meta">${escapeHtml(range24)} · на ${escapeHtml(p.referenceTime||"03:30")}</div>`;
+}
+
+function journalPressureCacheValid(day,key,referenceTime,city){
+  const p=day?.pressureStability;
+  if(!p)return false;
+  if(p.referenceTime!==referenceTime)return false;
+  if(String(p.city||"").toLocaleLowerCase("ru-RU")!==String(city||"").toLocaleLowerCase("ru-RU"))return false;
+  if(key!==todayKey)return true;
+  const loaded=Date.parse(p.calculatedAt||"");
+  return Number.isFinite(loaded)&&(Date.now()-loaded)<60*60*1000;
+}
+
+let journalPressureLoading=false;
+async function fillJournalPressureStability(year=null,force=false){
+  if(journalPressureLoading)return;
+  const targetYear=year||Number($("yearSelect").value)||Number(todayKey.slice(0,4));
+  const dates=visibleJournalDates(targetYear).filter(key=>key<=todayKey);
+  if(!dates.length)return;
+
+  journalPressureLoading=true;
+  try{
+    for(const key of dates){
+      const day=ensureDay(key);
+      const referenceTime=journalPressureReferenceTime(day);
+      const city=day.city||day.weather?.city||DEFAULT_CITY_NAME;
+
+      if(!force&&journalPressureCacheValid(day,key,referenceTime,city))continue;
+
+      try{
+        const location=await resolveCity(city);
+        const hourly=await fetchBiteHourlyInternet(key,location);
+        const summary=calculateJournalPressureStability(hourly,referenceTime);
+        if(summary){
+          day.pressureStability={
+            ...summary,
+            city:location.city,
+            region:location.region||""
+          };
+          saveData();
+          renderYear();
+          if(key===selectedDateKey)renderSelectedDayPressureStability();
+        }
+      }catch(err){
+        day.pressureStability={
+          referenceTime,
+          city,
+          trendLabel:"Нет данных",
+          trendArrow:"",
+          trendClass:"bite-pressure-stable",
+          dayLabel:"Не удалось получить давление",
+          dayClass:"pressure-unknown",
+          calculatedAt:new Date().toISOString(),
+          error:String(err?.message||err||"")
+        };
+        saveData();
+        renderYear();
+        if(key===selectedDateKey)renderSelectedDayPressureStability();
+      }
+    }
+  }finally{
+    journalPressureLoading=false;
+  }
+}
+
 function yearRow(key){
   const day=state.days[key]||{fishing:false,catches:[],weather:null},w=day.weather;
   return {
     date:key,weekday:weekday(key),fishing:!!day.fishing,result:resultText(day),comment:day.comment||"",
-    weather:w?`${w.city||day.city||DEFAULT_CITY_NAME} · ${Math.round(w.temperature)} °C · ${weatherText(w.weatherCode)} · ветер ${windDirection(w.windDirection)} ${Math.round(w.windSpeed)} км/ч`:""
+    weather:w?`${w.city||day.city||DEFAULT_CITY_NAME} · ${Math.round(w.temperature)} °C · ${weatherText(w.weatherCode)} · ветер ${windDirection(w.windDirection)} ${Math.round(w.windSpeed)} км/ч`:"",
+    pressureHtml:journalPressureHtml(day)
   };
 }
 function renderYear(){
@@ -1352,10 +1609,10 @@ function renderYear(){
   $("yearTableBody").innerHTML=dates.map(key=>{
     const r=yearRow(key);
     const rowClasses=[key===selectedDateKey?"selected-row":"",key===todayKey?"today-row":""].filter(Boolean).join(" ");
-    return `<tr class="${rowClasses}"><td>${formatDate(r.date)}</td><td>${escapeHtml(r.weekday)}</td><td><span class="${r.fishing?"yes-badge":"no-badge"}">${r.fishing?"Да":"Нет"}</span></td><td class="result-cell">${escapeHtml(r.result)}</td><td class="comment-cell">${escapeHtml(r.comment||"—")}</td><td class="weather-cell">${escapeHtml(r.weather||"—")}</td><td><button class="row-edit-btn" type="button" data-open-date="${key}">Изменить</button></td></tr>`;
+    return `<tr class="${rowClasses}"><td>${formatDate(r.date)}</td><td>${escapeHtml(r.weekday)}</td><td><span class="${r.fishing?"yes-badge":"no-badge"}">${r.fishing?"Да":"Нет"}</span></td><td class="result-cell">${escapeHtml(r.result)}</td><td class="comment-cell">${escapeHtml(r.comment||"—")}</td><td class="weather-cell">${escapeHtml(r.weather||"—")}</td><td class="pressure-journal-cell">${r.pressureHtml}</td><td><button class="row-edit-btn" type="button" data-open-date="${key}">Изменить</button></td></tr>`;
   }).join("");
   if(!dates.length){
-    $("yearTableBody").innerHTML=`<tr><td colspan="7">Нет отображаемых дат.</td></tr>`;
+    $("yearTableBody").innerHTML=`<tr><td colspan="8">Нет отображаемых дат.</td></tr>`;
   }
   $("yearTableBody").querySelectorAll("[data-open-date]").forEach(b=>b.onclick=()=>selectDay(b.dataset.openDate));
 }
@@ -1400,7 +1657,7 @@ function buildSyncPayload(){
     const best=rows.reduce((a,r)=>r.total>a.total?r:a,{date:"",total:0});
     return {year,rows,summary:{fishingDays,total,species:species.size,bestDay:best.date,bestTotal:best.total},catches};
   });
-  return {app:"Fishing Day MVP",version:24,clientToday:todayKey,selectedDate:selectedDateKey,syncedAt:new Date().toISOString(),years:yearData};
+  return {app:"Fishing Day MVP",version:27,clientToday:todayKey,selectedDate:selectedDateKey,syncedAt:new Date().toISOString(),years:yearData};
 }
 async function syncGoogleSheets(){
   const endpoint=$("sheetEndpoint").value.trim(),status=$("syncStatus");
@@ -1577,14 +1834,25 @@ $("catchForm").onsubmit=async e=>{
   renderAll();
   await fetchWeather(location);
   await fetchBiteForecast(location);
+  ensureDay(selectedDateKey).pressureStability=null;
+  saveData();
+  renderSelectedDayPressureStability();
+  fillJournalPressureStability(Number(selectedDateKey.slice(0,4)),true);
 };
 $("clearToday").onclick=()=>{
   const d=ensureDay(selectedDateKey);if(!d.catches.length)return;
-  if(confirm(`Удалить весь улов за ${formatDate(selectedDateKey)}?`)){d.catches=[];cancelCatchEditing();saveData();renderAll()}
+  if(confirm(`Удалить весь улов за ${formatDate(selectedDateKey)}?`)){
+    d.catches=[];
+    d.pressureStability=null;
+    cancelCatchEditing();
+    saveData();
+    renderAll();
+    fillJournalPressureStability(Number(selectedDateKey.slice(0,4)),true);
+  }
 };
-$("refreshWeather").onclick=fetchWeather;$("fillYearWeather").onclick=()=>fillWeatherForYear(Number($("yearSelect").value));$("exportCsv").onclick=exportCsv;$("yearSelect").onchange=renderYear;
-$("prevYear").onclick=()=>{const s=$("yearSelect"),y=Number(s.value)-1;if(![...s.options].some(o=>Number(o.value)===y)){s.insertAdjacentHTML("beforeend",`<option value="${y}">${y}</option>`)}s.value=String(y);renderYear()};
-$("nextYear").onclick=()=>{const s=$("yearSelect"),y=Number(s.value)+1;if(![...s.options].some(o=>Number(o.value)===y)){s.insertAdjacentHTML("afterbegin",`<option value="${y}">${y}</option>`)}s.value=String(y);renderYear()};
+$("refreshWeather").onclick=fetchWeather;$("fillYearWeather").onclick=()=>fillWeatherForYear(Number($("yearSelect").value));$("exportCsv").onclick=exportCsv;$("yearSelect").onchange=()=>{renderYear();fillJournalPressureStability(Number($("yearSelect").value));};
+$("prevYear").onclick=()=>{const s=$("yearSelect"),y=Number(s.value)-1;if(![...s.options].some(o=>Number(o.value)===y)){s.insertAdjacentHTML("beforeend",`<option value="${y}">${y}</option>`)}s.value=String(y);renderYear();fillJournalPressureStability(y)};
+$("nextYear").onclick=()=>{const s=$("yearSelect"),y=Number(s.value)+1;if(![...s.options].some(o=>Number(o.value)===y)){s.insertAdjacentHTML("afterbegin",`<option value="${y}">${y}</option>`)}s.value=String(y);renderYear();fillJournalPressureStability(y)};
 $("saveEndpoint").onclick=()=>{localStorage.setItem(ENDPOINT_KEY,$("sheetEndpoint").value.trim());$("syncStatus").textContent="URL сохранён на этом устройстве."};
 $("syncSheets").onclick=syncGoogleSheets;
 $("refreshBiteForecast").onclick=()=>fetchBiteForecast();
@@ -1607,6 +1875,10 @@ $("cityInput").onchange=async()=>{
     saveData();
     await fetchWeather(location);
     await fetchBiteForecast(location);
+    day.pressureStability=null;
+    saveData();
+    renderSelectedDayPressureStability();
+    fillJournalPressureStability(Number(selectedDateKey.slice(0,4)),true);
   }catch(e){
     $("cityStatus").textContent=e.message||"Не удалось определить город.";
   }
@@ -1622,6 +1894,7 @@ renderAll();
 fetchWeather().then(()=>{
   autoBackfillCurrentYear();
   fetchBiteForecast();
+  fillJournalPressureStability(Number(todayKey.slice(0,4)));
 });
 
 </script>
