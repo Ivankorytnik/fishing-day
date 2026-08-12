@@ -98,7 +98,7 @@
 <body>
 <main class="wrap">
   <section class="hero">
-    <div class="version-badge">Версия 29</div>
+    <div class="version-badge">Версия 30</div>
     <small>Дневник рыболова</small>
     <h1>Рыболовный день</h1>
     <p>Учёт каждого дня года, улова, города, комментариев и погоды по выбранному городу.</p>
@@ -279,7 +279,7 @@
   </section>
 
   <section class="card">
-    <div class="section-title"><h2>Журнал <span id="journalYearLabel">2026</span>: последние 8 дней</h2></div>
+    <div class="section-title"><h2>Журнал <span id="journalYearLabel">2026</span>: последние 7 дней</h2></div>
     <div class="annual-toolbar">
       <div class="field"><label for="yearSelect">Год</label><select id="yearSelect"></select></div>
       <button class="btn secondary" id="prevYear" type="button">← Предыдущий</button>
@@ -1430,7 +1430,7 @@ function shiftDateKey(key,days){
 function visibleJournalDates(year){
   const currentYear=Number(todayKey.slice(0,4));
   if(year!==currentYear) return datesOfYear(year);
-  const startKey=shiftDateKey(todayKey,-7);
+  const startKey=shiftDateKey(todayKey,-6);
   return datesOfYear(year).filter(key=>key>=startKey && key<=todayKey);
 }
 function availableYears(){
@@ -1733,7 +1733,7 @@ function buildSyncPayload(){
     const best=rows.reduce((a,r)=>r.total>a.total?r:a,{date:"",total:0});
     return {year,rows,summary:{fishingDays,total,species:species.size,bestDay:best.date,bestTotal:best.total},catches};
   });
-  return {app:"Fishing Day MVP",version:29,clientToday:todayKey,selectedDate:selectedDateKey,syncedAt:new Date().toISOString(),years:yearData};
+  return {app:"Fishing Day MVP",version:30,clientToday:todayKey,selectedDate:selectedDateKey,syncedAt:new Date().toISOString(),years:yearData};
 }
 async function syncGoogleSheets(){
   const endpoint=$("sheetEndpoint").value.trim(),status=$("syncStatus");
