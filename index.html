@@ -4,6 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#123f39" />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="alternate icon" href="favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
   <title>Рыболовный день — годовой журнал</title>
   <style>
     :root{
@@ -568,7 +572,7 @@ function buildSyncPayload(){
     const best=rows.reduce((a,r)=>r.total>a.total?r:a,{date:"",total:0});
     return {year,rows,summary:{fishingDays,total,species:species.size,bestDay:best.date,bestTotal:best.total},catches};
   });
-  return {app:"Fishing Day MVP",version:10,syncedAt:new Date().toISOString(),years:yearData};
+  return {app:"Fishing Day MVP",version:11,syncedAt:new Date().toISOString(),years:yearData};
 }
 async function syncGoogleSheets(){
   const endpoint=$("sheetEndpoint").value.trim(),status=$("syncStatus");

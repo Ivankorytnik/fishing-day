@@ -21,3 +21,14 @@
 ## Обновление сайта
 
 На GitHub достаточно заменить файл `index.html` и дождаться обновления GitHub Pages.
+
+
+## Версия 11 — favicon
+
+Добавлен фирменный favicon в цветах сайта:
+- `favicon.svg` — основной вариант;
+- `favicon.ico` — совместимость со старыми браузерами;
+- `favicon-32.png` — PNG 32×32;
+- `apple-touch-icon.png` — иконка для iPhone/iPad.
+
+Для GitHub Pages все эти файлы должны лежать рядом с `index.html`.
