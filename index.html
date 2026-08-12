@@ -4,653 +4,351 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#123f39" />
-  <title>Рыболовный день — MVP</title>
+  <title>Рыболовный день — годовой журнал</title>
   <style>
     :root{
-      --bg:#f4f2e8;
-      --surface:#fffdf6;
-      --surface-2:#edf4ee;
-      --text:#17342f;
-      --muted:#6b7d77;
-      --accent:#146b5f;
-      --accent-dark:#0f5148;
-      --line:#d9dfd7;
-      --danger:#a44736;
-      --shadow:0 12px 30px rgba(31,54,48,.10);
-      --radius:18px;
+      --bg:#f4f2e8;--surface:#fffdf6;--surface2:#edf4ee;--text:#17342f;
+      --muted:#6b7d77;--accent:#146b5f;--accent2:#0f5148;--line:#d9dfd7;
+      --danger:#a44736;--yellow:#f4dc4f;--shadow:0 10px 28px rgba(31,54,48,.09)
     }
     *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:Arial, Helvetica, sans-serif;
-      background:linear-gradient(180deg,#e9f1ea 0,#f4f2e8 240px);
-      color:var(--text);
-    }
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(180deg,#e8f0e9 0,#f4f2e8 260px);color:var(--text)}
     button,input,select{font:inherit}
-    .wrap{max-width:920px;margin:0 auto;padding:20px 16px 60px}
-    .hero{
-      background:linear-gradient(135deg,#123f39,#1d7568);
-      color:#fff;
-      border-radius:24px;
-      padding:24px;
-      box-shadow:var(--shadow);
-      margin-bottom:16px;
-    }
-    .eyebrow{font-size:13px;letter-spacing:.08em;text-transform:uppercase;opacity:.75}
-    h1{font-size:30px;line-height:1.05;margin:8px 0}
-    .hero p{margin:6px 0 0;opacity:.88}
-    .grid{display:grid;gap:16px}
-    .weather-grid{grid-template-columns:repeat(4,1fr)}
-    .card{
-      background:var(--surface);
-      border:1px solid rgba(23,52,47,.08);
-      border-radius:var(--radius);
-      padding:18px;
-      box-shadow:0 7px 20px rgba(31,54,48,.06);
-    }
-    .section-title{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      margin:0 0 14px;
-    }
-    .section-title h2{font-size:19px;margin:0}
-    .stat{
-      background:var(--surface-2);
-      border-radius:15px;
-      padding:14px;
-      min-height:92px;
-    }
-    .stat-label{font-size:12px;color:var(--muted);margin-bottom:7px}
-    .stat-value{font-size:20px;font-weight:700;word-break:break-word}
-    .stat-sub{font-size:12px;color:var(--muted);margin-top:5px}
-    .status{
-      font-size:13px;
-      color:var(--muted);
-      margin-top:12px;
-      min-height:18px;
-    }
-    .btn{
-      border:0;
-      border-radius:12px;
-      padding:11px 15px;
-      cursor:pointer;
-      background:var(--accent);
-      color:white;
-      font-weight:700;
-    }
-    .btn:hover{background:var(--accent-dark)}
-    .btn.secondary{
-      background:#e7efea;
-      color:var(--accent-dark);
-      border:1px solid #cedbd4;
-    }
-    .btn.danger{
-      background:#f6e8e4;
-      color:var(--danger);
-      border:1px solid #ead1ca;
-    }
-    .form-grid{
-      display:grid;
-      grid-template-columns:2fr 1fr 1fr auto;
-      gap:12px;
-      align-items:end;
-    }
-    label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
-    input,select{
-      width:100%;
-      border:1px solid var(--line);
-      border-radius:12px;
-      background:#fff;
-      color:var(--text);
-      padding:11px 12px;
-      outline:none;
-    }
-    input:focus,select:focus{border-color:#6ca79d;box-shadow:0 0 0 3px rgba(20,107,95,.10)}
-    .summary{
-      display:grid;
-      grid-template-columns:1fr 1fr 1fr;
-      gap:10px;
-      margin-bottom:14px;
-    }
-    .summary .mini{
-      background:#f3f7f3;
-      border-radius:12px;
-      padding:12px;
-    }
-    .mini b{display:block;font-size:21px}
-    .mini span{font-size:12px;color:var(--muted)}
-    .empty{
-      padding:26px 10px;
-      text-align:center;
-      color:var(--muted);
-      border:1px dashed var(--line);
-      border-radius:14px;
-    }
-    .catch-list{display:flex;flex-direction:column;gap:9px}
-    .catch-row{
-      display:grid;
-      grid-template-columns:74px 1fr 86px 42px;
-      gap:10px;
-      align-items:center;
-      padding:12px;
-      border:1px solid var(--line);
-      border-radius:13px;
-      background:#fff;
-    }
-    .catch-time{font-weight:700}
-    .catch-fish{font-weight:700}
-    .catch-qty{color:var(--muted);text-align:right}
-    .icon-btn{
-      border:0;
-      background:#f7ece9;
-      color:var(--danger);
-      height:34px;
-      width:34px;
-      border-radius:10px;
-      cursor:pointer;
-      font-weight:700;
-    }
-    .history-day{
-      display:flex;
-      justify-content:space-between;
-      gap:12px;
-      align-items:center;
-      border-top:1px solid var(--line);
-      padding:12px 0;
-    }
-    .history-day:first-child{border-top:0}
-    .history-day small{display:block;color:var(--muted);margin-top:3px}
+    .wrap{max-width:1120px;margin:0 auto;padding:20px 16px 64px}
+    .hero{background:linear-gradient(135deg,#123f39,#1d7568);color:white;border-radius:24px;padding:24px;box-shadow:var(--shadow);margin-bottom:16px}
+    .hero small{text-transform:uppercase;letter-spacing:.08em;opacity:.72}
+    .hero h1{font-size:32px;margin:8px 0 6px}.hero p{margin:0;opacity:.88}
+    .card{background:var(--surface);border:1px solid rgba(23,52,47,.08);border-radius:18px;padding:18px;box-shadow:0 7px 20px rgba(31,54,48,.05);margin-top:16px}
+    .section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.section-title h2{font-size:19px;margin:0}
+    .grid{display:grid;gap:12px}.weather-grid{grid-template-columns:repeat(4,1fr)}
+    .stat{background:var(--surface2);border-radius:14px;padding:13px;min-height:88px}.stat-label{font-size:12px;color:var(--muted);margin-bottom:6px}.stat-value{font-size:19px;font-weight:700}.stat-sub{font-size:12px;color:var(--muted);margin-top:5px}
+    .btn{border:0;border-radius:12px;padding:11px 15px;cursor:pointer;background:var(--accent);color:white;font-weight:700}.btn:hover{background:var(--accent2)}
+    .btn.secondary{background:#e7efea;color:var(--accent2);border:1px solid #cedbd4}.btn.danger{background:#f6e8e4;color:var(--danger);border:1px solid #ead1ca}
+    .status{font-size:13px;color:var(--muted);margin-top:12px;min-height:18px}
+    .fish-status{display:flex;gap:8px;flex-wrap:wrap}.choice{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:12px;padding:11px 18px;cursor:pointer;font-weight:700}.choice.active.yes{background:#dfeee8;border-color:#8ab8aa;color:#0f5148}.choice.active.no{background:#f1eee6;border-color:#cbc5b6}
+    .form-grid{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:12px;align-items:end}
+    label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}input,select{width:100%;border:1px solid var(--line);border-radius:12px;background:white;color:var(--text);padding:11px 12px;outline:none}
+    .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}.mini{background:#f3f7f3;border-radius:12px;padding:12px}.mini b{display:block;font-size:20px}.mini span{font-size:12px;color:var(--muted)}
+    .catch-list{display:flex;flex-direction:column;gap:8px}.catch-row{display:grid;grid-template-columns:72px 1fr 80px 38px;gap:9px;align-items:center;padding:11px;border:1px solid var(--line);border-radius:12px;background:white}.catch-time,.catch-fish{font-weight:700}.catch-qty{text-align:right;color:var(--muted)}
+    .icon-btn{border:0;background:#f7ece9;color:var(--danger);height:34px;width:34px;border-radius:9px;cursor:pointer;font-weight:700}
+    .empty{padding:24px 10px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:13px}
+    .annual-toolbar{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.annual-toolbar .field{min-width:150px}.annual-toolbar select{min-width:140px}
+    .annual-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+    .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px;max-height:560px;background:white}
+    table{border-collapse:collapse;width:100%;min-width:820px;font-size:13px}th,td{padding:9px 10px;border-bottom:1px solid #ecefe9;text-align:left;vertical-align:top}th{position:sticky;top:0;background:var(--yellow);color:#111;z-index:1;font-weight:700}td.num{text-align:right}.yes-badge,.no-badge{display:inline-block;border-radius:999px;padding:3px 8px;font-weight:700;font-size:12px}.yes-badge{background:#dfeee8;color:#0f5148}.no-badge{background:#f0eee8;color:#6c6554}
+    .result-cell{min-width:230px}.weather-cell{min-width:220px;color:var(--muted)}
+    .sync-box{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end}.sync-note{font-size:12px;color:var(--muted);line-height:1.45;margin-top:10px}
     .footer-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-    .note{font-size:12px;color:var(--muted);line-height:1.45;margin-top:12px}
-    @media (max-width:720px){
-      .weather-grid{grid-template-columns:1fr 1fr}
-      .form-grid{grid-template-columns:1fr 1fr}
-      .form-grid .fish-field{grid-column:1/-1}
-      .form-grid .add-field{grid-column:1/-1}
-      .form-grid .add-field .btn{width:100%}
-    }
-    @media (max-width:480px){
-      .hero{padding:20px}
-      h1{font-size:26px}
-      .weather-grid{grid-template-columns:1fr 1fr}
-      .summary{grid-template-columns:1fr 1fr}
-      .summary .mini:last-child{grid-column:1/-1}
-      .catch-row{grid-template-columns:60px 1fr 66px 36px;gap:7px}
-      .catch-row{font-size:14px}
-    }
+    @media(max-width:760px){.weather-grid{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr 1fr}.fish-field,.add-field{grid-column:1/-1}.add-field .btn{width:100%}.summary,.annual-stats{grid-template-columns:1fr 1fr}.sync-box{grid-template-columns:1fr}.sync-box .btn{width:100%}}
+    @media(max-width:480px){.weather-grid{grid-template-columns:1fr 1fr}.hero h1{font-size:26px}.catch-row{grid-template-columns:58px 1fr 62px 34px;font-size:14px}}
   </style>
 </head>
 <body>
-  <main class="wrap">
-    <section class="hero">
-      <div class="eyebrow">Дневник рыболова</div>
-      <h1>Рыболовный день</h1>
-      <p>Погода из интернета по геолокации. Улов — за несколько секунд.</p>
-    </section>
+<main class="wrap">
+  <section class="hero">
+    <small>Дневник рыболова</small>
+    <h1>Рыболовный день</h1>
+    <p>Учёт каждого дня года, улова и погодных условий.</p>
+  </section>
 
-    <section class="card">
-      <div class="section-title">
-        <h2>Условия сегодня</h2>
-        <button class="btn secondary" id="refreshWeather">Обновить погоду</button>
+  <section class="card">
+    <div class="section-title"><h2>Условия сегодня</h2><button class="btn secondary" id="refreshWeather">Обновить погоду</button></div>
+    <div class="grid weather-grid">
+      <div class="stat"><div class="stat-label">Дата</div><div class="stat-value" id="dateValue">—</div><div class="stat-sub" id="locationValue"></div></div>
+      <div class="stat"><div class="stat-label">Температура</div><div class="stat-value" id="tempValue">—</div><div class="stat-sub" id="feelsValue"></div></div>
+      <div class="stat"><div class="stat-label">Погода</div><div class="stat-value" id="weatherValue">—</div><div class="stat-sub" id="cloudValue"></div></div>
+      <div class="stat"><div class="stat-label">Ветер</div><div class="stat-value" id="windValue">—</div><div class="stat-sub" id="windSpeedValue"></div></div>
+      <div class="stat"><div class="stat-label">Порывы</div><div class="stat-value" id="gustValue">—</div></div>
+      <div class="stat"><div class="stat-label">Влажность</div><div class="stat-value" id="humidityValue">—</div></div>
+      <div class="stat"><div class="stat-label">Давление</div><div class="stat-value" id="pressureValue">—</div><div class="stat-sub" id="pressureMmValue"></div></div>
+      <div class="stat"><div class="stat-label">Осадки</div><div class="stat-value" id="precipValue">—</div></div>
+    </div>
+    <div class="status" id="weatherStatus"></div>
+  </section>
+
+  <section class="card">
+    <div class="section-title"><h2>Была ли сегодня рыбалка?</h2></div>
+    <div class="fish-status">
+      <button class="choice yes" id="fishingYes" type="button">Да, была</button>
+      <button class="choice no" id="fishingNo" type="button">Нет</button>
+    </div>
+    <div class="status" id="fishingStatus">Отметьте факт рыбалки отдельно от результата улова.</div>
+  </section>
+
+  <section class="card">
+    <div class="section-title"><h2>Добавить улов</h2></div>
+    <form id="catchForm" class="form-grid">
+      <div class="fish-field"><label for="fish">Рыба</label><select id="fish" required>
+        <option>Карась</option><option>Лещ</option><option>Карп</option><option>Сазан</option><option>Сом</option><option>Судак</option><option>Подлещик</option><option>Густера</option><option>Ёрш</option><option>Щука</option><option>Окунь</option>
+      </select></div>
+      <div><label for="qty">Количество</label><input id="qty" type="number" min="1" step="1" value="1" required></div>
+      <div><label for="catchTime">Время</label><input id="catchTime" type="time" required></div>
+      <div class="add-field"><button class="btn" type="submit">+ Добавить</button></div>
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="section-title"><h2>Результат дня</h2></div>
+    <div class="summary">
+      <div class="mini"><b id="dayFishing">Нет</b><span>рыбалка</span></div>
+      <div class="mini"><b id="totalQty">0</b><span>всего рыб</span></div>
+      <div class="mini"><b id="speciesQty">0</b><span>видов</span></div>
+      <div class="mini"><b id="firstCatch">—</b><span>первая поимка</span></div>
+    </div>
+    <div id="catchList"></div>
+    <div class="footer-actions">
+      <button class="btn secondary" id="exportCsv" type="button">Экспорт CSV</button>
+      <button class="btn danger" id="clearToday" type="button">Очистить улов за сегодня</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="section-title"><h2>Годовой журнал</h2></div>
+    <div class="annual-toolbar">
+      <div class="field"><label for="yearSelect">Год</label><select id="yearSelect"></select></div>
+      <button class="btn secondary" id="prevYear" type="button">← Предыдущий</button>
+      <button class="btn secondary" id="nextYear" type="button">Следующий →</button>
+    </div>
+    <div class="annual-stats">
+      <div class="mini"><b id="yearFishingDays">0</b><span>дней с рыбалкой</span></div>
+      <div class="mini"><b id="yearCatchTotal">0</b><span>рыб поймано</span></div>
+      <div class="mini"><b id="yearSpecies">0</b><span>видов за год</span></div>
+      <div class="mini"><b id="yearBestDay">—</b><span>лучший день</span></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Дата</th><th>День</th><th>Рыбалка</th><th>Результат дня</th><th>Погода</th></tr></thead>
+        <tbody id="yearTableBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="section-title"><h2>Google Таблица</h2></div>
+    <div class="sync-box">
+      <div>
+        <label for="sheetEndpoint">URL веб-приложения Google Apps Script</label>
+        <input id="sheetEndpoint" type="url" placeholder="https://script.google.com/macros/s/.../exec">
       </div>
+      <button class="btn" id="syncSheets" type="button">Выгрузить все годы</button>
+    </div>
+    <div class="footer-actions"><button class="btn secondary" id="saveEndpoint" type="button">Сохранить URL</button></div>
+    <div class="status" id="syncStatus">После настройки Apps Script данные будут выгружаться в лист «Сводка», годовые вкладки и лист «Улов».</div>
+    <div class="sync-note">Вкладка каждого года содержит все 365/366 календарных дней. Если рыбалка была, но улова не было — в строке будет «Рыбалка: Да» и результат «Без улова».</div>
+  </section>
+</main>
 
-      <div class="grid weather-grid">
-        <div class="stat">
-          <div class="stat-label">Дата</div>
-          <div class="stat-value" id="dateValue">—</div>
-          <div class="stat-sub" id="locationValue"></div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Температура</div>
-          <div class="stat-value" id="tempValue">—</div>
-          <div class="stat-sub" id="feelsValue"></div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Погода</div>
-          <div class="stat-value" id="weatherValue">—</div>
-          <div class="stat-sub" id="cloudValue"></div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Направление ветра</div>
-          <div class="stat-value" id="windValue">—</div>
-          <div class="stat-sub" id="windSpeedValue"></div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Порывы ветра</div>
-          <div class="stat-value" id="gustValue">—</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Влажность</div>
-          <div class="stat-value" id="humidityValue">—</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Давление</div>
-          <div class="stat-value" id="pressureValue">—</div>
-          <div class="stat-sub" id="pressureMmValue"></div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Осадки сейчас</div>
-          <div class="stat-value" id="precipValue">—</div>
-        </div>
-      </div>
-      <div class="status" id="weatherStatus">Определяю местоположение и погоду…</div>
-    </section>
+<script>
+const STORAGE_KEY="fishing-day-mvp-v3";
+const ENDPOINT_KEY="fishing-day-google-endpoint";
+const $=id=>document.getElementById(id);
+const todayKey=localDateKey();
 
-    <section class="card" style="margin-top:16px">
-      <div class="section-title">
-        <h2>Добавить улов</h2>
-      </div>
+function localDateKey(date=new Date()){
+  const y=date.getFullYear(),m=String(date.getMonth()+1).padStart(2,"0"),d=String(date.getDate()).padStart(2,"0");
+  return `${y}-${m}-${d}`;
+}
+function formatDate(key){
+  const [y,m,d]=key.split("-").map(Number);
+  return new Intl.DateTimeFormat("ru-RU",{day:"2-digit",month:"2-digit",year:"numeric"}).format(new Date(y,m-1,d));
+}
+function weekday(key){
+  const [y,m,d]=key.split("-").map(Number);
+  return new Intl.DateTimeFormat("ru-RU",{weekday:"short"}).format(new Date(y,m-1,d));
+}
+function currentTime(){const d=new Date();return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`}
+function loadData(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||{days:{}}}catch{return{days:{}}}}
+function saveData(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
+function ensureDay(key){
+  if(!state.days[key]) state.days[key]={fishing:false,catches:[],weather:null};
+  if(typeof state.days[key].fishing!=="boolean") state.days[key].fishing=(state.days[key].catches||[]).length>0;
+  if(!Array.isArray(state.days[key].catches)) state.days[key].catches=[];
+  return state.days[key];
+}
+function weatherText(code){
+  const map={0:"Ясно",1:"Преимущественно ясно",2:"Переменная облачность",3:"Пасмурно",45:"Туман",48:"Изморозь / туман",51:"Лёгкая морось",53:"Морось",55:"Сильная морось",56:"Ледяная морось",57:"Сильная ледяная морось",61:"Небольшой дождь",63:"Дождь",65:"Сильный дождь",66:"Ледяной дождь",67:"Сильный ледяной дождь",71:"Небольшой снег",73:"Снег",75:"Сильный снег",77:"Снежная крупа",80:"Небольшой ливень",81:"Ливень",82:"Сильный ливень",85:"Небольшой снегопад",86:"Сильный снегопад",95:"Гроза",96:"Гроза с градом",99:"Сильная гроза с градом"};
+  return map[code]||"—";
+}
+function windDirection(deg){const dirs=["С","СВ","В","ЮВ","Ю","ЮЗ","З","СЗ"];return dirs[Math.round((Number(deg)||0)/45)%8]}
+function escapeHtml(value){return String(value??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
 
-      <form id="catchForm" class="form-grid">
-        <div class="fish-field">
-          <label for="fish">Рыба</label>
-          <select id="fish" required>
-            <option>Карась</option>
-            <option>Лещ</option>
-            <option>Карп</option>
-            <option>Сазан</option>
-            <option>Сом</option>
-            <option>Судак</option>
-            <option>Подлещик</option>
-            <option>Густера</option>
-            <option>Ёрш</option>
-            <option>Щука</option>
-            <option>Окунь</option>
-          </select>
-        </div>
-        <div>
-          <label for="qty">Количество</label>
-          <input id="qty" type="number" inputmode="numeric" min="1" step="1" value="1" required />
-        </div>
-        <div>
-          <label for="catchTime">Время</label>
-          <input id="catchTime" type="time" required />
-        </div>
-        <div class="add-field">
-          <button class="btn" type="submit">+ Добавить</button>
-        </div>
-      </form>
-    </section>
+function renderWeather(){
+  const day=ensureDay(todayKey),w=day.weather;
+  $("dateValue").textContent=formatDate(todayKey);
+  if(!w){["tempValue","weatherValue","windValue","gustValue","humidityValue","pressureValue","precipValue"].forEach(id=>$(id).textContent="—");["feelsValue","cloudValue","windSpeedValue","pressureMmValue","locationValue"].forEach(id=>$(id).textContent="");return}
+  $("tempValue").textContent=`${Math.round(w.temperature)} °C`;
+  $("feelsValue").textContent=`Ощущается как ${Math.round(w.apparentTemperature)} °C`;
+  $("weatherValue").textContent=weatherText(w.weatherCode);
+  $("cloudValue").textContent=`Облачность ${Math.round(w.cloudCover)}%`;
+  $("windValue").textContent=`${windDirection(w.windDirection)} · ${Math.round(w.windDirection)}°`;
+  $("windSpeedValue").textContent=`${Math.round(w.windSpeed)} км/ч`;
+  $("gustValue").textContent=`${Math.round(w.windGusts)} км/ч`;
+  $("humidityValue").textContent=`${Math.round(w.humidity)}%`;
+  $("pressureValue").textContent=`${Math.round(w.pressure)} hPa`;
+  $("pressureMmValue").textContent=`${Math.round(w.pressure*.750062)} мм рт. ст.`;
+  $("precipValue").textContent=`${Number(w.precipitation).toFixed(1)} мм`;
+  $("locationValue").textContent=w.coords?`${w.coords.lat.toFixed(3)}, ${w.coords.lon.toFixed(3)}`:"";
+}
+async function fetchWeather(){
+  const status=$("weatherStatus");
+  if(!navigator.geolocation){status.textContent="Геолокация не поддерживается этим браузером.";return}
+  status.textContent="Определяю местоположение…";
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    const lat=pos.coords.latitude,lon=pos.coords.longitude;
+    status.textContent="Получаю актуальную погоду из интернета…";
+    const url=new URL("https://api.open-meteo.com/v1/forecast");
+    url.searchParams.set("latitude",lat);url.searchParams.set("longitude",lon);
+    url.searchParams.set("current","temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m");
+    url.searchParams.set("temperature_unit","celsius");url.searchParams.set("wind_speed_unit","kmh");url.searchParams.set("precipitation_unit","mm");url.searchParams.set("timezone","auto");
+    try{
+      const res=await fetch(url,{cache:"no-store"});if(!res.ok)throw new Error("weather");
+      const c=(await res.json()).current;
+      ensureDay(todayKey).weather={temperature:c.temperature_2m,apparentTemperature:c.apparent_temperature,humidity:c.relative_humidity_2m,precipitation:c.precipitation,weatherCode:c.weather_code,cloudCover:c.cloud_cover,pressure:c.pressure_msl,windSpeed:c.wind_speed_10m,windDirection:c.wind_direction_10m,windGusts:c.wind_gusts_10m,coords:{lat,lon},source:"Open-Meteo",observationTime:c.time,loadedAt:new Date().toISOString()};
+      saveData();renderAll();status.textContent=`Данные из интернета · Open-Meteo · ${currentTime()}`;
+    }catch(e){renderWeather();status.textContent=ensureDay(todayKey).weather?"Нет связи. Показаны последние сохранённые данные.":"Не удалось получить погоду из интернета."}
+  },err=>{
+    const m={1:"Разрешите доступ к геолокации для автоматической погоды.",2:"Не удалось определить местоположение.",3:"Истекло время определения местоположения."};
+    status.textContent=m[err.code]||"Не удалось определить местоположение.";
+  },{timeout:12000,maximumAge:300000});
+}
 
-    <section class="card" style="margin-top:16px">
-      <div class="section-title">
-        <h2>Улов за день</h2>
-      </div>
+function setFishing(value){
+  const day=ensureDay(todayKey);
+  if(!value && day.catches.length){
+    alert("За сегодня уже есть улов. Сначала удалите записи улова, если рыбалки не было.");
+    return;
+  }
+  day.fishing=value;saveData();renderAll();
+}
+function renderFishing(){
+  const fishing=ensureDay(todayKey).fishing;
+  $("fishingYes").classList.toggle("active",fishing);
+  $("fishingNo").classList.toggle("active",!fishing);
+  $("dayFishing").textContent=fishing?"Да":"Нет";
+}
 
-      <div class="summary">
-        <div class="mini"><b id="totalQty">0</b><span>всего рыб</span></div>
-        <div class="mini"><b id="speciesQty">0</b><span>видов</span></div>
-        <div class="mini"><b id="firstCatch">—</b><span>первая поимка</span></div>
-      </div>
+function resultText(day){
+  if(!day || !day.fishing) return "Без рыбалки";
+  const catches=day.catches||[];
+  if(!catches.length) return "Без улова";
+  const by={};let total=0;
+  catches.forEach(c=>{by[c.fish]=(by[c.fish]||0)+Number(c.qty||0);total+=Number(c.qty||0)});
+  return `${total} шт. — `+Object.entries(by).map(([fish,qty])=>`${fish}: ${qty}`).join(", ");
+}
+function renderCatches(){
+  const day=ensureDay(todayKey),catches=[...day.catches].sort((a,b)=>a.time.localeCompare(b.time));
+  $("totalQty").textContent=catches.reduce((s,c)=>s+Number(c.qty||0),0);
+  $("speciesQty").textContent=new Set(catches.map(c=>c.fish)).size;
+  $("firstCatch").textContent=catches.length?catches[0].time:"—";
+  const list=$("catchList");
+  if(!catches.length){list.className="";list.innerHTML=`<div class="empty">${day.fishing?"Рыбалка отмечена. Улов пока не добавлен.":"Сегодня рыбалка не отмечена."}</div>`;return}
+  list.className="catch-list";
+  list.innerHTML=catches.map(c=>`<div class="catch-row"><div class="catch-time">${escapeHtml(c.time)}</div><div class="catch-fish">${escapeHtml(c.fish)}</div><div class="catch-qty">${c.qty} шт.</div><button class="icon-btn" data-id="${c.id}" type="button">×</button></div>`).join("");
+  list.querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>{day.catches=day.catches.filter(c=>c.id!==b.dataset.id);saveData();renderAll()});
+}
 
-      <div id="catchList"></div>
-
-      <div class="footer-actions">
-        <button class="btn secondary" id="exportCsv" type="button">Экспорт CSV</button>
-        <button class="btn danger" id="clearToday" type="button">Очистить сегодняшний улов</button>
-      </div>
-    </section>
-
-    <section class="card" style="margin-top:16px">
-      <div class="section-title">
-        <h2>Последние рыболовные дни</h2>
-      </div>
-      <div id="history"></div>
-      <div class="note">Данные сохраняются только на этом устройстве в localStorage браузера.</div>
-    </section>
-  </main>
-
-  <script>
-    const STORAGE_KEY = "fishing-day-mvp-v1";
-    const todayKey = localDateKey();
-
-    const $ = (id) => document.getElementById(id);
-
-    function localDateKey(date = new Date()) {
-      const y = date.getFullYear();
-      const m = String(date.getMonth() + 1).padStart(2, "0");
-      const d = String(date.getDate()).padStart(2, "0");
-      return `${y}-${m}-${d}`;
-    }
-
-    function formatDate(key) {
-      const [y,m,d] = key.split("-").map(Number);
-      return new Intl.DateTimeFormat("ru-RU", {
-        day:"2-digit", month:"long", year:"numeric"
-      }).format(new Date(y, m - 1, d));
-    }
-
-    function currentTime() {
-      const d = new Date();
-      return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
-    }
-
-    function loadData() {
-      try {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { days:{} };
-      } catch {
-        return { days:{} };
-      }
-    }
-
-    function saveData() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    }
-
-    function getToday() {
-      if (!state.days[todayKey]) {
-        state.days[todayKey] = { catches:[], weather:null };
-      }
-      return state.days[todayKey];
-    }
-
-    function weatherText(code) {
-      const map = {
-        0:"Ясно",
-        1:"Преимущественно ясно",
-        2:"Переменная облачность",
-        3:"Пасмурно",
-        45:"Туман",
-        48:"Изморозь / туман",
-        51:"Лёгкая морось",
-        53:"Морось",
-        55:"Сильная морось",
-        56:"Ледяная морось",
-        57:"Сильная ледяная морось",
-        61:"Небольшой дождь",
-        63:"Дождь",
-        65:"Сильный дождь",
-        66:"Ледяной дождь",
-        67:"Сильный ледяной дождь",
-        71:"Небольшой снег",
-        73:"Снег",
-        75:"Сильный снег",
-        77:"Снежная крупа",
-        80:"Небольшой ливень",
-        81:"Ливень",
-        82:"Сильный ливень",
-        85:"Небольшой снегопад",
-        86:"Сильный снегопад",
-        95:"Гроза",
-        96:"Гроза с градом",
-        99:"Сильная гроза с градом"
+function datesOfYear(year){
+  const dates=[],d=new Date(year,0,1);
+  while(d.getFullYear()===year){dates.push(localDateKey(d));d.setDate(d.getDate()+1)}
+  return dates;
+}
+function availableYears(){
+  const current=new Date().getFullYear();
+  const years=new Set([current]);
+  Object.keys(state.days).forEach(k=>years.add(Number(k.slice(0,4))));
+  for(let y=current-5;y<=current;y++) years.add(y);
+  return [...years].filter(Number.isFinite).sort((a,b)=>b-a);
+}
+function buildYearSelect(){
+  const select=$("yearSelect"),currentValue=Number(select.value)||new Date().getFullYear(),years=availableYears();
+  select.innerHTML=years.map(y=>`<option value="${y}">${y}</option>`).join("");
+  select.value=years.includes(currentValue)?String(currentValue):String(new Date().getFullYear());
+}
+function yearRow(key){
+  const day=state.days[key]||{fishing:false,catches:[],weather:null},w=day.weather;
+  return {
+    date:key,weekday:weekday(key),fishing:!!day.fishing,result:resultText(day),
+    weather:w?`${Math.round(w.temperature)} °C · ${weatherText(w.weatherCode)} · ветер ${windDirection(w.windDirection)} ${Math.round(w.windSpeed)} км/ч`:""
+  };
+}
+function renderYear(){
+  const year=Number($("yearSelect").value)||new Date().getFullYear(),dates=datesOfYear(year);
+  let fishingDays=0,total=0,best={date:null,total:0};const species=new Set();
+  dates.forEach(key=>{
+    const day=state.days[key];
+    if(day?.fishing) fishingDays++;
+    const t=(day?.catches||[]).reduce((s,c)=>s+Number(c.qty||0),0);
+    total+=t;if(t>best.total)best={date:key,total:t};
+    (day?.catches||[]).forEach(c=>species.add(c.fish));
+  });
+  $("yearFishingDays").textContent=fishingDays;$("yearCatchTotal").textContent=total;$("yearSpecies").textContent=species.size;$("yearBestDay").textContent=best.date?`${formatDate(best.date)} · ${best.total}`:"—";
+  $("yearTableBody").innerHTML=dates.map(key=>{
+    const r=yearRow(key);
+    return `<tr><td>${formatDate(r.date)}</td><td>${escapeHtml(r.weekday)}</td><td><span class="${r.fishing?"yes-badge":"no-badge"}">${r.fishing?"Да":"Нет"}</span></td><td class="result-cell">${escapeHtml(r.result)}</td><td class="weather-cell">${escapeHtml(r.weather||"—")}</td></tr>`;
+  }).join("");
+}
+function getYearsWithData(){
+  const years=new Set([new Date().getFullYear()]);
+  Object.entries(state.days).forEach(([k,d])=>{
+    if(d?.fishing || (d?.catches||[]).length || d?.weather) years.add(Number(k.slice(0,4)));
+  });
+  return [...years].sort((a,b)=>a-b);
+}
+function buildSyncPayload(){
+  const years=getYearsWithData();
+  const yearData=years.map(year=>{
+    const rows=datesOfYear(year).map(key=>{
+      const d=state.days[key]||{fishing:false,catches:[],weather:null},w=d.weather,total=(d.catches||[]).reduce((s,c)=>s+Number(c.qty||0),0);
+      return {
+        date:key,weekday:weekday(key),fishing:!!d.fishing,total,result:resultText(d),
+        temperature:w?.temperature??"",apparentTemperature:w?.apparentTemperature??"",weather:w?weatherText(w.weatherCode):"",
+        windDirection:w?windDirection(w.windDirection):"",windDegrees:w?.windDirection??"",windSpeed:w?.windSpeed??"",windGusts:w?.windGusts??"",
+        humidity:w?.humidity??"",pressureHpa:w?.pressure??"",pressureMm:w?.pressure?Math.round(w.pressure*.750062):"",
+        precipitation:w?.precipitation??"",cloudCover:w?.cloudCover??""
       };
-      return map[code] || `Код ${code}`;
-    }
-
-    function windDirection(deg) {
-      const dirs = ["С","СВ","В","ЮВ","Ю","ЮЗ","З","СЗ"];
-      return dirs[Math.round(deg / 45) % 8];
-    }
-
-    function renderWeather() {
-      const day = getToday();
-      $("dateValue").textContent = formatDate(todayKey);
-
-      const emptyIds = ["tempValue","weatherValue","windValue","gustValue","humidityValue","pressureValue","precipValue"];
-      if (!day.weather) {
-        emptyIds.forEach(id => $(id).textContent = "—");
-        ["feelsValue","cloudValue","windSpeedValue","pressureMmValue","locationValue"].forEach(id => $(id).textContent = "");
-        return;
-      }
-
-      const w = day.weather;
-      $("tempValue").textContent = `${Math.round(w.temperature)} °C`;
-      $("feelsValue").textContent = `Ощущается как ${Math.round(w.apparentTemperature)} °C`;
-      $("weatherValue").textContent = weatherText(w.weatherCode);
-      $("cloudValue").textContent = `Облачность ${Math.round(w.cloudCover)}%`;
-      $("windValue").textContent = `${windDirection(w.windDirection)} · ${Math.round(w.windDirection)}°`;
-      $("windSpeedValue").textContent = `Скорость ${Math.round(w.windSpeed)} км/ч`;
-      $("gustValue").textContent = `${Math.round(w.windGusts)} км/ч`;
-      $("humidityValue").textContent = `${Math.round(w.humidity)}%`;
-      $("pressureValue").textContent = `${Math.round(w.pressure)} hPa`;
-      $("pressureMmValue").textContent = `${Math.round(w.pressure * 0.750062)} мм рт. ст.`;
-      $("precipValue").textContent = `${Number(w.precipitation).toFixed(1)} мм`;
-      $("locationValue").textContent = w.coords
-        ? `${w.coords.lat.toFixed(3)}, ${w.coords.lon.toFixed(3)}`
-        : "";
-    }
-
-    async function fetchWeather() {
-      const status = $("weatherStatus");
-
-      if (!navigator.geolocation) {
-        status.textContent = "Геолокация не поддерживается этим браузером.";
-        return;
-      }
-
-      status.textContent = "Определяю местоположение…";
-
-      navigator.geolocation.getCurrentPosition(async (position) => {
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
-        status.textContent = "Получаю актуальную погоду из интернета…";
-
-        const url = new URL("https://api.open-meteo.com/v1/forecast");
-        url.searchParams.set("latitude", lat);
-        url.searchParams.set("longitude", lon);
-        url.searchParams.set("current", "temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m");
-        url.searchParams.set("temperature_unit", "celsius");
-        url.searchParams.set("wind_speed_unit", "kmh");
-        url.searchParams.set("precipitation_unit", "mm");
-        url.searchParams.set("timezone", "auto");
-
-        try {
-          const res = await fetch(url, { cache: "no-store" });
-          if (!res.ok) throw new Error(`weather request failed: ${res.status}`);
-          const data = await res.json();
-          const c = data.current;
-
-          getToday().weather = {
-            temperature: c.temperature_2m,
-            apparentTemperature: c.apparent_temperature,
-            humidity: c.relative_humidity_2m,
-            precipitation: c.precipitation,
-            weatherCode: c.weather_code,
-            cloudCover: c.cloud_cover,
-            pressure: c.pressure_msl,
-            windSpeed: c.wind_speed_10m,
-            windDirection: c.wind_direction_10m,
-            windGusts: c.wind_gusts_10m,
-            coords: {lat, lon},
-            source: "Open-Meteo",
-            observationTime: c.time,
-            loadedAt: new Date().toISOString()
-          };
-          saveData();
-          renderWeather();
-          status.textContent = `Данные из интернета · Open-Meteo · обновлено в ${currentTime()}.`;
-        } catch (err) {
-          renderWeather();
-          if (getToday().weather) {
-            status.textContent = "Сейчас нет связи с погодным сервисом. Показаны последние сохранённые данные; нажмите «Обновить погоду», когда появится интернет.";
-          } else {
-            status.textContent = "Не удалось получить погоду из интернета. Проверьте подключение и нажмите «Обновить погоду».";
-          }
-        }
-      }, (err) => {
-        const messages = {
-          1:"Разрешите доступ к геолокации, чтобы погода загружалась из интернета для вашего места рыбалки.",
-          2:"Не удалось определить местоположение.",
-          3:"Определение местоположения заняло слишком много времени."
-        };
-        status.textContent = messages[err.code] || "Не удалось определить местоположение.";
-      }, {
-        enableHighAccuracy:false,
-        timeout:12000,
-        maximumAge:5 * 60 * 1000
-      });
-    }
-
-    function renderCatches() {
-      const catches = [...getToday().catches].sort((a,b) => a.time.localeCompare(b.time));
-      const list = $("catchList");
-
-      const total = catches.reduce((sum, item) => sum + item.qty, 0);
-      const species = new Set(catches.map(item => item.fish)).size;
-
-      $("totalQty").textContent = total;
-      $("speciesQty").textContent = species;
-      $("firstCatch").textContent = catches.length ? catches[0].time : "—";
-
-      if (!catches.length) {
-        list.innerHTML = `<div class="empty">Пока улова нет. Добавьте первую пойманную рыбу.</div>`;
-        return;
-      }
-
-      list.className = "catch-list";
-      list.innerHTML = catches.map(item => `
-        <div class="catch-row">
-          <div class="catch-time">${escapeHtml(item.time)}</div>
-          <div class="catch-fish">${escapeHtml(item.fish)}</div>
-          <div class="catch-qty">${item.qty} шт.</div>
-          <button class="icon-btn" type="button" title="Удалить" data-id="${item.id}">×</button>
-        </div>
-      `).join("");
-
-      list.querySelectorAll("[data-id]").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const day = getToday();
-          day.catches = day.catches.filter(x => x.id !== btn.dataset.id);
-          saveData();
-          renderAll();
-        });
-      });
-    }
-
-    function renderHistory() {
-      const container = $("history");
-      const days = Object.entries(state.days)
-        .filter(([_, day]) => day.catches && day.catches.length)
-        .sort((a,b) => b[0].localeCompare(a[0]))
-        .slice(0,7);
-
-      if (!days.length) {
-        container.innerHTML = `<div class="empty">История появится после первого улова.</div>`;
-        return;
-      }
-
-      container.innerHTML = days.map(([date, day]) => {
-        const total = day.catches.reduce((s,c) => s + c.qty, 0);
-        const names = [...new Set(day.catches.map(c => c.fish))].join(", ");
-        const weather = day.weather
-          ? `${Math.round(day.weather.temperature)} °C · ${weatherText(day.weather.weatherCode)} · ветер ${windDirection(day.weather.windDirection)}`
-          : "без данных о погоде";
-        return `
-          <div class="history-day">
-            <div>
-              <b>${escapeHtml(formatDate(date))}</b>
-              <small>${escapeHtml(names)} · ${escapeHtml(weather)}</small>
-            </div>
-            <b>${total} шт.</b>
-          </div>
-        `;
-      }).join("");
-    }
-
-    function escapeHtml(value) {
-      return String(value)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-
-    function exportCsv() {
-      const rows = [["Дата","Температура, °C","Ощущается, °C","Влажность, %","Давление, hPa","Давление, мм рт. ст.","Осадки, мм","Облачность, %","Направление ветра","Скорость ветра, км/ч","Порывы, км/ч","Погода","Рыба","Количество","Время"]];
-      Object.entries(state.days)
-        .sort((a,b) => a[0].localeCompare(b[0]))
-        .forEach(([date, day]) => {
-          const w = day.weather;
-          (day.catches || []).forEach(c => {
-            rows.push([
-              date,
-              w ? Math.round(w.temperature) : "",
-              w ? Math.round(w.apparentTemperature) : "",
-              w ? Math.round(w.humidity) : "",
-              w ? Math.round(w.pressure) : "",
-              w ? Math.round(w.pressure * 0.750062) : "",
-              w ? Number(w.precipitation).toFixed(1) : "",
-              w ? Math.round(w.cloudCover) : "",
-              w ? `${windDirection(w.windDirection)} (${Math.round(w.windDirection)}°)` : "",
-              w ? Math.round(w.windSpeed) : "",
-              w ? Math.round(w.windGusts) : "",
-              w ? weatherText(w.weatherCode) : "",
-              c.fish,
-              c.qty,
-              c.time
-            ]);
-          });
-        });
-
-      if (rows.length === 1) {
-        alert("Пока нечего экспортировать.");
-        return;
-      }
-
-      const csv = "\uFEFF" + rows.map(row =>
-        row.map(v => `"${String(v).replaceAll('"','""')}"`).join(";")
-      ).join("\n");
-
-      const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `fishing-log-${todayKey}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    function renderAll() {
-      renderWeather();
-      renderCatches();
-      renderHistory();
-    }
-
-    let state = loadData();
-    getToday();
-    saveData();
-
-    $("catchTime").value = currentTime();
-
-    $("catchForm").addEventListener("submit", (e) => {
-      e.preventDefault();
-      const qty = Number($("qty").value);
-      if (!Number.isInteger(qty) || qty < 1) return;
-
-      getToday().catches.push({
-        id: (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`),
-        fish: $("fish").value,
-        qty,
-        time: $("catchTime").value
-      });
-
-      saveData();
-      $("qty").value = 1;
-      $("catchTime").value = currentTime();
-      renderAll();
     });
+    const fishingDays=rows.filter(r=>r.fishing).length,total=rows.reduce((s,r)=>s+r.total,0);
+    const species=new Set(),catches=[];
+    datesOfYear(year).forEach(key=>(state.days[key]?.catches||[]).forEach(c=>{species.add(c.fish);catches.push({date:key,time:c.time,fish:c.fish,qty:Number(c.qty||0)})}));
+    const best=rows.reduce((a,r)=>r.total>a.total?r:a,{date:"",total:0});
+    return {year,rows,summary:{fishingDays,total,species:species.size,bestDay:best.date,bestTotal:best.total},catches};
+  });
+  return {app:"Fishing Day MVP",version:3,syncedAt:new Date().toISOString(),years:yearData};
+}
+async function syncGoogleSheets(){
+  const endpoint=$("sheetEndpoint").value.trim(),status=$("syncStatus");
+  if(!endpoint || !endpoint.includes("script.google.com")){status.textContent="Сначала вставьте URL веб-приложения Apps Script вида .../exec.";return}
+  localStorage.setItem(ENDPOINT_KEY,endpoint);
+  status.textContent="Отправляю данные в Google Таблицу…";
+  try{
+    await fetch(endpoint,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(buildSyncPayload())});
+    status.textContent="Данные отправлены. Проверьте Google Таблицу: «Сводка», вкладки по годам и «Улов».";
+  }catch(e){status.textContent="Не удалось отправить данные. Проверьте URL Apps Script и интернет."}
+}
+function exportCsv(){
+  const rows=[["Год","Дата","День","Рыбалка","Результат","Температура °C","Погода","Ветер","Скорость ветра км/ч"]];
+  getYearsWithData().forEach(year=>datesOfYear(year).forEach(key=>{
+    const d=state.days[key]||{fishing:false,catches:[],weather:null},w=d.weather;
+    rows.push([year,key,weekday(key),d.fishing?"Да":"Нет",resultText(d),w?.temperature??"",w?weatherText(w.weatherCode):"",w?windDirection(w.windDirection):"",w?.windSpeed??""]);
+  }));
+  const csv="\uFEFF"+rows.map(r=>r.map(v=>`"${String(v??"").replaceAll('"','""')}"`).join(";")).join("\n");
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+  a.href=url;a.download=`fishing-year-log-${new Date().getFullYear()}.csv`;a.click();URL.revokeObjectURL(url);
+}
+function renderAll(){renderWeather();renderFishing();renderCatches();buildYearSelect();renderYear()}
 
-    $("refreshWeather").addEventListener("click", fetchWeather);
-    $("exportCsv").addEventListener("click", exportCsv);
-
-    $("clearToday").addEventListener("click", () => {
-      if (!getToday().catches.length) return;
-      if (confirm("Удалить весь улов за сегодняшний день?")) {
-        getToday().catches = [];
-        saveData();
-        renderAll();
-      }
-    });
-
-    renderAll();
-
-    // При каждом открытии страницы запрашиваем свежую погоду из интернета.
-    // Сохранённые данные используются только как резерв, если сеть недоступна.
-    fetchWeather();
-  </script>
+let state=loadData();ensureDay(todayKey);saveData();
+$("catchTime").value=currentTime();
+$("sheetEndpoint").value=localStorage.getItem(ENDPOINT_KEY)||"";
+$("fishingYes").onclick=()=>setFishing(true);$("fishingNo").onclick=()=>setFishing(false);
+$("catchForm").onsubmit=e=>{e.preventDefault();const q=Number($("qty").value);if(!Number.isInteger(q)||q<1)return;const d=ensureDay(todayKey);d.fishing=true;d.catches.push({id:crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random()}`,fish:$("fish").value,qty:q,time:$("catchTime").value});saveData();$("qty").value=1;$("catchTime").value=currentTime();renderAll()};
+$("clearToday").onclick=()=>{const d=ensureDay(todayKey);if(!d.catches.length)return;if(confirm("Удалить весь улов за сегодняшний день?")){d.catches=[];saveData();renderAll()}};
+$("refreshWeather").onclick=fetchWeather;$("exportCsv").onclick=exportCsv;$("yearSelect").onchange=renderYear;
+$("prevYear").onclick=()=>{const s=$("yearSelect"),y=Number(s.value)-1;if(![...s.options].some(o=>Number(o.value)===y)){s.insertAdjacentHTML("beforeend",`<option value="${y}">${y}</option>`)}s.value=String(y);renderYear()};
+$("nextYear").onclick=()=>{const s=$("yearSelect"),y=Number(s.value)+1;if(![...s.options].some(o=>Number(o.value)===y)){s.insertAdjacentHTML("afterbegin",`<option value="${y}">${y}</option>`)}s.value=String(y);renderYear()};
+$("saveEndpoint").onclick=()=>{localStorage.setItem(ENDPOINT_KEY,$("sheetEndpoint").value.trim());$("syncStatus").textContent="URL сохранён на этом устройстве."};
+$("syncSheets").onclick=syncGoogleSheets;
+renderAll();fetchWeather();
+</script>
 </body>
 </html>
