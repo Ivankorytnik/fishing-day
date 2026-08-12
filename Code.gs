@@ -1,6 +1,6 @@
 /**
  * Рыболовный дневник -> Google Sheets
- * Версия 9: накопительная синхронизация + окно корректировки 7 дней назад.
+ * Версия 13: накопительная синхронизация + окно корректировки 7 дней назад.
  *
  * Логика:
  * 1. Все новые даты после последней записи добавляются в таблицу.
@@ -23,12 +23,14 @@ const YEAR_HEADERS = [
   "Температура, °C", "Ощущается, °C", "Погода",
   "Направление ветра", "Ветер, °", "Скорость ветра, км/ч", "Порывы ветра, км/ч",
   "Влажность, %", "Давление, hPa", "Давление, мм рт. ст.",
-  "Осадки, мм", "Облачность, %"
+  "Осадки, мм", "Облачность, %",
+  "Город погоды"
 ];
 
 const CATCH_HEADERS = [
   "Год", "Дата", "Время", "Рыба", "Количество",
-  "Снасть", "Способ ловли", "Место ловли", "Приманка"
+  "Снасть", "Способ ловли", "Место ловли", "Приманка",
+  "Город"
 ];
 
 const SUMMARY_HEADERS = [
@@ -47,7 +49,7 @@ function doGet() {
     return jsonResponse_({
       ok: true,
       service: "Fishing Day Sheets Sync",
-      version: 9,
+      version: 13,
       mode: "incremental-with-7-day-correction",
       spreadsheet: ss.getName(),
       spreadsheetId: SPREADSHEET_ID,
@@ -374,7 +376,9 @@ function yearRowToValues_(r) {
     value_(r.pressureMm),
 
     value_(r.precipitation),
-    value_(r.cloudCover)
+    value_(r.cloudCover),
+
+    r.city || ""
   ];
 }
 
@@ -462,7 +466,8 @@ function writeCatches_(
         c.place || "",
         Array.isArray(c.baits)
           ? c.baits.join(", ")
-          : (c.baits || "")
+          : (c.baits || ""),
+        c.city || ""
       ]);
     });
   });

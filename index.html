@@ -30,22 +30,22 @@
     .btn.secondary{background:#e7efea;color:var(--accent2);border:1px solid #cedbd4}.btn.danger{background:#f6e8e4;color:var(--danger);border:1px solid #ead1ca}
     .status{font-size:13px;color:var(--muted);margin-top:12px;min-height:18px}
     .fish-status{display:flex;gap:8px;flex-wrap:wrap}.choice{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:12px;padding:11px 18px;cursor:pointer;font-weight:700}.choice.active.yes{background:#dfeee8;border-color:#8ab8aa;color:#0f5148}.choice.active.no{background:#f1eee6;border-color:#cbc5b6}
-    .form-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;align-items:end}.fish-field{grid-column:span 4}.qty-field{grid-column:span 2}.time-field{grid-column:span 2}.tackle-field{grid-column:span 4}.method-field{grid-column:span 3}.place-field{grid-column:span 3}.custom-place-field{grid-column:span 3}.bait-field{grid-column:span 6}.add-field{grid-column:span 3}
+    .form-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;align-items:end}.city-field{grid-column:span 4}.fish-field{grid-column:span 4}.qty-field{grid-column:span 2}.time-field{grid-column:span 2}.tackle-field{grid-column:span 4}.method-field{grid-column:span 3}.place-field{grid-column:span 3}.custom-place-field{grid-column:span 3}.bait-field{grid-column:span 6}.add-field{grid-column:span 3}
     label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}input,select,textarea{width:100%;border:1px solid var(--line);border-radius:12px;background:white;color:var(--text);padding:11px 12px;outline:none;font-family:Arial,Helvetica,sans-serif}textarea{resize:vertical;min-height:110px;line-height:1.45}.comment-box{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end}.comment-cell{min-width:260px;white-space:pre-wrap}.comment-counter{font-size:12px;color:var(--muted);margin-top:6px;text-align:right}
     .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}.mini{background:#f3f7f3;border-radius:12px;padding:12px}.mini b{display:block;font-size:20px}.mini span{font-size:12px;color:var(--muted)}
     .catch-list{display:flex;flex-direction:column;gap:8px}.catch-row{display:grid;grid-template-columns:72px minmax(220px,1fr) 80px 38px 38px;gap:9px;align-items:center;padding:11px;border:1px solid var(--line);border-radius:12px;background:white}.catch-time,.catch-fish{font-weight:700}.catch-qty{text-align:right;color:var(--muted)}.catch-meta{font-size:12px;color:var(--muted);font-weight:400;margin-top:4px;line-height:1.45}.multi-select{position:relative}.multi-select summary{list-style:none;cursor:pointer;border:1px solid var(--line);border-radius:12px;background:white;padding:11px 12px;min-height:42px}.multi-select summary::-webkit-details-marker{display:none}.multi-select[open] summary{border-color:#6ca79d;box-shadow:0 0 0 3px rgba(20,107,95,.10)}.multi-options{position:absolute;z-index:20;left:0;right:0;top:calc(100% + 6px);background:white;border:1px solid var(--line);border-radius:12px;padding:8px;box-shadow:0 10px 28px rgba(31,54,48,.16);max-height:260px;overflow:auto}.multi-option{display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;cursor:pointer}.multi-option:hover{background:#f3f7f3}.multi-option input{width:auto;margin:0}.multi-option label{margin:0;color:var(--text);font-size:14px;cursor:pointer;flex:1}
     .icon-btn{border:0;background:#f7ece9;color:var(--danger);height:34px;width:34px;border-radius:9px;cursor:pointer;font-weight:700}.edit-icon{background:#e7efea;color:var(--accent2)}
-    .edit-toolbar{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.edit-toolbar .field{min-width:190px;flex:1}.editing-banner{margin-top:12px;padding:11px 13px;border-radius:12px;background:#edf4ee;color:var(--accent2);font-size:13px}.hidden{display:none!important}.row-edit-btn{border:1px solid #cedbd4;background:#e7efea;color:var(--accent2);border-radius:9px;padding:6px 9px;cursor:pointer;font-weight:700;font-size:12px}.selected-row td{background:#f7fbf8}
+    .edit-toolbar{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.edit-toolbar .field{min-width:190px;flex:1}.editing-banner{margin-top:12px;padding:11px 13px;border-radius:12px;background:#edf4ee;color:var(--accent2);font-size:13px}.hidden{display:none!important}.row-edit-btn{border:1px solid #cedbd4;background:#e7efea;color:var(--accent2);border-radius:9px;padding:6px 9px;cursor:pointer;font-weight:700;font-size:12px}.selected-row td{background:#f7fbf8}.today-row td{background:#fff5bf!important;font-weight:700}.today-row.selected-row td{background:#f7e989!important}
     .empty{padding:24px 10px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:13px}
     .annual-toolbar{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.annual-toolbar .field{min-width:150px}.annual-toolbar select{min-width:140px}
     .annual-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
     .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px;max-height:560px;background:white}
     table{border-collapse:collapse;width:100%;min-width:820px;font-size:13px}th,td{padding:9px 10px;border-bottom:1px solid #ecefe9;text-align:left;vertical-align:top}th{position:sticky;top:0;background:var(--yellow);color:#111;z-index:1;font-weight:700}td.num{text-align:right}.yes-badge,.no-badge{display:inline-block;border-radius:999px;padding:3px 8px;font-weight:700;font-size:12px}.yes-badge{background:#dfeee8;color:#0f5148}.no-badge{background:#f0eee8;color:#6c6554}
-    .result-cell{min-width:230px}.weather-cell{min-width:220px;color:var(--muted)}.comment-cell{color:var(--text)}
+    .result-cell{min-width:230px}.weather-cell{min-width:260px;color:var(--muted)}.comment-cell{color:var(--text)}.city-hint{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.35}
     .sync-box{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end}.sync-note{font-size:12px;color:var(--muted);line-height:1.45;margin-top:10px}
     .footer-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-    @media(max-width:760px){.weather-grid{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr 1fr}.fish-field,.tackle-field,.bait-field{grid-column:1/-1}.qty-field,.time-field,.method-field,.place-field,.custom-place-field{grid-column:span 1}.add-field{grid-column:1/-1}.add-field .btn{width:100%}.summary,.annual-stats{grid-template-columns:1fr 1fr}.sync-box,.comment-box{grid-template-columns:1fr}.sync-box .btn,.comment-box .btn{width:100%}}
-    @media(max-width:480px){.weather-grid{grid-template-columns:1fr 1fr}.hero h1{font-size:26px}.catch-row{grid-template-columns:52px minmax(150px,1fr) 54px 32px 32px;gap:5px;font-size:13px}.edit-toolbar{display:grid;grid-template-columns:1fr}.edit-toolbar .field{min-width:0}.qty-field,.time-field,.method-field,.place-field,.custom-place-field{grid-column:1/-1}}
+    @media(max-width:760px){.weather-grid{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr 1fr}.city-field,.fish-field,.tackle-field,.bait-field{grid-column:1/-1}.qty-field,.time-field,.method-field,.place-field,.custom-place-field{grid-column:span 1}.add-field{grid-column:1/-1}.add-field .btn{width:100%}.summary,.annual-stats{grid-template-columns:1fr 1fr}.sync-box,.comment-box{grid-template-columns:1fr}.sync-box .btn,.comment-box .btn{width:100%}}
+    @media(max-width:480px){.weather-grid{grid-template-columns:1fr 1fr}.hero h1{font-size:26px}.catch-row{grid-template-columns:52px minmax(150px,1fr) 54px 32px 32px;gap:5px;font-size:13px}.edit-toolbar{display:grid;grid-template-columns:1fr}.edit-toolbar .field{min-width:0}.city-field,.qty-field,.time-field,.method-field,.place-field,.custom-place-field{grid-column:1/-1}}
   </style>
 </head>
 <body>
@@ -53,7 +53,7 @@
   <section class="hero">
     <small>Дневник рыболова</small>
     <h1>Рыболовный день</h1>
-    <p>Учёт каждого дня года, улова, комментариев и погоды — независимо от того, была рыбалка или нет.</p>
+    <p>Учёт каждого дня года, улова, города, комментариев и погоды по выбранному городу.</p>
   </section>
 
   <section class="card" id="dayEditor">
@@ -105,6 +105,12 @@
   <section class="card">
     <div class="section-title"><h2 id="catchFormTitle">Добавить улов</h2></div>
     <form id="catchForm" class="form-grid">
+      <div class="city-field">
+        <label for="cityInput">Город</label>
+        <input id="cityInput" list="cityOptions" value="Конаково" autocomplete="off" placeholder="Начните вводить город" required>
+        <datalist id="cityOptions"></datalist>
+        <div class="city-hint" id="cityStatus">По умолчанию: Конаково. Начните вводить название — список городов РФ подгрузится из интернета.</div>
+      </div>
       <div class="fish-field"><label for="fish">Рыба</label><select id="fish" required>
         <option>Карась</option><option>Лещ</option><option>Карп</option><option>Сазан</option><option>Сом</option><option>Судак</option><option>Подлещик</option><option>Густера</option><option>Ёрш</option><option>Щука</option><option>Окунь</option>
       </select></div>
@@ -151,7 +157,7 @@
   </section>
 
   <section class="card">
-    <div class="section-title"><h2>Годовой журнал</h2></div>
+    <div class="section-title"><h2>Журнал: последние 8 дней</h2></div>
     <div class="annual-toolbar">
       <div class="field"><label for="yearSelect">Год</label><select id="yearSelect"></select></div>
       <button class="btn secondary" id="prevYear" type="button">← Предыдущий</button>
@@ -159,6 +165,7 @@
       <button class="btn" id="fillYearWeather" type="button">Заполнить погоду за год</button>
     </div>
     <div class="status" id="yearWeatherStatus">Погода может быть заполнена для всех прошедших дней года, даже если рыбалки не было.</div>
+    <div class="status">Для текущего года в таблице показываются даты от сегодня минус 7 дней до сегодняшнего дня. Строка с сегодняшней датой подсвечена.</div>
     <div class="annual-stats">
       <div class="mini"><b id="yearFishingDays">0</b><span>дней с рыбалкой</span></div>
       <div class="mini"><b id="yearCatchTotal">0</b><span>рыб поймано</span></div>
@@ -191,8 +198,17 @@
 <script>
 const STORAGE_KEY="fishing-day-mvp-v3";
 const ENDPOINT_KEY="fishing-day-google-endpoint";
-const WEATHER_LOCATION_KEY="fishing-day-weather-location";
-const WEATHER_BACKFILL_KEY="fishing-day-weather-backfill-date";
+const CITY_CACHE_KEY="fishing-day-city-cache-v1";
+const WEATHER_BACKFILL_KEY="fishing-day-weather-backfill-v13-date";
+const DEFAULT_CITY_NAME="Конаково";
+const POPULAR_RU_CITIES=[
+  "Конаково","Москва","Санкт-Петербург","Тверь","Дубна","Кимры","Ржев","Торжок",
+  "Ярославль","Рыбинск","Нижний Новгород","Казань","Самара","Саратов","Волгоград",
+  "Ростов-на-Дону","Краснодар","Воронеж","Псков","Великий Новгород","Петрозаводск",
+  "Мурманск","Архангельск","Вологда","Череповец","Пермь","Екатеринбург","Челябинск",
+  "Омск","Новосибирск","Красноярск","Иркутск","Хабаровск","Владивосток","Астрахань"
+];
+let citySearchTimer=null;
 const $=id=>document.getElementById(id);
 const todayKey=localDateKey();
 let selectedDateKey=todayKey;
@@ -214,10 +230,16 @@ function currentTime(){const d=new Date();return `${String(d.getHours()).padStar
 function loadData(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||{days:{}}}catch{return{days:{}}}}
 function saveData(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
 function ensureDay(key){
-  if(!state.days[key]) state.days[key]={fishing:false,catches:[],weather:null,comment:""};
+  if(!state.days[key]) state.days[key]={fishing:false,catches:[],weather:null,comment:"",city:DEFAULT_CITY_NAME,cityRegion:""};
   if(typeof state.days[key].fishing!=="boolean") state.days[key].fishing=(state.days[key].catches||[]).length>0;
   if(!Array.isArray(state.days[key].catches)) state.days[key].catches=[];
   if(typeof state.days[key].comment!=="string") state.days[key].comment="";
+  if(!state.days[key].city)state.days[key].city=(state.days[key].catches||[]).find(c=>c.city)?.city||DEFAULT_CITY_NAME;
+  if(typeof state.days[key].cityRegion!=="string")state.days[key].cityRegion="";
+  // Погода из старых версий могла быть получена по геолокации устройства.
+  // Если у неё нет сохранённого города, не переименовываем её в Конаково,
+  // а очищаем и загружаем заново по выбранному городу.
+  if(state.days[key].weather && !state.days[key].weather.city)state.days[key].weather=null;
   return state.days[key];
 }
 function weatherText(code){
@@ -231,11 +253,12 @@ function renderWeather(){
   const day=ensureDay(selectedDateKey),w=day.weather;
   $("dateValue").textContent=formatDate(selectedDateKey);
   $("refreshWeather").disabled=false;
-  $("refreshWeather").textContent=selectedDateKey===todayKey?"Обновить погоду":"Обновить погоду из интернета";
+  $("refreshWeather").textContent=selectedDateKey===todayKey?"Обновить погоду":"Обновить историческую погоду";
   if(!w){
     ["tempValue","weatherValue","windValue","gustValue","humidityValue","pressureValue","precipValue"].forEach(id=>$(id).textContent="—");
-    ["feelsValue","cloudValue","windSpeedValue","pressureMmValue","locationValue"].forEach(id=>$(id).textContent="");
-    $("weatherStatus").textContent=selectedDateKey===todayKey?"Погода за сегодня будет загружена из интернета.":"Историческая погода будет автоматически загружена из интернета при открытии этого дня.";
+    ["feelsValue","cloudValue","windSpeedValue","pressureMmValue"].forEach(id=>$(id).textContent="");
+    $("locationValue").textContent=day.city||DEFAULT_CITY_NAME;
+    $("weatherStatus").textContent=`Погода будет загружена из интернета для города ${day.city||DEFAULT_CITY_NAME}.`;
     return;
   }
   $("tempValue").textContent=`${Math.round(w.temperature)} °C`;
@@ -249,26 +272,89 @@ function renderWeather(){
   $("pressureValue").textContent=`${Math.round(w.pressure)} hPa`;
   $("pressureMmValue").textContent=`${Math.round(w.pressure*.750062)} мм рт. ст.`;
   $("precipValue").textContent=`${Number(w.precipitation).toFixed(1)} мм`;
-  $("locationValue").textContent=w.coords?`${w.coords.lat.toFixed(3)}, ${w.coords.lon.toFixed(3)}`:"";
-  $("weatherStatus").textContent=w.source?.includes("historical")?"Историческая погода загружена из интернета Open-Meteo за выбранный календарный день.":"Погода Open-Meteo за выбранный календарный день.";
+  $("locationValue").textContent=[w.city||day.city||DEFAULT_CITY_NAME,w.region||day.cityRegion||""].filter(Boolean).join(" · ");
+  $("weatherStatus").textContent=w.source?.includes("historical")
+    ?`Историческая погода Open-Meteo для города ${w.city||day.city||DEFAULT_CITY_NAME}.`
+    :`Текущая погода Open-Meteo для города ${w.city||day.city||DEFAULT_CITY_NAME}.`;
 }
 
-function savedWeatherCoords(){
-  try{return JSON.parse(localStorage.getItem(WEATHER_LOCATION_KEY)||"null")}catch{return null}
+function readCityCache(){
+  try{return JSON.parse(localStorage.getItem(CITY_CACHE_KEY)||"{}")}catch{return{}}
 }
-function getWeatherCoords(force=false){
-  return new Promise((resolve,reject)=>{
-    const saved=savedWeatherCoords();
-    if(saved && !force){resolve(saved);return}
-    if(!navigator.geolocation){reject(new Error("Геолокация не поддерживается браузером."));return}
-    navigator.geolocation.getCurrentPosition(pos=>{
-      const coords={lat:pos.coords.latitude,lon:pos.coords.longitude};
-      localStorage.setItem(WEATHER_LOCATION_KEY,JSON.stringify(coords));
-      resolve(coords);
-    },err=>reject(new Error(err.code===1?"Разрешите доступ к геолокации.":"Не удалось определить местоположение.")),{timeout:12000,maximumAge:300000});
-  });
+function writeCityCache(cache){
+  try{localStorage.setItem(CITY_CACHE_KEY,JSON.stringify(cache))}catch{}
 }
-function dailyWeatherFromApi(d,i,coords,source){
+function cityFeatureRank(code){
+  const ranks={PPLC:100,PPLA:90,PPLA2:80,PPLA3:70,PPLA4:60,PPL:50};
+  return ranks[code]||0;
+}
+async function searchRussianCities(term,count=50){
+  const name=String(term||"").trim();
+  if(name.length<2)return [];
+  const url=new URL("https://geocoding-api.open-meteo.com/v1/search");
+  url.searchParams.set("name",name);
+  url.searchParams.set("count",String(Math.min(100,Math.max(1,count))));
+  url.searchParams.set("language","ru");
+  url.searchParams.set("countryCode","RU");
+  url.searchParams.set("format","json");
+  const res=await fetch(url,{cache:"no-store"});
+  if(!res.ok)throw new Error(`Список городов: HTTP ${res.status}`);
+  const data=await res.json();
+  return (data.results||[])
+    .filter(r=>r.country_code==="RU" && String(r.feature_code||"").startsWith("PPL"))
+    .sort((a,b)=>(cityFeatureRank(b.feature_code)-cityFeatureRank(a.feature_code))+(Number(b.population||0)-Number(a.population||0))/100000000);
+}
+function cityLocationFromResult(r){
+  return {
+    city:r.name,
+    region:r.admin1||"",
+    lat:Number(r.latitude),
+    lon:Number(r.longitude),
+    timezone:r.timezone||"auto",
+    featureCode:r.feature_code||""
+  };
+}
+async function resolveCity(name){
+  const requested=String(name||DEFAULT_CITY_NAME).trim()||DEFAULT_CITY_NAME;
+  const cache=readCityCache();
+  const cacheKey=requested.toLocaleLowerCase("ru-RU");
+  if(cache[cacheKey] && Number.isFinite(Number(cache[cacheKey].lat)) && Number.isFinite(Number(cache[cacheKey].lon))){
+    return cache[cacheKey];
+  }
+  const results=await searchRussianCities(requested,50);
+  if(!results.length)throw new Error(`Город «${requested}» не найден в России.`);
+  const exact=results.filter(r=>String(r.name||"").toLocaleLowerCase("ru-RU")===requested.toLocaleLowerCase("ru-RU"));
+  const best=(exact.length?exact:results)[0];
+  const location=cityLocationFromResult(best);
+  cache[cacheKey]=location;
+  cache[location.city.toLocaleLowerCase("ru-RU")]=location;
+  writeCityCache(cache);
+  return location;
+}
+function renderCityOptions(items){
+  const options=items.length
+    ?items.map(r=>typeof r==="string"
+      ?`<option value="${escapeHtml(r)}"></option>`
+      :`<option value="${escapeHtml(r.name)}" label="${escapeHtml([r.admin1,r.admin2].filter(Boolean).join(", "))}"></option>`).join("")
+    :POPULAR_RU_CITIES.map(city=>`<option value="${escapeHtml(city)}"></option>`).join("");
+  $("cityOptions").innerHTML=options;
+}
+async function updateCitySuggestions(term){
+  const value=String(term||"").trim();
+  if(value.length<2){renderCityOptions(POPULAR_RU_CITIES);return}
+  try{
+    $("cityStatus").textContent="Ищу города России…";
+    const results=await searchRussianCities(value,50);
+    renderCityOptions(results);
+    $("cityStatus").textContent=results.length
+      ?`Найдено вариантов: ${results.length}. Выберите город из списка.`
+      :"Города не найдены. Проверьте написание.";
+  }catch(e){
+    renderCityOptions(POPULAR_RU_CITIES);
+    $("cityStatus").textContent=e.message||"Не удалось загрузить список городов.";
+  }
+}
+function dailyWeatherFromApi(d,i,location,source){
   return {
     temperature:d.temperature_2m_mean?.[i]??d.temperature_2m_max?.[i]??0,
     apparentTemperature:d.apparent_temperature_mean?.[i]??d.apparent_temperature_max?.[i]??0,
@@ -280,77 +366,121 @@ function dailyWeatherFromApi(d,i,coords,source){
     windSpeed:d.wind_speed_10m_mean?.[i]??d.wind_speed_10m_max?.[i]??0,
     windDirection:d.wind_direction_10m_dominant?.[i]??0,
     windGusts:d.wind_gusts_10m_max?.[i]??0,
-    coords,source,observationTime:d.time?.[i]||"",loadedAt:new Date().toISOString()
+    coords:{lat:location.lat,lon:location.lon},
+    city:location.city,region:location.region||"",source,
+    observationTime:d.time?.[i]||"",loadedAt:new Date().toISOString()
   };
 }
-async function fetchHistoricalWeatherRange(startDate,endDate,coords){
+async function fetchHistoricalWeatherRange(startDate,endDate,location){
   const url=new URL("https://archive-api.open-meteo.com/v1/archive");
-  url.searchParams.set("latitude",coords.lat);url.searchParams.set("longitude",coords.lon);
+  url.searchParams.set("latitude",location.lat);url.searchParams.set("longitude",location.lon);
   url.searchParams.set("start_date",startDate);url.searchParams.set("end_date",endDate);
   url.searchParams.set("daily","weather_code,temperature_2m_mean,apparent_temperature_mean,relative_humidity_2m_mean,precipitation_sum,cloud_cover_mean,pressure_msl_mean,wind_speed_10m_mean,wind_direction_10m_dominant,wind_gusts_10m_max");
-  url.searchParams.set("temperature_unit","celsius");url.searchParams.set("wind_speed_unit","kmh");url.searchParams.set("precipitation_unit","mm");url.searchParams.set("timezone","auto");
+  url.searchParams.set("temperature_unit","celsius");url.searchParams.set("wind_speed_unit","kmh");url.searchParams.set("precipitation_unit","mm");
+  url.searchParams.set("timezone",location.timezone||"auto");
   const res=await fetch(url,{cache:"no-store"});
   if(!res.ok)throw new Error(`Историческая погода: HTTP ${res.status}`);
   const data=await res.json();
   if(!data.daily?.time)throw new Error("Историческая погода не получена.");
   return data.daily;
 }
-async function fetchCurrentWeather(coords){
+async function fetchCurrentWeather(location){
   const url=new URL("https://api.open-meteo.com/v1/forecast");
-  url.searchParams.set("latitude",coords.lat);url.searchParams.set("longitude",coords.lon);
+  url.searchParams.set("latitude",location.lat);url.searchParams.set("longitude",location.lon);
   url.searchParams.set("current","temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m");
-  url.searchParams.set("temperature_unit","celsius");url.searchParams.set("wind_speed_unit","kmh");url.searchParams.set("precipitation_unit","mm");url.searchParams.set("timezone","auto");
+  url.searchParams.set("temperature_unit","celsius");url.searchParams.set("wind_speed_unit","kmh");url.searchParams.set("precipitation_unit","mm");
+  url.searchParams.set("timezone",location.timezone||"auto");
   const res=await fetch(url,{cache:"no-store"});if(!res.ok)throw new Error(`Текущая погода: HTTP ${res.status}`);
   const c=(await res.json()).current;
-  return {temperature:c.temperature_2m,apparentTemperature:c.apparent_temperature,humidity:c.relative_humidity_2m,precipitation:c.precipitation,weatherCode:c.weather_code,cloudCover:c.cloud_cover,pressure:c.pressure_msl,windSpeed:c.wind_speed_10m,windDirection:c.wind_direction_10m,windGusts:c.wind_gusts_10m,coords,source:"Open-Meteo current",observationTime:c.time,loadedAt:new Date().toISOString()};
+  return {
+    temperature:c.temperature_2m,apparentTemperature:c.apparent_temperature,
+    humidity:c.relative_humidity_2m,precipitation:c.precipitation,weatherCode:c.weather_code,
+    cloudCover:c.cloud_cover,pressure:c.pressure_msl,windSpeed:c.wind_speed_10m,
+    windDirection:c.wind_direction_10m,windGusts:c.wind_gusts_10m,
+    coords:{lat:location.lat,lon:location.lon},city:location.city,region:location.region||"",
+    source:"Open-Meteo current",observationTime:c.time,loadedAt:new Date().toISOString()
+  };
 }
-async function fetchWeather(){
+async function fetchWeather(locationOverride=null){
   const status=$("weatherStatus");
   try{
-    status.textContent="Получаю погоду из интернета…";
-    const coords=await getWeatherCoords(selectedDateKey===todayKey);
+    const day=ensureDay(selectedDateKey);
+    status.textContent="Определяю город и получаю погоду из интернета…";
+    const requestedCity=locationOverride?.city || $("cityInput")?.value.trim() || day.city || DEFAULT_CITY_NAME;
+    const location=locationOverride||await resolveCity(requestedCity);
+    day.city=location.city;day.cityRegion=location.region||"";day.cityMeta=location;
+    if($("cityInput"))$("cityInput").value=location.city;
+    $("cityStatus").textContent=`Город выбран: ${location.city}${location.region?`, ${location.region}`:""}.`;
     if(selectedDateKey===todayKey){
-      ensureDay(selectedDateKey).weather=await fetchCurrentWeather(coords);
+      day.weather=await fetchCurrentWeather(location);
     }else{
-      const d=await fetchHistoricalWeatherRange(selectedDateKey,selectedDateKey,coords);
-      ensureDay(selectedDateKey).weather=dailyWeatherFromApi(d,0,coords,"Open-Meteo historical archive");
+      const d=await fetchHistoricalWeatherRange(selectedDateKey,selectedDateKey,location);
+      day.weather=dailyWeatherFromApi(d,0,location,"Open-Meteo historical archive");
     }
-    saveData();renderAll();status.textContent=`Погода загружена для ${formatDate(selectedDateKey)}.`;
-  }catch(e){renderWeather();status.textContent=e.message||"Не удалось загрузить погоду."}
+    saveData();renderAll();
+    status.textContent=`Погода загружена для ${location.city} за ${formatDate(selectedDateKey)}.`;
+  }catch(e){
+    renderWeather();
+    status.textContent=e.message||"Не удалось загрузить погоду.";
+  }
 }
 async function fillWeatherForYear(year,showStatus=true){
   const status=$("yearWeatherStatus");
   const currentYear=Number(todayKey.slice(0,4));
   if(year>currentYear){if(showStatus)status.textContent="Для будущего года фактическая погода пока недоступна.";return}
   try{
-    if(showStatus)status.textContent=`Загружаю погоду за ${year} год…`;
-    const coords=await getWeatherCoords(false);
-    const start=`${year}-01-01`;
-    let end=year===currentYear?todayKey:`${year}-12-31`;
-    if(year===currentYear && todayKey===start){end=start}
-    const historicalEnd=year===currentYear?localDateKey(new Date(new Date().setDate(new Date().getDate()-1))):end;
-    if(historicalEnd>=start){
-      const d=await fetchHistoricalWeatherRange(start,historicalEnd,coords);
-      d.time.forEach((key,i)=>{ensureDay(key).weather=dailyWeatherFromApi(d,i,coords,"Open-Meteo historical archive")});
-    }
-    if(year===currentYear){ensureDay(todayKey).weather=await fetchCurrentWeather(coords)}
-    saveData();renderAll();
-    if(showStatus)status.textContent=`Погода заполнена за все прошедшие дни ${year} года, независимо от рыбалки.`;
-  }catch(e){if(showStatus)status.textContent=`Не удалось заполнить погоду за ${year}: ${e.message}`;throw e}
-}
+    if(showStatus)status.textContent=`Загружаю погоду за ${year} год по городам, указанным в днях…`;
+    const allDates=datesOfYear(year).filter(key=>key<=todayKey);
+    const historicalDates=allDates.filter(key=>key<todayKey);
+    const groups=new Map();
 
+    historicalDates.forEach(key=>{
+      const day=ensureDay(key);
+      const city=day.city||DEFAULT_CITY_NAME;
+      if(!groups.has(city))groups.set(city,[]);
+      groups.get(city).push(key);
+    });
+
+    for(const [city,keys] of groups.entries()){
+      const location=await resolveCity(city);
+      const start=keys[0],end=keys[keys.length-1];
+      const d=await fetchHistoricalWeatherRange(start,end,location);
+      const byDate=new Map(d.time.map((key,i)=>[key,i]));
+      keys.forEach(key=>{
+        const i=byDate.get(key);
+        if(i!==undefined){
+          const day=ensureDay(key);
+          day.city=location.city;day.cityRegion=location.region||"";
+          day.weather=dailyWeatherFromApi(d,i,location,"Open-Meteo historical archive");
+        }
+      });
+    }
+
+    if(year===currentYear){
+      const day=ensureDay(todayKey);
+      const location=await resolveCity(day.city||DEFAULT_CITY_NAME);
+      day.city=location.city;day.cityRegion=location.region||"";
+      day.weather=await fetchCurrentWeather(location);
+    }
+
+    saveData();renderAll();
+    if(showStatus)status.textContent=`Погода заполнена за прошедшие дни ${year} года по городу каждого дня. По умолчанию используется ${DEFAULT_CITY_NAME}.`;
+  }catch(e){
+    if(showStatus)status.textContent=`Не удалось заполнить погоду за ${year}: ${e.message}`;
+    throw e;
+  }
+}
 
 async function autoBackfillCurrentYear(){
   if(localStorage.getItem(WEATHER_BACKFILL_KEY)===todayKey)return;
   try{
     await fillWeatherForYear(Number(todayKey.slice(0,4)),false);
     localStorage.setItem(WEATHER_BACKFILL_KEY,todayKey);
-    $("yearWeatherStatus").textContent=`Погода автоматически заполнена за все прошедшие дни ${todayKey.slice(0,4)} года, включая дни без рыбалки.`;
+    $("yearWeatherStatus").textContent=`Погода автоматически заполнена по городам рыбалки. Для дней без указанного города используется ${DEFAULT_CITY_NAME}.`;
   }catch(e){
     $("yearWeatherStatus").textContent="Автозаполнение погоды за год не завершено. Можно повторить кнопкой «Заполнить погоду за год».";
   }
 }
-
 
 function renderComment(){
   const day=ensureDay(selectedDateKey);
@@ -426,12 +556,14 @@ function normalizeCatch(c){
   if(!c.tackle)c.tackle="Удочка";
   if(!c.method)c.method="С берега";
   if(!c.place)c.place="";
+  if(!c.city)c.city=DEFAULT_CITY_NAME;
   if(!Array.isArray(c.baits))c.baits=[];
   return c;
 }
 
 function cancelCatchEditing(){
   editingCatchId=null;
+  $("cityInput").value=ensureDay(selectedDateKey).city||DEFAULT_CITY_NAME;
   $("fish").selectedIndex=0;
   $("qty").value=1;
   $("catchTime").value=selectedDateKey===todayKey?currentTime():"12:00";
@@ -451,6 +583,7 @@ function startCatchEditing(id){
   if(!item)return;
   normalizeCatch(item);
   editingCatchId=id;
+  $("cityInput").value=item.city||ensureDay(selectedDateKey).city||DEFAULT_CITY_NAME;
   $("fish").value=item.fish;
   $("qty").value=item.qty;
   $("catchTime").value=item.time;
@@ -473,7 +606,7 @@ function renderCatches(){
   if(!catches.length){list.className="";list.innerHTML=`<div class="empty">${day.fishing?"Рыбалка отмечена. Улов не внесён.":"В выбранный день рыбалка не отмечена."}</div>`;return}
   list.className="catch-list";
   list.innerHTML=catches.map(c=>{
-    const meta=[c.tackle,c.method,c.place,c.baits?.length?`Приманка: ${c.baits.join(", ")}`:""].filter(Boolean).join(" · ");
+    const meta=[c.city?`Город: ${c.city}`:"",c.tackle,c.method,c.place,c.baits?.length?`Приманка: ${c.baits.join(", ")}`:""].filter(Boolean).join(" · ");
     return `<div class="catch-row"><div class="catch-time">${escapeHtml(c.time)}</div><div><div class="catch-fish">${escapeHtml(c.fish)}</div><div class="catch-meta">${escapeHtml(meta||"Параметры ловли не указаны")}</div></div><div class="catch-qty">${c.qty} шт.</div><button class="icon-btn edit-icon" data-edit="${c.id}" type="button" title="Изменить">✎</button><button class="icon-btn" data-delete="${c.id}" type="button" title="Удалить">×</button></div>`;
   }).join("");
   list.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>startCatchEditing(b.dataset.edit));
@@ -510,6 +643,18 @@ function datesOfYear(year){
   while(d.getFullYear()===year){dates.push(localDateKey(d));d.setDate(d.getDate()+1)}
   return dates;
 }
+function shiftDateKey(key,days){
+  const [y,m,d]=key.split("-").map(Number);
+  const date=new Date(y,m-1,d);
+  date.setDate(date.getDate()+days);
+  return localDateKey(date);
+}
+function visibleJournalDates(year){
+  const currentYear=Number(todayKey.slice(0,4));
+  if(year!==currentYear) return datesOfYear(year);
+  const startKey=shiftDateKey(todayKey,-7);
+  return datesOfYear(year).filter(key=>key>=startKey && key<=todayKey);
+}
 function availableYears(){
   const current=new Date().getFullYear();
   const years=new Set([current]);
@@ -526,13 +671,13 @@ function yearRow(key){
   const day=state.days[key]||{fishing:false,catches:[],weather:null},w=day.weather;
   return {
     date:key,weekday:weekday(key),fishing:!!day.fishing,result:resultText(day),comment:day.comment||"",
-    weather:w?`${Math.round(w.temperature)} °C · ${weatherText(w.weatherCode)} · ветер ${windDirection(w.windDirection)} ${Math.round(w.windSpeed)} км/ч`:""
+    weather:w?`${w.city||day.city||DEFAULT_CITY_NAME} · ${Math.round(w.temperature)} °C · ${weatherText(w.weatherCode)} · ветер ${windDirection(w.windDirection)} ${Math.round(w.windSpeed)} км/ч`:""
   };
 }
 function renderYear(){
-  const year=Number($("yearSelect").value)||new Date().getFullYear(),dates=datesOfYear(year);
+  const year=Number($("yearSelect").value)||new Date().getFullYear(),allDates=datesOfYear(year),dates=visibleJournalDates(year);
   let fishingDays=0,total=0,best={date:null,total:0};const species=new Set();
-  dates.forEach(key=>{
+  allDates.forEach(key=>{
     const day=state.days[key];
     if(day?.fishing) fishingDays++;
     const t=(day?.catches||[]).reduce((s,c)=>s+Number(c.qty||0),0);
@@ -542,8 +687,12 @@ function renderYear(){
   $("yearFishingDays").textContent=fishingDays;$("yearCatchTotal").textContent=total;$("yearSpecies").textContent=species.size;$("yearBestDay").textContent=best.date?`${formatDate(best.date)} · ${best.total}`:"—";
   $("yearTableBody").innerHTML=dates.map(key=>{
     const r=yearRow(key);
-    return `<tr class="${key===selectedDateKey?"selected-row":""}"><td>${formatDate(r.date)}</td><td>${escapeHtml(r.weekday)}</td><td><span class="${r.fishing?"yes-badge":"no-badge"}">${r.fishing?"Да":"Нет"}</span></td><td class="result-cell">${escapeHtml(r.result)}</td><td class="comment-cell">${escapeHtml(r.comment||"—")}</td><td class="weather-cell">${escapeHtml(r.weather||"—")}</td><td><button class="row-edit-btn" type="button" data-open-date="${key}">Изменить</button></td></tr>`;
+    const rowClasses=[key===selectedDateKey?"selected-row":"",key===todayKey?"today-row":""].filter(Boolean).join(" ");
+    return `<tr class="${rowClasses}"><td>${formatDate(r.date)}</td><td>${escapeHtml(r.weekday)}</td><td><span class="${r.fishing?"yes-badge":"no-badge"}">${r.fishing?"Да":"Нет"}</span></td><td class="result-cell">${escapeHtml(r.result)}</td><td class="comment-cell">${escapeHtml(r.comment||"—")}</td><td class="weather-cell">${escapeHtml(r.weather||"—")}</td><td><button class="row-edit-btn" type="button" data-open-date="${key}">Изменить</button></td></tr>`;
   }).join("");
+  if(!dates.length){
+    $("yearTableBody").innerHTML=`<tr><td colspan="7">Нет отображаемых дат.</td></tr>`;
+  }
   $("yearTableBody").querySelectorAll("[data-open-date]").forEach(b=>b.onclick=()=>selectDay(b.dataset.openDate));
 }
 function getYearsWithData(){
@@ -563,16 +712,17 @@ function buildSyncPayload(){
         temperature:w?.temperature??"",apparentTemperature:w?.apparentTemperature??"",weather:w?weatherText(w.weatherCode):"",
         windDirection:w?windDirection(w.windDirection):"",windDegrees:w?.windDirection??"",windSpeed:w?.windSpeed??"",windGusts:w?.windGusts??"",
         humidity:w?.humidity??"",pressureHpa:w?.pressure??"",pressureMm:w?.pressure?Math.round(w.pressure*.750062):"",
-        precipitation:w?.precipitation??"",cloudCover:w?.cloudCover??""
+        precipitation:w?.precipitation??"",cloudCover:w?.cloudCover??"",
+        city:d.city||w?.city||DEFAULT_CITY_NAME
       };
     });
     const fishingDays=rows.filter(r=>r.fishing).length,total=rows.reduce((s,r)=>s+r.total,0);
     const species=new Set(),catches=[];
-    datesOfYear(year).forEach(key=>(state.days[key]?.catches||[]).forEach(c=>{species.add(c.fish);catches.push({date:key,time:c.time,fish:c.fish,qty:Number(c.qty||0),tackle:c.tackle||"",method:c.method||"",place:c.place||"",baits:Array.isArray(c.baits)?c.baits:[]})}));
+    datesOfYear(year).forEach(key=>(state.days[key]?.catches||[]).forEach(c=>{species.add(c.fish);catches.push({date:key,time:c.time,fish:c.fish,qty:Number(c.qty||0),tackle:c.tackle||"",method:c.method||"",place:c.place||"",baits:Array.isArray(c.baits)?c.baits:[],city:c.city||state.days[key]?.city||DEFAULT_CITY_NAME})}));
     const best=rows.reduce((a,r)=>r.total>a.total?r:a,{date:"",total:0});
     return {year,rows,summary:{fishingDays,total,species:species.size,bestDay:best.date,bestTotal:best.total},catches};
   });
-  return {app:"Fishing Day MVP",version:11,syncedAt:new Date().toISOString(),years:yearData};
+  return {app:"Fishing Day MVP",version:13,syncedAt:new Date().toISOString(),years:yearData};
 }
 async function syncGoogleSheets(){
   const endpoint=$("sheetEndpoint").value.trim(),status=$("syncStatus");
@@ -588,10 +738,10 @@ async function syncGoogleSheets(){
   }catch(e){status.textContent=`Не удалось завершить выгрузку: ${e.message||e}`}
 }
 function exportCsv(){
-  const rows=[["Год","Дата","День","Рыбалка","Результат","Комментарий","Температура °C","Погода","Ветер","Скорость ветра км/ч"]];
+  const rows=[["Год","Дата","День","Рыбалка","Результат","Комментарий","Город","Температура °C","Погода","Ветер","Скорость ветра км/ч"]];
   getYearsWithData().forEach(year=>datesOfYear(year).forEach(key=>{
     const d=state.days[key]||{fishing:false,catches:[],weather:null},w=d.weather;
-    rows.push([year,key,weekday(key),d.fishing?"Да":"Нет",resultText(d),d.comment||"",w?.temperature??"",w?weatherText(w.weatherCode):"",w?windDirection(w.windDirection):"",w?.windSpeed??""]);
+    rows.push([year,key,weekday(key),d.fishing?"Да":"Нет",resultText(d),d.comment||"",d.city||w?.city||DEFAULT_CITY_NAME,w?.temperature??"",w?weatherText(w.weatherCode):"",w?windDirection(w.windDirection):"",w?.windSpeed??""]);
   }));
   const csv="\uFEFF"+rows.map(r=>r.map(v=>`"${String(v??"").replaceAll('"','""')}"`).join(";")).join("\n");
   const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");
@@ -611,21 +761,55 @@ $("cancelCatchEdit").onclick=cancelCatchEditing;
 $("saveComment").onclick=saveDayComment;
 $("dayComment").oninput=()=>{$("commentCounter").textContent=`${$("dayComment").value.length} / 2000`;};
 $("dayComment").onblur=()=>{const current=ensureDay(selectedDateKey).comment||"";if($("dayComment").value.trim()!==current)saveDayComment();};
-$("catchForm").onsubmit=e=>{
+$("catchForm").onsubmit=async e=>{
   e.preventDefault();
   const q=Number($("qty").value);if(!Number.isInteger(q)||q<1)return;
   const baits=selectedBaits();
   if(!baits.length){alert("Выберите хотя бы одну приманку.");return}
   if($("fishingPlace").value==="Другое" && !$("customPlace").value.trim()){alert("Укажите другое место ловли.");return}
-  const d=ensureDay(selectedDateKey);d.fishing=true;
-  const values={fish:$("fish").value,qty:q,time:$("catchTime").value,tackle:$("tackle").value,method:$("fishingMethod").value,place:catchPlaceValue(),baits};
+
+  let location;
+  try{
+    $("cityStatus").textContent="Проверяю город…";
+    location=await resolveCity($("cityInput").value);
+    $("cityInput").value=location.city;
+    $("cityStatus").textContent=`Город выбран: ${location.city}${location.region?`, ${location.region}`:""}.`;
+  }catch(err){
+    alert(err.message||"Не удалось определить город.");
+    return;
+  }
+
+  const d=ensureDay(selectedDateKey);
+  d.fishing=true;
+  d.city=location.city;
+  d.cityRegion=location.region||"";
+  d.cityMeta=location;
+
+  const values={
+    fish:$("fish").value,
+    qty:q,
+    time:$("catchTime").value,
+    tackle:$("tackle").value,
+    method:$("fishingMethod").value,
+    place:catchPlaceValue(),
+    baits,
+    city:location.city,
+    cityRegion:location.region||"",
+    cityLat:location.lat,
+    cityLon:location.lon
+  };
+
   if(editingCatchId){
     const item=d.catches.find(c=>c.id===editingCatchId);
     if(item)Object.assign(item,values);
   }else{
     d.catches.push({id:crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random()}`,...values});
   }
-  saveData();cancelCatchEditing();renderAll();
+
+  saveData();
+  cancelCatchEditing();
+  renderAll();
+  await fetchWeather(location);
 };
 $("clearToday").onclick=()=>{
   const d=ensureDay(selectedDateKey);if(!d.catches.length)return;
@@ -637,9 +821,29 @@ $("nextYear").onclick=()=>{const s=$("yearSelect"),y=Number(s.value)+1;if(![...s
 $("saveEndpoint").onclick=()=>{localStorage.setItem(ENDPOINT_KEY,$("sheetEndpoint").value.trim());$("syncStatus").textContent="URL сохранён на этом устройстве."};
 $("syncSheets").onclick=syncGoogleSheets;
 $("fishingPlace").onchange=updateCustomPlaceVisibility;
+$("cityInput").oninput=()=>{
+  clearTimeout(citySearchTimer);
+  const term=$("cityInput").value;
+  citySearchTimer=setTimeout(()=>updateCitySuggestions(term),250);
+};
+$("cityInput").onchange=async()=>{
+  const name=$("cityInput").value.trim()||DEFAULT_CITY_NAME;
+  try{
+    const location=await resolveCity(name);
+    $("cityInput").value=location.city;
+    const day=ensureDay(selectedDateKey);
+    day.city=location.city;day.cityRegion=location.region||"";day.cityMeta=location;
+    saveData();
+    await fetchWeather(location);
+  }catch(e){
+    $("cityStatus").textContent=e.message||"Не удалось определить город.";
+  }
+};
 document.querySelectorAll('input[name="bait"]').forEach(x=>x.onchange=updateBaitSummary);
 document.addEventListener("click",e=>{if(!$("baitSelect").contains(e.target))$("baitSelect").open=false});
 $("editingBanner").textContent="Сейчас редактируется сегодняшний день.";
+$("cityInput").value=ensureDay(selectedDateKey).city||DEFAULT_CITY_NAME;
+renderCityOptions(POPULAR_RU_CITIES);
 updateCustomPlaceVisibility();
 updateBaitSummary();
 renderAll();fetchWeather().then(autoBackfillCurrentYear);
