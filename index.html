@@ -98,7 +98,7 @@
 <body>
 <main class="wrap">
   <section class="hero">
-    <div class="version-badge">Версия 30</div>
+    <div class="version-badge">Версия 31</div>
     <small>Дневник рыболова</small>
     <h1>Рыболовный день</h1>
     <p>Учёт каждого дня года, улова, города, комментариев и погоды по выбранному городу.</p>
@@ -175,6 +175,7 @@
             <th>Давление, мм рт. ст.</th>
             <th>Тренд давления за 12ч</th>
             <th>Стабильность за 24ч</th>
+            <th>Тренд давления за 72ч</th>
             <th>В одном направлении</th>
             <th>Ветер</th>
             <th>Порывы</th>
@@ -183,7 +184,7 @@
           </tr>
         </thead>
         <tbody id="biteTableBody">
-          <tr><td colspan="13">Загрузка прогноза…</td></tr>
+          <tr><td colspan="14">Загрузка прогноза…</td></tr>
         </tbody>
       </table>
     </div>
@@ -193,8 +194,9 @@
       Основной тренд давления считается ровно за 12 часов и переводится в мм рт. ст.
       Используются 7 категорий: резко падает ↓↓↓, падает ↓↓, медленно падает ↓, стабильное →,
       медленно растёт ↑, растёт ↑↑, резко растёт ↑↑↑. Дополнительно оценивается стабильность
-      за 24 часа: «Очень стабильно» ставится, если полный диапазон давления за сутки не превышал
-      примерно 3 мм. Отдельно показывается, сколько часов давление подряд сохраняет направление.
+      за 24 часа и общий фон за 72 часа. Для 3 суток используются категории: стабильно,
+      почти стабильно, медленно падает/растёт, заметно падает/растёт и резкий перепад.
+      Отдельно показывается, сколько часов давление подряд сохраняет направление.
       В расчёте также учитываются температура, ветер, порывы, осадки, снег, облачность, влажность,
       восход/закат и особенности выбранного вида рыбы.
       В колонке «Погодные условия» используются 26 категорий: от солнечной погоды и тумана
@@ -382,7 +384,7 @@ function renderSelectedDayPressureStability(){
   if(!p){
     $("pressureStabilityValue").textContent="Загрузка…";
     $("pressureStabilityValue").className="stat-value";
-    $("pressureStabilitySub").textContent="Тренд за 12 ч и стабильность за 24 ч";
+    $("pressureStabilitySub").textContent="Тренд за 12 ч · стабильность за 24 ч · фон за 72 ч";
     return;
   }
 
@@ -403,6 +405,16 @@ function renderSelectedDayPressureStability(){
 
   if(Number.isFinite(Number(p.range24))){
     parts.push(`диапазон 24 ч: ${Number(p.range24).toFixed(1)} мм`);
+  }
+
+  if(p.trend72Label){
+    const delta72=Number.isFinite(Number(p.delta72))
+      ?`${Number(p.delta72)>0?"+":""}${Number(p.delta72).toFixed(1)} мм`
+      :"без Δ";
+    const range72=Number.isFinite(Number(p.range72))
+      ?`разброс ${Number(p.range72).toFixed(1)} мм`
+      :"разброс —";
+    parts.push(`72 ч: ${p.trend72Label} ${p.trend72Arrow||""} (${delta72}, ${range72})`);
   }
 
   if(p.referenceTime){
@@ -806,6 +818,91 @@ function pressure24hInfo(index,hours,trend12){
   };
 }
 
+
+function pressure72TrendInfo(deltaMm,rangeMm){
+  if(!Number.isFinite(deltaMm)||!Number.isFinite(rangeMm)){
+    return {label:"Недостаточно данных",arrow:"",className:"pressure-unknown",scoreAdj:0};
+  }
+
+  if(rangeMm<=4){
+    return {label:"Стабильно 3 суток",arrow:"→",className:"pressure-good",scoreAdj:6};
+  }
+
+  if(Math.abs(deltaMm)<3&&rangeMm<=7){
+    return {label:"Почти стабильно",arrow:"↔",className:"pressure-warn",scoreAdj:3};
+  }
+
+  if(Math.abs(deltaMm)<3&&rangeMm>12){
+    return {label:"Резкий перепад за 3 суток",arrow:"↕",className:"pressure-bad",scoreAdj:-10};
+  }
+
+  if(Math.abs(deltaMm)<3&&rangeMm>=8){
+    return {label:"Заметные колебания за 3 суток",arrow:"↕",className:"pressure-bad",scoreAdj:-5};
+  }
+
+  if(deltaMm<=-12){
+    return {label:"Резкий перепад: давление падает",arrow:"↓↓↓",className:"pressure-bad",scoreAdj:-10};
+  }
+  if(deltaMm>=12){
+    return {label:"Резкий перепад: давление растёт",arrow:"↑↑↑",className:"pressure-bad",scoreAdj:-10};
+  }
+  if(deltaMm<=-8){
+    return {label:"Заметно падает 3 суток",arrow:"↓↓",className:"pressure-bad",scoreAdj:-5};
+  }
+  if(deltaMm>=8){
+    return {label:"Заметно растёт 3 суток",arrow:"↑↑",className:"pressure-bad",scoreAdj:-5};
+  }
+  if(deltaMm<=-3){
+    return {label:"Медленно падает 3 суток",arrow:"↓",className:"pressure-good",scoreAdj:4};
+  }
+  if(deltaMm>=3){
+    return {label:"Медленно растёт 3 суток",arrow:"↑",className:"pressure-warn",scoreAdj:2};
+  }
+
+  return {label:"Почти стабильно",arrow:"↔",className:"pressure-warn",scoreAdj:2};
+}
+
+function pressure72hInfo(index,hours){
+  if(index<72){
+    return {
+      label:"Недостаточно данных за 72 ч",
+      arrow:"",
+      detail:"нет полного периода 3 суток",
+      deltaMm:null,
+      rangeMm:null,
+      className:"pressure-unknown",
+      scoreAdj:0
+    };
+  }
+
+  const slice=hours.slice(index-72,index+1)
+    .map(h=>pressureHpaToMm(h?.pressure))
+    .filter(Number.isFinite);
+
+  if(slice.length<73){
+    return {
+      label:"Недостаточно данных за 72 ч",
+      arrow:"",
+      detail:"нет полного периода 3 суток",
+      deltaMm:null,
+      rangeMm:null,
+      className:"pressure-unknown",
+      scoreAdj:0
+    };
+  }
+
+  const deltaMm=slice[slice.length-1]-slice[0];
+  const rangeMm=Math.max(...slice)-Math.min(...slice);
+  const trend=pressure72TrendInfo(deltaMm,rangeMm);
+
+  return {
+    ...trend,
+    deltaMm,
+    rangeMm,
+    detail:`Δ ${deltaMm>=0?"+":""}${deltaMm.toFixed(1)} мм · разброс ${rangeMm.toFixed(1)} мм`
+  };
+}
+
 function hourlyPressureDirection(deltaMm){
   if(!Number.isFinite(deltaMm))return "unknown";
   // Игнорируем микроколебания датчика/модели меньше ~0.15 мм за час.
@@ -942,6 +1039,7 @@ function calculateBiteScore(hour,index,hours,sunrise,sunset,fishName){
   let pressureTrend={key:"unknown",label:"Нет данных",arrow:"",level:"unknown",className:"bite-pressure-stable"};
   let pressureDirectionDuration=0;
   let pressureDay=null;
+  let pressure72=null;
 
   if(index>=12&&Number.isFinite(Number(hours[index-12]?.pressure))){
     pressureDeltaMm=(pressure-Number(hours[index-12].pressure))*0.750062;
@@ -967,6 +1065,15 @@ function calculateBiteScore(hour,index,hours,sunrise,sunset,fishName){
     score+=pressureDay.scoreAdj||0;
     if(pressureDay.label.startsWith("Очень хорошо"))reasons.push("давление очень стабильно сутки");
     else if(pressureDay.label.startsWith("Хорошо"))reasons.push("давление стабильно 12 часов");
+  }
+
+  // Общий фон за 72 часа имеет меньший вес, чем последние 12 часов.
+  pressure72=pressure72hInfo(index,hours);
+  if(pressure72){
+    score+=pressure72.scoreAdj||0;
+    if(pressure72.label==="Стабильно 3 суток")reasons.push("давление стабильно трое суток");
+    else if(pressure72.label==="Почти стабильно")reasons.push("давление почти стабильно трое суток");
+    else if(pressure72.label.includes("Резкий перепад"))reasons.push("резкий перепад давления за 3 суток");
   }
 
   if(Number.isFinite(pressure)){
@@ -1039,7 +1146,7 @@ function calculateBiteScore(hour,index,hours,sunrise,sunset,fishName){
   if(conditions.includes("Гололёд")){score-=7;reasons.push("гололёд")}
 
   score=clamp(Math.round(score),5,95);
-  return {score,pressureDeltaMm,pressureTrend,pressureDay,pressureDirectionDuration,reasons};
+  return {score,pressureDeltaMm,pressureTrend,pressureDay,pressure72,pressureDirectionDuration,reasons};
 }
 
 async function fetchJsonWithTimeout(url,timeoutMs=15000){
@@ -1059,7 +1166,7 @@ async function fetchJsonWithTimeout(url,timeoutMs=15000){
 
 async function fetchBiteHourlyInternet(date,location){
   const isPast=date<todayKey;
-  const previousDate=shiftDateKey(date,-1);
+  const historyStartDate=shiftDateKey(date,-3);
 
   const setCommonParams=url=>{
     url.searchParams.set("latitude",location.lat);
@@ -1080,7 +1187,7 @@ async function fetchBiteHourlyInternet(date,location){
   if(isPast){
     try{
       const historicalForecast=setCommonParams(new URL("https://historical-forecast-api.open-meteo.com/v1/forecast"));
-      historicalForecast.searchParams.set("start_date",previousDate);
+      historicalForecast.searchParams.set("start_date",historyStartDate);
       historicalForecast.searchParams.set("end_date",date);
       historicalForecast.searchParams.set("hourly",hourlyPast);
       historicalForecast.searchParams.set("daily","sunrise,sunset");
@@ -1088,7 +1195,7 @@ async function fetchBiteHourlyInternet(date,location){
       source="Open-Meteo Historical Forecast";
     }catch(firstError){
       const archive=setCommonParams(new URL("https://archive-api.open-meteo.com/v1/archive"));
-      archive.searchParams.set("start_date",previousDate);
+      archive.searchParams.set("start_date",historyStartDate);
       archive.searchParams.set("end_date",date);
       archive.searchParams.set("hourly",hourlyPast);
       archive.searchParams.set("daily","sunrise,sunset");
@@ -1101,7 +1208,7 @@ async function fetchBiteHourlyInternet(date,location){
     }
   }else{
     const forecast=setCommonParams(new URL("https://api.open-meteo.com/v1/forecast"));
-    forecast.searchParams.set("past_days","1");
+    forecast.searchParams.set("past_days","3");
     forecast.searchParams.set("forecast_days","16");
     forecast.searchParams.set("hourly",hourlyForecast);
     forecast.searchParams.set("daily","sunrise,sunset");
@@ -1134,7 +1241,7 @@ async function fetchBiteHourlyInternet(date,location){
   }));
 
   const previousIndexes=[];
-  for(let i=Math.max(0,targetIndexes[0]-24);i<targetIndexes[0];i++)previousIndexes.push(i);
+  for(let i=Math.max(0,targetIndexes[0]-72);i<targetIndexes[0];i++)previousIndexes.push(i);
   const previousHours=previousIndexes.map(i=>({
     time:data.hourly.time[i],
     pressure:data.hourly.pressure_msl?.[i]
@@ -1196,6 +1303,7 @@ function renderBiteForecast(){
       :"—";
     const trend=r.pressureTrend||pressureTrendInfo(r.pressureDeltaMm);
     const dayPressure=r.pressureDay||{label:"Недостаточно данных",detail:"нет полного периода 24 ч",className:"pressure-unknown"};
+    const pressure72=r.pressure72||{label:"Недостаточно данных за 72 ч",arrow:"",detail:"нет полного периода 3 суток",className:"pressure-unknown"};
     const directionHours=r.pressureDirectionDuration||0;
     const rainProb=Number.isFinite(Number(r.precipitationProbability))
       ?`${Math.round(r.precipitationProbability)}% · `
@@ -1215,6 +1323,10 @@ function renderBiteForecast(){
       <td class="pressure-day ${dayPressure.className}">
         <b>${dayPressure.label}</b>
         <span>${dayPressure.detail}</span>
+      </td>
+      <td class="pressure-day ${pressure72.className}">
+        <b>${pressure72.label} ${pressure72.arrow||""}</b>
+        <span>${pressure72.detail}</span>
       </td>
       <td><b>${directionHours?`${directionHours} ч`:"—"}</b><div class="pressure-hours">${directionHours?`${trend.key==="stable"?"стабильно":trend.key==="up"?"рост":"падение"} подряд`:"нет данных"}</div></td>
       <td>${Number.isFinite(Number(r.windSpeed))?`${Math.round(r.windSpeed)} км/ч ${windDirection(Number(r.windDirection)||0)}`:"—"}</td>
@@ -1237,7 +1349,7 @@ async function fetchBiteForecast(locationOverride=null){
     if(date>maxDate)throw new Error("Прогноз доступен максимум на 15 дней вперёд.");
 
     status.textContent="Загружаю почасовую погоду и рассчитываю вероятность клёва…";
-    $("biteTableBody").innerHTML='<tr><td colspan="13">Загрузка данных из интернета…</td></tr>';
+    $("biteTableBody").innerHTML='<tr><td colspan="14">Загрузка данных из интернета…</td></tr>';
 
     const day=ensureDay(selectedDateKey);
     const cityName=locationOverride?.city||$("cityInput").value.trim()||day.city||DEFAULT_CITY_NAME;
@@ -1247,7 +1359,7 @@ async function fetchBiteForecast(locationOverride=null){
     renderBiteForecast();
   }catch(e){
     biteHourlyData=null;
-    $("biteTableBody").innerHTML=`<tr><td colspan="13">${escapeHtml(e.message||"Не удалось рассчитать прогноз клёва.")}</td></tr>`;
+    $("biteTableBody").innerHTML=`<tr><td colspan="14">${escapeHtml(e.message||"Не удалось рассчитать прогноз клёва.")}</td></tr>`;
     status.textContent=e.message||"Не удалось рассчитать прогноз клёва.";
   }
 }
@@ -1483,6 +1595,17 @@ function pressureAtLocalTime(hours,date,time){
   return null;
 }
 
+function shiftLocalDateTime(date,time,hoursDelta){
+  const [y,m,d]=String(date).split("-").map(Number);
+  const [hh,mm]=String(time).split(":").map(Number);
+  const value=new Date(Date.UTC(y,m-1,d,hh,mm));
+  value.setUTCHours(value.getUTCHours()+hoursDelta);
+  return {
+    date:value.toISOString().slice(0,10),
+    time:value.toISOString().slice(11,16)
+  };
+}
+
 function pressureRangeForPeriod(hours,date,time,hoursBack){
   const end=isoLocalMinutes(`${date}T${time}`);
   if(end===null)return null;
@@ -1493,7 +1616,8 @@ function pressureRangeForPeriod(hours,date,time,hoursBack){
     .filter(p=>p.minute!==null&&Number.isFinite(p.pressure)&&p.minute>=start&&p.minute<=end)
     .map(p=>p.pressure);
 
-  const startPressure=pressureAtLocalTime(hours,shiftDateKey(date,-1),time);
+  const shifted=shiftLocalDateTime(date,time,-hoursBack);
+  const startPressure=pressureAtLocalTime(hours,shifted.date,shifted.time);
   const endPressure=pressureAtLocalTime(hours,date,time);
 
   if(Number.isFinite(startPressure))points.push(startPressure);
@@ -1523,7 +1647,14 @@ function calculateJournalPressureStability(hourlyData,referenceTime){
   const delta12=Number.isFinite(current)&&Number.isFinite(before12)?current-before12:null;
   const delta24=Number.isFinite(current)&&Number.isFinite(before24)?current-before24:null;
   const range24=pressureRangeForPeriod(allHours,date,referenceTime,24);
+
+  const before72Ref=shiftLocalDateTime(date,referenceTime,-72);
+  const before72=pressureAtLocalTime(allHours,before72Ref.date,before72Ref.time);
+  const delta72=Number.isFinite(current)&&Number.isFinite(before72)?current-before72:null;
+  const range72=pressureRangeForPeriod(allHours,date,referenceTime,72);
+
   const trend=pressureTrendInfo(delta12);
+  const trend72=pressure72TrendInfo(delta72,range72);
 
   let dayLabel="Недостаточно данных";
   let dayClass="pressure-unknown";
@@ -1561,6 +1692,11 @@ function calculateJournalPressureStability(hourlyData,referenceTime){
     delta12,
     delta24,
     range24,
+    delta72,
+    range72,
+    trend72Label:trend72.label,
+    trend72Arrow:trend72.arrow,
+    trend72Class:trend72.className,
     trendLabel:trend.label,
     trendArrow:trend.arrow,
     trendClass:trend.className,
@@ -1581,6 +1717,12 @@ function journalPressureHtml(day){
   const range24=Number.isFinite(Number(p.range24))
     ?`диапазон 24ч: ${Number(p.range24).toFixed(1)} мм`
     :"24ч: недостаточно данных";
+  const range72=Number.isFinite(Number(p.range72))
+    ?`разброс 72ч: ${Number(p.range72).toFixed(1)} мм`
+    :"72ч: недостаточно данных";
+  const delta72=Number.isFinite(Number(p.delta72))
+    ?`${Number(p.delta72)>0?"+":""}${Number(p.delta72).toFixed(1)} мм / 72ч`
+    :"нет данных за 72 ч";
   const pressure=Number.isFinite(Number(p.pressureMm))
     ?`${Math.round(Number(p.pressureMm))} мм`
     :"—";
@@ -1588,12 +1730,15 @@ function journalPressureHtml(day){
   return `<b class="${p.trendClass||""}">${escapeHtml(p.trendLabel||"Нет данных")} ${escapeHtml(p.trendArrow||"")}</b>
     <div>${escapeHtml(pressure)} · ${escapeHtml(delta12)}</div>
     <div class="pressure-journal-meta ${p.dayClass||""}">${escapeHtml(p.dayLabel||"")}</div>
-    <div class="pressure-journal-meta">${escapeHtml(range24)} · на ${escapeHtml(p.referenceTime||"03:30")}</div>`;
+    <div class="pressure-journal-meta">${escapeHtml(range24)}</div>
+    <div class="pressure-journal-meta ${p.trend72Class||""}"><b>${escapeHtml(p.trend72Label||"Недостаточно данных за 72 ч")} ${escapeHtml(p.trend72Arrow||"")}</b></div>
+    <div class="pressure-journal-meta">${escapeHtml(delta72)} · ${escapeHtml(range72)} · на ${escapeHtml(p.referenceTime||"03:30")}</div>`;
 }
 
 function journalPressureCacheValid(day,key,referenceTime,city){
   const p=day?.pressureStability;
   if(!p)return false;
+  if(!("trend72Label" in p))return false;
   if(p.referenceTime!==referenceTime)return false;
   if(String(p.city||"").toLocaleLowerCase("ru-RU")!==String(city||"").toLocaleLowerCase("ru-RU"))return false;
   if(key!==todayKey)return true;
@@ -1733,7 +1878,7 @@ function buildSyncPayload(){
     const best=rows.reduce((a,r)=>r.total>a.total?r:a,{date:"",total:0});
     return {year,rows,summary:{fishingDays,total,species:species.size,bestDay:best.date,bestTotal:best.total},catches};
   });
-  return {app:"Fishing Day MVP",version:30,clientToday:todayKey,selectedDate:selectedDateKey,syncedAt:new Date().toISOString(),years:yearData};
+  return {app:"Fishing Day MVP",version:31,clientToday:todayKey,selectedDate:selectedDateKey,syncedAt:new Date().toISOString(),years:yearData};
 }
 async function syncGoogleSheets(){
   const endpoint=$("sheetEndpoint").value.trim(),status=$("syncStatus");
