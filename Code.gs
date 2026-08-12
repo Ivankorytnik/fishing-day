@@ -1,6 +1,6 @@
 /**
  * Рыболовный дневник -> Google Sheets
- * Версия 14: накопительная синхронизация + окно корректировки 7 дней назад.
+ * Версия 16: накопительная синхронизация + окно корректировки 7 дней назад.
  *
  * Логика:
  * 1. Все новые даты после последней записи добавляются в таблицу.
@@ -24,7 +24,18 @@ const YEAR_HEADERS = [
   "Направление ветра", "Ветер, °", "Скорость ветра, км/ч", "Порывы ветра, км/ч",
   "Влажность, %", "Давление, hPa", "Давление, мм рт. ст.",
   "Осадки, мм", "Облачность, %",
-  "Город погоды"
+  "Город погоды",
+
+  // Данные из блока «Добавить улов».
+  // Добавлены в конец, чтобы не сдвигать старые исторические столбцы.
+  "Город улова",
+  "Рыба",
+  "Количество по записям",
+  "Время улова",
+  "Снасть",
+  "Способ ловли",
+  "Место ловли",
+  "Приманка"
 ];
 
 const CATCH_HEADERS = [
@@ -49,7 +60,7 @@ function doGet() {
     return jsonResponse_({
       ok: true,
       service: "Fishing Day Sheets Sync",
-      version: 14,
+      version: 16,
       mode: "incremental-with-7-day-correction",
       spreadsheet: ss.getName(),
       spreadsheetId: SPREADSHEET_ID,
@@ -108,6 +119,24 @@ function doPost(e) {
     // окне корректировки, в том числе если в листе случайно есть
     // несколько строк одной даты после старых версий.
     writeCommentsForCorrectionWindow_(
+      ss,
+      years,
+      correctionStartIso,
+      todayIso
+    );
+
+    // Явно обновляем колонку "Город погоды" для разрешённого
+    // 7-дневного окна корректировки.
+    writeWeatherCityForCorrectionWindow_(
+      ss,
+      years,
+      correctionStartIso,
+      todayIso
+    );
+
+    // Обновляем поля «Добавить улов» прямо в строке дня
+    // за сегодня и предыдущие 7 дней.
+    writeCatchFieldsForCorrectionWindow_(
       ss,
       years,
       correctionStartIso,
@@ -395,7 +424,19 @@ function yearRowToValues_(r) {
     value_(r.precipitation),
     value_(r.cloudCover),
 
-    r.city || ""
+    // Пишем именно город, по которому реально получены погодные данные.
+    // Если погода не была загружена, значение остаётся пустым.
+    r.weatherCity || "",
+
+    // Все поля из формы «Добавить улов».
+    r.catchCities || "",
+    r.catchFish || "",
+    r.catchQuantities || "",
+    r.catchTimes || "",
+    r.catchTackles || "",
+    r.catchMethods || "",
+    r.catchPlaces || "",
+    r.catchBaits || ""
   ];
 }
 
@@ -481,6 +522,201 @@ function writeCommentsForCorrectionWindow_(
           )
           .setFontFamily("Arial");
       }
+    });
+  });
+}
+
+
+/**
+ * Явно записывает город, по которому получена погода.
+ *
+ * Колонка "Город погоды" находится в последнем столбце YEAR_HEADERS.
+ * Значение берётся из weatherCity, сформированного сайтом из weather.city
+ * и weather.region. Поэтому город формы не подменяет фактический город погоды.
+ */
+function writeWeatherCityForCorrectionWindow_(
+  ss,
+  years,
+  correctionStartIso,
+  todayIso
+) {
+  const tz = ss.getSpreadsheetTimeZone();
+  const cityColumn = YEAR_HEADERS.indexOf("Город погоды") + 1;
+
+  if (cityColumn <= 0) {
+    return;
+  }
+
+  years.forEach(function(yearData) {
+    const sheet = ss.getSheetByName(
+      String(yearData.year)
+    );
+
+    if (!sheet || sheet.getLastRow() < 2) {
+      return;
+    }
+
+    const sourceRows = Array.isArray(yearData.rows)
+      ? yearData.rows
+      : [];
+
+    const cityByDate = {};
+
+    sourceRows.forEach(function(row) {
+      if (
+        row.date &&
+        row.date >= correctionStartIso &&
+        row.date <= todayIso
+      ) {
+        cityByDate[row.date] =
+          row.weatherCity === null ||
+          typeof row.weatherCity === "undefined"
+            ? ""
+            : String(row.weatherCity);
+      }
+    });
+
+    const lastRow = sheet.getLastRow();
+
+    const sheetDates = sheet
+      .getRange(
+        2,
+        1,
+        lastRow - 1,
+        1
+      )
+      .getValues();
+
+    sheetDates.forEach(function(row, index) {
+      const iso = cellDateToIso_(
+        row[0],
+        tz
+      );
+
+      if (
+        iso &&
+        Object.prototype.hasOwnProperty.call(
+          cityByDate,
+          iso
+        )
+      ) {
+        sheet
+          .getRange(
+            index + 2,
+            cityColumn
+          )
+          .setValue(
+            cityByDate[iso]
+          )
+          .setFontFamily("Arial");
+      }
+    });
+  });
+}
+
+
+/**
+ * Записывает данные формы «Добавить улов» прямо в годовой лист.
+ *
+ * На годовом листе одна строка = один день, поэтому при нескольких
+ * записях улова значения объединяются через " | ".
+ * Детальная структура "одна поимка = одна строка" сохраняется на листе "Улов".
+ */
+function writeCatchFieldsForCorrectionWindow_(
+  ss,
+  years,
+  correctionStartIso,
+  todayIso
+) {
+  const tz = ss.getSpreadsheetTimeZone();
+
+  const columns = {
+    catchCities: YEAR_HEADERS.indexOf("Город улова") + 1,
+    catchFish: YEAR_HEADERS.indexOf("Рыба") + 1,
+    catchQuantities: YEAR_HEADERS.indexOf("Количество по записям") + 1,
+    catchTimes: YEAR_HEADERS.indexOf("Время улова") + 1,
+    catchTackles: YEAR_HEADERS.indexOf("Снасть") + 1,
+    catchMethods: YEAR_HEADERS.indexOf("Способ ловли") + 1,
+    catchPlaces: YEAR_HEADERS.indexOf("Место ловли") + 1,
+    catchBaits: YEAR_HEADERS.indexOf("Приманка") + 1
+  };
+
+  years.forEach(function(yearData) {
+    const sheet = ss.getSheetByName(
+      String(yearData.year)
+    );
+
+    if (!sheet || sheet.getLastRow() < 2) {
+      return;
+    }
+
+    const sourceRows = Array.isArray(yearData.rows)
+      ? yearData.rows
+      : [];
+
+    const byDate = {};
+
+    sourceRows.forEach(function(row) {
+      if (
+        row.date &&
+        row.date >= correctionStartIso &&
+        row.date <= todayIso
+      ) {
+        byDate[row.date] = {
+          catchCities: row.catchCities || "",
+          catchFish: row.catchFish || "",
+          catchQuantities: row.catchQuantities || "",
+          catchTimes: row.catchTimes || "",
+          catchTackles: row.catchTackles || "",
+          catchMethods: row.catchMethods || "",
+          catchPlaces: row.catchPlaces || "",
+          catchBaits: row.catchBaits || ""
+        };
+      }
+    });
+
+    const sheetDates = sheet
+      .getRange(
+        2,
+        1,
+        sheet.getLastRow() - 1,
+        1
+      )
+      .getValues();
+
+    sheetDates.forEach(function(dateRow, index) {
+      const iso = cellDateToIso_(
+        dateRow[0],
+        tz
+      );
+
+      if (
+        !iso ||
+        !Object.prototype.hasOwnProperty.call(
+          byDate,
+          iso
+        )
+      ) {
+        return;
+      }
+
+      const values = byDate[iso];
+
+      Object.keys(columns).forEach(function(key) {
+        const column = columns[key];
+
+        if (column > 0) {
+          sheet
+            .getRange(
+              index + 2,
+              column
+            )
+            .setValue(
+              values[key]
+            )
+            .setFontFamily("Arial");
+        }
+      });
     });
   });
 }

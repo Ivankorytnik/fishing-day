@@ -19,9 +19,9 @@
     body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(180deg,#e8f0e9 0,#f4f2e8 260px);color:var(--text)}
     button,input,select{font:inherit}
     .wrap{max-width:1120px;margin:0 auto;padding:20px 16px 64px}
-    .hero{background:linear-gradient(135deg,#123f39,#1d7568);color:white;border-radius:24px;padding:24px;box-shadow:var(--shadow);margin-bottom:16px}
+    .hero{position:relative;background:linear-gradient(135deg,#123f39,#1d7568);color:white;border-radius:24px;padding:24px;box-shadow:var(--shadow);margin-bottom:16px}
     .hero small{text-transform:uppercase;letter-spacing:.08em;opacity:.72}
-    .hero h1{font-size:32px;margin:8px 0 6px}.hero p{margin:0;opacity:.88}
+    .hero h1{font-size:32px;margin:8px 0 6px}.hero p{margin:0;opacity:.88}.version-badge{position:absolute;top:18px;right:18px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);color:#fff;border-radius:999px;padding:7px 11px;font-size:12px;font-weight:700;letter-spacing:.03em;backdrop-filter:blur(4px)}
     .card{background:var(--surface);border:1px solid rgba(23,52,47,.08);border-radius:18px;padding:18px;box-shadow:0 7px 20px rgba(31,54,48,.05);margin-top:16px}
     .section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}.section-title h2{font-size:19px;margin:0}
     .grid{display:grid;gap:12px}.weather-grid{grid-template-columns:repeat(4,1fr)}
@@ -45,12 +45,13 @@
     .sync-box{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end}.sync-note{font-size:12px;color:var(--muted);line-height:1.45;margin-top:10px}
     .footer-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
     @media(max-width:760px){.weather-grid{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr 1fr}.city-field,.fish-field,.tackle-field,.bait-field{grid-column:1/-1}.qty-field,.time-field,.method-field,.place-field,.custom-place-field{grid-column:span 1}.add-field{grid-column:1/-1}.add-field .btn{width:100%}.summary,.annual-stats{grid-template-columns:1fr 1fr}.sync-box,.comment-box{grid-template-columns:1fr}.sync-box .btn,.comment-box .btn{width:100%}}
-    @media(max-width:480px){.weather-grid{grid-template-columns:1fr 1fr}.hero h1{font-size:26px}.catch-row{grid-template-columns:52px minmax(150px,1fr) 54px 32px 32px;gap:5px;font-size:13px}.edit-toolbar{display:grid;grid-template-columns:1fr}.edit-toolbar .field{min-width:0}.city-field,.qty-field,.time-field,.method-field,.place-field,.custom-place-field{grid-column:1/-1}}
+    @media(max-width:480px){.version-badge{top:14px;right:14px;font-size:11px;padding:6px 9px}.weather-grid{grid-template-columns:1fr 1fr}.hero h1{font-size:26px}.catch-row{grid-template-columns:52px minmax(150px,1fr) 54px 32px 32px;gap:5px;font-size:13px}.edit-toolbar{display:grid;grid-template-columns:1fr}.edit-toolbar .field{min-width:0}.city-field,.qty-field,.time-field,.method-field,.place-field,.custom-place-field{grid-column:1/-1}}
   </style>
 </head>
 <body>
 <main class="wrap">
   <section class="hero">
+    <div class="version-badge">Версия 17</div>
     <small>Дневник рыболова</small>
     <h1>Рыболовный день</h1>
     <p>Учёт каждого дня года, улова, города, комментариев и погоды по выбранному городу.</p>
@@ -706,14 +707,28 @@ function buildSyncPayload(){
   const years=getYearsWithData();
   const yearData=years.map(year=>{
     const rows=datesOfYear(year).map(key=>{
-      const d=state.days[key]||{fishing:false,catches:[],weather:null},w=d.weather,total=(d.catches||[]).reduce((s,c)=>s+Number(c.qty||0),0);
+      const d=state.days[key]||{fishing:false,catches:[],weather:null},w=d.weather;
+      const catches=(d.catches||[]).map(normalizeCatch);
+      const total=catches.reduce((s,c)=>s+Number(c.qty||0),0);
+      const joinCatchField=fn=>catches.map(fn).filter(v=>String(v??"").trim()).join(" | ");
       return {
         date:key,weekday:weekday(key),fishing:!!d.fishing,total,result:resultText(d),comment:d.comment||"",
         temperature:w?.temperature??"",apparentTemperature:w?.apparentTemperature??"",weather:w?weatherText(w.weatherCode):"",
         windDirection:w?windDirection(w.windDirection):"",windDegrees:w?.windDirection??"",windSpeed:w?.windSpeed??"",windGusts:w?.windGusts??"",
         humidity:w?.humidity??"",pressureHpa:w?.pressure??"",pressureMm:w?.pressure?Math.round(w.pressure*.750062):"",
         precipitation:w?.precipitation??"",cloudCover:w?.cloudCover??"",
-        city:d.city||w?.city||DEFAULT_CITY_NAME
+        weatherCity:w?.city?[w.city,w.region].filter(Boolean).join(", "):"",
+        city:d.city||DEFAULT_CITY_NAME,
+
+        // Поля блока «Добавить улов» для строки конкретного дня.
+        catchCities:joinCatchField(c=>c.city||d.city||DEFAULT_CITY_NAME),
+        catchFish:joinCatchField(c=>c.fish||""),
+        catchQuantities:joinCatchField(c=>c.qty??""),
+        catchTimes:joinCatchField(c=>c.time||""),
+        catchTackles:joinCatchField(c=>c.tackle||""),
+        catchMethods:joinCatchField(c=>c.method||""),
+        catchPlaces:joinCatchField(c=>c.place||""),
+        catchBaits:joinCatchField(c=>Array.isArray(c.baits)?c.baits.join(", "):(c.baits||""))
       };
     });
     const fishingDays=rows.filter(r=>r.fishing).length,total=rows.reduce((s,r)=>s+r.total,0);
@@ -722,7 +737,7 @@ function buildSyncPayload(){
     const best=rows.reduce((a,r)=>r.total>a.total?r:a,{date:"",total:0});
     return {year,rows,summary:{fishingDays,total,species:species.size,bestDay:best.date,bestTotal:best.total},catches};
   });
-  return {app:"Fishing Day MVP",version:14,clientToday:todayKey,selectedDate:selectedDateKey,syncedAt:new Date().toISOString(),years:yearData};
+  return {app:"Fishing Day MVP",version:17,clientToday:todayKey,selectedDate:selectedDateKey,syncedAt:new Date().toISOString(),years:yearData};
 }
 async function syncGoogleSheets(){
   const endpoint=$("sheetEndpoint").value.trim(),status=$("syncStatus");
