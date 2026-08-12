@@ -43,15 +43,24 @@
     table{border-collapse:collapse;width:100%;min-width:820px;font-size:13px}th,td{padding:9px 10px;border-bottom:1px solid #ecefe9;text-align:left;vertical-align:top}th{position:sticky;top:0;background:var(--yellow);color:#111;z-index:1;font-weight:700}td.num{text-align:right}.yes-badge,.no-badge{display:inline-block;border-radius:999px;padding:3px 8px;font-weight:700;font-size:12px}.yes-badge{background:#dfeee8;color:#0f5148}.no-badge{background:#f0eee8;color:#6c6554}
     .result-cell{min-width:230px}.weather-cell{min-width:260px;color:var(--muted)}.comment-cell{color:var(--text)}.city-hint{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.35}
     .sync-box{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end}.sync-note{font-size:12px;color:var(--muted);line-height:1.45;margin-top:10px}
+    .bite-toolbar{display:grid;grid-template-columns:180px 220px auto;gap:10px;align-items:end}
+    .bite-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+    .bite-score{display:inline-flex;align-items:center;justify-content:center;min-width:58px;padding:5px 9px;border-radius:999px;font-weight:700}
+    .bite-high{background:#dfeee8;color:#0f5148}.bite-mid{background:#fff3bf;color:#6d5a00}.bite-low{background:#f6e8e4;color:#8c3f31}
+    .bite-row-now td{background:#fff5bf!important}.bite-row-best td{box-shadow:inset 3px 0 0 #146b5f}
+    .bite-table{max-height:620px}.bite-table table{min-width:980px}
+    .bite-note{font-size:12px;color:var(--muted);line-height:1.5;margin-top:10px}
+    .bite-pressure-up{color:#8c3f31}.bite-pressure-down{color:#0f5148}.bite-pressure-stable{color:var(--muted)}
+
     .footer-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-    @media(max-width:760px){.weather-grid{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr 1fr}.city-field,.fish-field,.tackle-field,.bait-field{grid-column:1/-1}.qty-field,.time-field,.method-field,.place-field,.custom-place-field{grid-column:span 1}.add-field{grid-column:1/-1}.add-field .btn{width:100%}.summary,.annual-stats{grid-template-columns:1fr 1fr}.sync-box,.comment-box{grid-template-columns:1fr}.sync-box .btn,.comment-box .btn{width:100%}}
-    @media(max-width:480px){.version-badge{top:14px;right:14px;font-size:11px;padding:6px 9px}.weather-grid{grid-template-columns:1fr 1fr}.hero h1{font-size:26px}.catch-row{grid-template-columns:52px minmax(150px,1fr) 54px 32px 32px;gap:5px;font-size:13px}.edit-toolbar{display:grid;grid-template-columns:1fr}.edit-toolbar .field{min-width:0}.city-field,.qty-field,.time-field,.method-field,.place-field,.custom-place-field{grid-column:1/-1}}
+    @media(max-width:760px){.bite-toolbar{grid-template-columns:1fr 1fr}.bite-toolbar .btn{grid-column:1/-1}.bite-summary{grid-template-columns:1fr 1fr}.weather-grid{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr 1fr}.city-field,.fish-field,.tackle-field,.bait-field{grid-column:1/-1}.qty-field,.time-field,.method-field,.place-field,.custom-place-field{grid-column:span 1}.add-field{grid-column:1/-1}.add-field .btn{width:100%}.summary,.annual-stats{grid-template-columns:1fr 1fr}.sync-box,.comment-box{grid-template-columns:1fr}.sync-box .btn,.comment-box .btn{width:100%}}
+    @media(max-width:480px){.bite-toolbar,.bite-summary{grid-template-columns:1fr}.version-badge{top:14px;right:14px;font-size:11px;padding:6px 9px}.weather-grid{grid-template-columns:1fr 1fr}.hero h1{font-size:26px}.catch-row{grid-template-columns:52px minmax(150px,1fr) 54px 32px 32px;gap:5px;font-size:13px}.edit-toolbar{display:grid;grid-template-columns:1fr}.edit-toolbar .field{min-width:0}.city-field,.qty-field,.time-field,.method-field,.place-field,.custom-place-field{grid-column:1/-1}}
   </style>
 </head>
 <body>
 <main class="wrap">
   <section class="hero">
-    <div class="version-badge">Версия 20</div>
+    <div class="version-badge">Версия 21</div>
     <small>Дневник рыболова</small>
     <h1>Рыболовный день</h1>
     <p>Учёт каждого дня года, улова, города, комментариев и погоды по выбранному городу.</p>
@@ -79,6 +88,66 @@
       <div class="stat"><div class="stat-label">Осадки</div><div class="stat-value" id="precipValue">—</div></div>
     </div>
     <div class="status" id="weatherStatus"></div>
+  </section>
+
+  <section class="card" id="biteForecastCard">
+    <div class="section-title">
+      <h2>Вероятность клёва по часам</h2>
+      <button class="btn secondary" id="refreshBiteForecast" type="button">Обновить прогноз</button>
+    </div>
+    <div class="bite-toolbar">
+      <div class="field">
+        <label for="biteDate">Дата прогноза</label>
+        <input id="biteDate" type="date">
+      </div>
+      <div class="field">
+        <label for="biteFish">Рыба</label>
+        <select id="biteFish">
+          <option value="Общий">Общий клёв</option>
+          <option>Карась</option><option>Лещ</option><option>Карп</option><option>Сазан</option>
+          <option>Сом</option><option>Судак</option><option>Подлещик</option><option>Густера</option>
+          <option>Ёрш</option><option>Щука</option><option>Окунь</option>
+        </select>
+      </div>
+      <button class="btn" id="biteUseSelectedDay" type="button">Дата выбранного дня</button>
+    </div>
+
+    <div class="bite-summary">
+      <div class="mini"><b id="biteCityValue">—</b><span>город прогноза</span></div>
+      <div class="mini"><b id="biteBestHour">—</b><span>лучший час</span></div>
+      <div class="mini"><b id="biteBestWindow">—</b><span>лучшее окно 2 часа</span></div>
+      <div class="mini"><b id="biteDayScore">—</b><span>средний индекс дня</span></div>
+    </div>
+
+    <div class="status" id="biteStatus">Прогноз рассчитывается по почасовой погоде выбранного города.</div>
+
+    <div class="table-wrap bite-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Время</th>
+            <th>Клёв</th>
+            <th>Оценка</th>
+            <th>Температура</th>
+            <th>Давление</th>
+            <th>Δ давления 3ч</th>
+            <th>Ветер</th>
+            <th>Порывы</th>
+            <th>Осадки</th>
+            <th>Облачность</th>
+          </tr>
+        </thead>
+        <tbody id="biteTableBody">
+          <tr><td colspan="10">Загрузка прогноза…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="bite-note">
+      Индекс 0–100% — эвристическая оценка условий для клёва, а не гарантия улова.
+      В расчёте учитываются почасовые температура, давление и его изменение, ветер,
+      порывы, осадки, облачность, влажность, восход/закат и особенности выбранного вида рыбы.
+    </div>
   </section>
 
   <section class="card">
@@ -211,6 +280,8 @@ const POPULAR_RU_CITIES=[
   "Омск","Новосибирск","Красноярск","Иркутск","Хабаровск","Владивосток","Астрахань"
 ];
 let citySearchTimer=null;
+let biteHourlyData=null;
+let biteForecastLocation=null;
 const $=id=>document.getElementById(id);
 const todayKey=localDateKey();
 let selectedDateKey=todayKey;
@@ -484,6 +555,304 @@ async function autoBackfillCurrentYear(){
   }
 }
 
+const BITE_FISH_PROFILES={
+  "Общий":{min:5,optMin:10,optMax:24,max:30,dawn:1,night:0},
+  "Карась":{min:10,optMin:16,optMax:25,max:30,dawn:1.15,night:-0.15},
+  "Лещ":{min:6,optMin:12,optMax:22,max:27,dawn:1.15,night:0.15},
+  "Карп":{min:10,optMin:18,optMax:27,max:31,dawn:1.1,night:0.05},
+  "Сазан":{min:10,optMin:18,optMax:28,max:32,dawn:1.05,night:0.05},
+  "Сом":{min:12,optMin:19,optMax:28,max:32,dawn:0.8,night:1.25},
+  "Судак":{min:3,optMin:10,optMax:20,max:25,dawn:1.3,night:0.65},
+  "Подлещик":{min:5,optMin:11,optMax:22,max:27,dawn:1.15,night:0.1},
+  "Густера":{min:4,optMin:10,optMax:22,max:27,dawn:1.05,night:0.05},
+  "Ёрш":{min:0,optMin:5,optMax:17,max:22,dawn:0.9,night:0.2},
+  "Щука":{min:0,optMin:6,optMax:18,max:24,dawn:1.2,night:-0.25},
+  "Окунь":{min:2,optMin:8,optMax:20,max:26,dawn:1.15,night:-0.1}
+};
+
+function clamp(n,min,max){return Math.max(min,Math.min(max,n))}
+function timeMinutes(value){
+  const m=String(value||"").match(/T?(\d{2}):(\d{2})/);
+  return m?Number(m[1])*60+Number(m[2]):null;
+}
+function minuteDistance(a,b){
+  if(a===null||b===null)return 9999;
+  return Math.abs(a-b);
+}
+function biteScoreClass(score){
+  return score>=70?"bite-high":score>=45?"bite-mid":"bite-low";
+}
+function biteScoreLabel(score){
+  return score>=80?"Очень высокий":score>=70?"Высокий":score>=55?"Хороший":score>=45?"Средний":score>=30?"Слабый":"Низкий";
+}
+function tempScoreForFish(temp,profile){
+  if(!Number.isFinite(temp))return 0;
+  if(temp>=profile.optMin&&temp<=profile.optMax)return 10;
+  if(temp>=profile.min&&temp<=profile.max)return 4;
+  if(temp<profile.min-5||temp>profile.max+5)return -12;
+  return -5;
+}
+function pressureTrendClass(delta){
+  if(!Number.isFinite(delta))return "bite-pressure-stable";
+  if(delta>1.5)return "bite-pressure-up";
+  if(delta<-1.5)return "bite-pressure-down";
+  return "bite-pressure-stable";
+}
+function calculateBiteScore(hour,index,hours,sunrise,sunset,fishName){
+  const profile=BITE_FISH_PROFILES[fishName]||BITE_FISH_PROFILES["Общий"];
+  let score=45;
+  const reasons=[];
+
+  const temp=Number(hour.temperature);
+  const wind=Number(hour.windSpeed);
+  const gust=Number(hour.windGusts);
+  const cloud=Number(hour.cloudCover);
+  const precip=Number(hour.precipitation);
+  const humidity=Number(hour.humidity);
+  const pressure=Number(hour.pressure);
+  const precipProb=Number(hour.precipitationProbability);
+
+  const tScore=tempScoreForFish(temp,profile);
+  score+=tScore;
+  if(tScore>=10)reasons.push("температура оптимальна");
+  else if(tScore<0)reasons.push("температура вне оптимума");
+
+  let pressureDelta=null;
+  if(index>=3&&Number.isFinite(Number(hours[index-3]?.pressure))){
+    pressureDelta=pressure-Number(hours[index-3].pressure);
+    const a=Math.abs(pressureDelta);
+    if(a<=1.2){score+=12;reasons.push("давление стабильное")}
+    else if(a<=2.5){score+=7;reasons.push("давление меняется плавно")}
+    else if(a<=4){score+=1}
+    else{score-=10;reasons.push("резкий скачок давления")}
+  }
+  if(Number.isFinite(pressure)){
+    if(pressure>=995&&pressure<=1025)score+=3;
+    else if(pressure<985||pressure>1035)score-=5;
+  }
+
+  if(Number.isFinite(wind)){
+    if(wind>=5&&wind<=18){score+=9;reasons.push("умеренный ветер")}
+    else if(wind>18&&wind<=26)score+=3;
+    else if(wind<5)score+=3;
+    else if(wind>35){score-=12;reasons.push("сильный ветер")}
+    else score-=5;
+  }
+  if(Number.isFinite(gust)){
+    if(gust>45){score-=10;reasons.push("сильные порывы")}
+    else if(gust>35)score-=5;
+  }
+
+  if(Number.isFinite(cloud)){
+    if(cloud>=30&&cloud<=85){score+=6;reasons.push("подходящая облачность")}
+    else if(cloud>85)score+=3;
+  }
+
+  if(Number.isFinite(precip)){
+    if(precip>4){score-=12;reasons.push("сильные осадки")}
+    else if(precip>1){score-=4}
+    else if(precip>0&&precip<=1){score+=4;reasons.push("лёгкие осадки")}
+    else score+=1;
+  }
+  if(Number.isFinite(precipProb)){
+    if(precipProb>=20&&precipProb<=60&&precip<=1)score+=3;
+    if(precipProb>85&&precip>1)score-=4;
+  }
+
+  if(Number.isFinite(humidity)&&humidity>=45&&humidity<=90)score+=2;
+
+  const hourMinutes=timeMinutes(hour.time);
+  const sunriseMinutes=timeMinutes(sunrise);
+  const sunsetMinutes=timeMinutes(sunset);
+  const nearSunrise=minuteDistance(hourMinutes,sunriseMinutes);
+  const nearSunset=minuteDistance(hourMinutes,sunsetMinutes);
+  const dawnDistance=Math.min(nearSunrise,nearSunset);
+
+  if(dawnDistance<=60){
+    const bonus=Math.round(16*profile.dawn);
+    score+=bonus;
+    reasons.push("восход/закат");
+  }else if(dawnDistance<=120){
+    score+=Math.round(8*profile.dawn);
+  }
+
+  const isNight=hour.isDay===0 || (
+    sunriseMinutes!==null&&sunsetMinutes!==null&&
+    (hourMinutes<sunriseMinutes||hourMinutes>sunsetMinutes)
+  );
+  if(isNight){
+    score+=Math.round(10*profile.night);
+    if(profile.night>0.5)reasons.push("вид активен ночью");
+  }
+
+  const code=Number(hour.weatherCode);
+  if([95,96,99].includes(code)){score-=20;reasons.push("гроза")}
+  if([65,67,82,86].includes(code))score-=8;
+
+  score=clamp(Math.round(score),5,95);
+  return {score,pressureDelta,reasons};
+}
+
+async function fetchBiteHourlyInternet(date,location){
+  const isPast=date<todayKey;
+  const previousDate=shiftDateKey(date,-1);
+  let url;
+
+  if(isPast){
+    url=new URL("https://archive-api.open-meteo.com/v1/archive");
+    url.searchParams.set("start_date",previousDate);
+    url.searchParams.set("end_date",date);
+    url.searchParams.set("hourly","temperature_2m,relative_humidity_2m,precipitation,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day");
+    url.searchParams.set("daily","sunrise,sunset");
+  }else{
+    url=new URL("https://api.open-meteo.com/v1/forecast");
+    url.searchParams.set("past_days","1");
+    url.searchParams.set("forecast_days","16");
+    url.searchParams.set("hourly","temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day");
+    url.searchParams.set("daily","sunrise,sunset");
+  }
+
+  url.searchParams.set("latitude",location.lat);
+  url.searchParams.set("longitude",location.lon);
+  url.searchParams.set("temperature_unit","celsius");
+  url.searchParams.set("wind_speed_unit","kmh");
+  url.searchParams.set("precipitation_unit","mm");
+  url.searchParams.set("timezone",location.timezone||"auto");
+
+  const res=await fetch(url,{cache:"no-store"});
+  if(!res.ok)throw new Error(`Почасовой прогноз: HTTP ${res.status}`);
+  const data=await res.json();
+  if(!data.hourly?.time)throw new Error("Почасовые данные не получены.");
+
+  const targetIndexes=[];
+  data.hourly.time.forEach((t,i)=>{
+    if(String(t).slice(0,10)===date)targetIndexes.push(i);
+  });
+  if(!targetIndexes.length)throw new Error("Для этой даты нет почасовых данных.");
+
+  const hours=targetIndexes.map(i=>({
+    time:data.hourly.time[i],
+    temperature:data.hourly.temperature_2m?.[i],
+    humidity:data.hourly.relative_humidity_2m?.[i],
+    precipitationProbability:data.hourly.precipitation_probability?.[i],
+    precipitation:data.hourly.precipitation?.[i],
+    weatherCode:data.hourly.weather_code?.[i],
+    cloudCover:data.hourly.cloud_cover?.[i],
+    pressure:data.hourly.pressure_msl?.[i],
+    windSpeed:data.hourly.wind_speed_10m?.[i],
+    windDirection:data.hourly.wind_direction_10m?.[i],
+    windGusts:data.hourly.wind_gusts_10m?.[i],
+    isDay:data.hourly.is_day?.[i]
+  }));
+
+  // Для давления добавляем до 3 часов предыдущего дня в начало массива расчёта.
+  const previousIndexes=[];
+  for(let i=Math.max(0,targetIndexes[0]-3);i<targetIndexes[0];i++)previousIndexes.push(i);
+  const previousHours=previousIndexes.map(i=>({
+    time:data.hourly.time[i],
+    pressure:data.hourly.pressure_msl?.[i]
+  }));
+
+  const dayIndex=(data.daily?.time||[]).findIndex(d=>d===date);
+  const sunrise=dayIndex>=0?data.daily.sunrise?.[dayIndex]:null;
+  const sunset=dayIndex>=0?data.daily.sunset?.[dayIndex]:null;
+
+  return {
+    date,
+    source:isPast?"Open-Meteo Historical Weather":"Open-Meteo Forecast",
+    sunrise,
+    sunset,
+    hours,
+    calculationHours:[...previousHours,...hours],
+    offset:previousHours.length
+  };
+}
+
+function renderBiteForecast(){
+  if(!biteHourlyData)return;
+  const fishName=$("biteFish").value||"Общий";
+  const sourceHours=biteHourlyData.calculationHours;
+  const rows=biteHourlyData.hours.map((hour,i)=>{
+    const calcIndex=i+biteHourlyData.offset;
+    const calc=calculateBiteScore(
+      hour,calcIndex,sourceHours,biteHourlyData.sunrise,biteHourlyData.sunset,fishName
+    );
+    return {...hour,...calc};
+  });
+
+  if(!rows.length)return;
+
+  const best=rows.reduce((a,b)=>b.score>a.score?b:a,rows[0]);
+  let bestWindow={start:rows[0],end:rows[Math.min(1,rows.length-1)],score:rows[0].score};
+  for(let i=0;i<rows.length-1;i++){
+    const avg=Math.round((rows[i].score+rows[i+1].score)/2);
+    if(avg>bestWindow.score)bestWindow={start:rows[i],end:rows[i+1],score:avg};
+  }
+  const avg=Math.round(rows.reduce((s,r)=>s+r.score,0)/rows.length);
+
+  $("biteCityValue").textContent=[
+    biteForecastLocation?.city||DEFAULT_CITY_NAME,
+    biteForecastLocation?.region||""
+  ].filter(Boolean).join(", ");
+  $("biteBestHour").textContent=`${best.time.slice(11,16)} · ${best.score}%`;
+  $("biteBestWindow").textContent=`${bestWindow.start.time.slice(11,16)}–${bestWindow.end.time.slice(11,16)} · ${bestWindow.score}%`;
+  $("biteDayScore").textContent=`${avg}%`;
+
+  const currentHour=new Date().getHours();
+  $("biteTableBody").innerHTML=rows.map(r=>{
+    const hh=Number(r.time.slice(11,13));
+    const isNow=biteHourlyData.date===todayKey&&hh===currentHour;
+    const isBest=r.time===best.time;
+    const deltaText=Number.isFinite(r.pressureDelta)
+      ?`${r.pressureDelta>0?"+":""}${r.pressureDelta.toFixed(1)} hPa`
+      :"—";
+    const rainProb=Number.isFinite(Number(r.precipitationProbability))
+      ?`${Math.round(r.precipitationProbability)}% · `
+      :"";
+    const reasons=r.reasons.length?`Причины: ${r.reasons.join(", ")}`:"";
+    return `<tr class="${isNow?"bite-row-now ":""}${isBest?"bite-row-best":""}" title="${escapeHtml(reasons)}">
+      <td><b>${r.time.slice(11,16)}</b>${isNow?' <span class="yes-badge">сейчас</span>':""}</td>
+      <td><span class="bite-score ${biteScoreClass(r.score)}">${r.score}%</span></td>
+      <td>${biteScoreLabel(r.score)}</td>
+      <td>${Number.isFinite(Number(r.temperature))?`${Math.round(r.temperature)} °C`:"—"}</td>
+      <td>${Number.isFinite(Number(r.pressure))?`${Math.round(r.pressure)} hPa`:"—"}</td>
+      <td class="${pressureTrendClass(r.pressureDelta)}">${deltaText}</td>
+      <td>${Number.isFinite(Number(r.windSpeed))?`${Math.round(r.windSpeed)} км/ч ${windDirection(Number(r.windDirection)||0)}`:"—"}</td>
+      <td>${Number.isFinite(Number(r.windGusts))?`${Math.round(r.windGusts)} км/ч`:"—"}</td>
+      <td>${rainProb}${Number.isFinite(Number(r.precipitation))?`${Number(r.precipitation).toFixed(1)} мм`:"—"}</td>
+      <td>${Number.isFinite(Number(r.cloudCover))?`${Math.round(r.cloudCover)}%`:"—"}</td>
+    </tr>`;
+  }).join("");
+
+  $("biteStatus").textContent=
+    `${biteHourlyData.source} · ${formatDate(biteHourlyData.date)} · ${fishName==="Общий"?"общий клёв":fishName}. `+
+    `Восход ${biteHourlyData.sunrise?.slice(11,16)||"—"}, закат ${biteHourlyData.sunset?.slice(11,16)||"—"}.`;
+}
+
+async function fetchBiteForecast(locationOverride=null){
+  const status=$("biteStatus");
+  try{
+    const date=$("biteDate").value||todayKey;
+    const maxDate=shiftDateKey(todayKey,15);
+    if(date>maxDate)throw new Error("Прогноз доступен максимум на 15 дней вперёд.");
+
+    status.textContent="Загружаю почасовую погоду и рассчитываю вероятность клёва…";
+    $("biteTableBody").innerHTML='<tr><td colspan="10">Загрузка данных из интернета…</td></tr>';
+
+    const day=ensureDay(selectedDateKey);
+    const cityName=locationOverride?.city||$("cityInput").value.trim()||day.city||DEFAULT_CITY_NAME;
+    const location=locationOverride||await resolveCity(cityName);
+    biteForecastLocation=location;
+    biteHourlyData=await fetchBiteHourlyInternet(date,location);
+    renderBiteForecast();
+  }catch(e){
+    biteHourlyData=null;
+    $("biteTableBody").innerHTML=`<tr><td colspan="10">${escapeHtml(e.message||"Не удалось рассчитать прогноз клёва.")}</td></tr>`;
+    status.textContent=e.message||"Не удалось рассчитать прогноз клёва.";
+  }
+}
+
+
 function renderComment(){
   const day=ensureDay(selectedDateKey);
   $("dayComment").value=day.comment||"";
@@ -630,6 +999,10 @@ function selectDay(key,scrollToEditor=true){
   buildYearSelect();
   if([...$("yearSelect").options].some(o=>Number(o.value)===year))$("yearSelect").value=String(year);
   renderWeather();renderFishing();renderComment();renderCatches();renderYear();
+  if($("biteDate")){
+    $("biteDate").value=selectedDateKey;
+    fetchBiteForecast();
+  }
   if(selectedDateKey===todayKey){
     if(!ensureDay(selectedDateKey).weather) fetchWeather();
   }else{
@@ -738,7 +1111,7 @@ function buildSyncPayload(){
     const best=rows.reduce((a,r)=>r.total>a.total?r:a,{date:"",total:0});
     return {year,rows,summary:{fishingDays,total,species:species.size,bestDay:best.date,bestTotal:best.total},catches};
   });
-  return {app:"Fishing Day MVP",version:20,clientToday:todayKey,selectedDate:selectedDateKey,syncedAt:new Date().toISOString(),years:yearData};
+  return {app:"Fishing Day MVP",version:21,clientToday:todayKey,selectedDate:selectedDateKey,syncedAt:new Date().toISOString(),years:yearData};
 }
 async function syncGoogleSheets(){
   const endpoint=$("sheetEndpoint").value.trim(),status=$("syncStatus");
@@ -854,6 +1227,8 @@ function renderAll(){renderWeather();renderFishing();renderComment();renderCatch
 let state=loadData();ensureDay(todayKey);saveData();
 $("editDate").max=todayKey;
 $("editDate").value=selectedDateKey;
+$("biteDate").value=todayKey;
+$("biteDate").max=shiftDateKey(todayKey,15);
 $("catchTime").value=currentTime();
 $("sheetEndpoint").value=localStorage.getItem(ENDPOINT_KEY)||"";
 $("fishingYes").onclick=()=>setFishing(true);$("fishingNo").onclick=()=>setFishing(false);
@@ -912,6 +1287,7 @@ $("catchForm").onsubmit=async e=>{
   cancelCatchEditing();
   renderAll();
   await fetchWeather(location);
+  await fetchBiteForecast(location);
 };
 $("clearToday").onclick=()=>{
   const d=ensureDay(selectedDateKey);if(!d.catches.length)return;
@@ -922,6 +1298,10 @@ $("prevYear").onclick=()=>{const s=$("yearSelect"),y=Number(s.value)-1;if(![...s
 $("nextYear").onclick=()=>{const s=$("yearSelect"),y=Number(s.value)+1;if(![...s.options].some(o=>Number(o.value)===y)){s.insertAdjacentHTML("afterbegin",`<option value="${y}">${y}</option>`)}s.value=String(y);renderYear()};
 $("saveEndpoint").onclick=()=>{localStorage.setItem(ENDPOINT_KEY,$("sheetEndpoint").value.trim());$("syncStatus").textContent="URL сохранён на этом устройстве."};
 $("syncSheets").onclick=syncGoogleSheets;
+$("refreshBiteForecast").onclick=()=>fetchBiteForecast();
+$("biteDate").onchange=()=>fetchBiteForecast();
+$("biteFish").onchange=()=>{if(biteHourlyData)renderBiteForecast();else fetchBiteForecast();};
+$("biteUseSelectedDay").onclick=()=>{$("biteDate").value=selectedDateKey;fetchBiteForecast();};
 $("fishingPlace").onchange=updateCustomPlaceVisibility;
 $("cityInput").oninput=()=>{
   clearTimeout(citySearchTimer);
@@ -937,6 +1317,7 @@ $("cityInput").onchange=async()=>{
     day.city=location.city;day.cityRegion=location.region||"";day.cityMeta=location;
     saveData();
     await fetchWeather(location);
+    await fetchBiteForecast(location);
   }catch(e){
     $("cityStatus").textContent=e.message||"Не удалось определить город.";
   }
@@ -948,7 +1329,11 @@ $("cityInput").value=ensureDay(selectedDateKey).city||DEFAULT_CITY_NAME;
 renderCityOptions(POPULAR_RU_CITIES);
 updateCustomPlaceVisibility();
 updateBaitSummary();
-renderAll();fetchWeather().then(autoBackfillCurrentYear);
+renderAll();
+fetchWeather().then(()=>{
+  autoBackfillCurrentYear();
+  fetchBiteForecast();
+});
 
 </script>
 </body>
