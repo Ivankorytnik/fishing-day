@@ -66,7 +66,7 @@
 <body>
 <main class="wrap">
   <section class="hero">
-    <div class="version-badge">Версия 27</div>
+    <div class="version-badge">Версия 28</div>
     <small>Дневник рыболова</small>
     <h1>Рыболовный день</h1>
     <p>Учёт каждого дня года, улова, города, комментариев и погоды по выбранному городу.</p>
@@ -247,7 +247,7 @@
   </section>
 
   <section class="card">
-    <div class="section-title"><h2>Журнал: последние 8 дней</h2></div>
+    <div class="section-title"><h2>Журнал <span id="journalYearLabel">2026</span>: последние 8 дней</h2></div>
     <div class="annual-toolbar">
       <div class="field"><label for="yearSelect">Год</label><select id="yearSelect"></select></div>
       <button class="btn secondary" id="prevYear" type="button">← Предыдущий</button>
@@ -389,7 +389,7 @@ function renderWeather(){
   $("refreshWeather").disabled=false;
   $("refreshWeather").textContent=selectedDateKey===todayKey?"Обновить погоду":"Обновить историческую погоду";
   if(!w){
-    ["tempValue","weatherValue","windValue","gustValue","humidityValue","pressureValue","precipValue"].forEach(id=>$(id).textContent="—");
+    ["tempValue","weatherValue","windValue","gustValue","humidityValue","pressureValue"].forEach(id=>$(id).textContent="—");
     ["feelsValue","cloudValue","windSpeedValue","pressureMmValue"].forEach(id=>$(id).textContent="");
     $("locationValue").textContent=day.city||DEFAULT_CITY_NAME;
     $("weatherStatus").textContent=`Погода будет загружена из интернета для города ${day.city||DEFAULT_CITY_NAME}.`;
@@ -405,7 +405,6 @@ function renderWeather(){
   $("humidityValue").textContent=`${Math.round(w.humidity)}%`;
   $("pressureValue").textContent=`${Math.round(w.pressure)} hPa`;
   $("pressureMmValue").textContent=`${Math.round(w.pressure*.750062)} мм рт. ст.`;
-  $("precipValue").textContent=`${Number(w.precipitation).toFixed(1)} мм`;
   $("locationValue").textContent=[w.city||day.city||DEFAULT_CITY_NAME,w.region||day.cityRegion||""].filter(Boolean).join(" · ");
   $("weatherStatus").textContent=w.source?.includes("historical")
     ?`Историческая погода Open-Meteo для города ${w.city||day.city||DEFAULT_CITY_NAME}.`
@@ -1011,36 +1010,74 @@ function calculateBiteScore(hour,index,hours,sunrise,sunset,fishName){
   return {score,pressureDeltaMm,pressureTrend,pressureDay,pressureDirectionDuration,reasons};
 }
 
+async function fetchJsonWithTimeout(url,timeoutMs=15000){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),timeoutMs);
+  try{
+    const res=await fetch(url,{cache:"no-store",signal:controller.signal});
+    if(!res.ok)throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  }catch(e){
+    if(e?.name==="AbortError")throw new Error("Сервис погоды не ответил за 15 секунд.");
+    throw e;
+  }finally{
+    clearTimeout(timer);
+  }
+}
+
 async function fetchBiteHourlyInternet(date,location){
   const isPast=date<todayKey;
   const previousDate=shiftDateKey(date,-1);
-  let url;
+
+  const setCommonParams=url=>{
+    url.searchParams.set("latitude",location.lat);
+    url.searchParams.set("longitude",location.lon);
+    url.searchParams.set("temperature_unit","celsius");
+    url.searchParams.set("wind_speed_unit","kmh");
+    url.searchParams.set("precipitation_unit","mm");
+    url.searchParams.set("timezone",location.timezone||"auto");
+    return url;
+  };
+
+  const hourlyPast="temperature_2m,relative_humidity_2m,precipitation,snowfall,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day";
+  const hourlyForecast="temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,snowfall,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day";
+
+  let data=null;
+  let source="";
 
   if(isPast){
-    url=new URL("https://archive-api.open-meteo.com/v1/archive");
-    url.searchParams.set("start_date",previousDate);
-    url.searchParams.set("end_date",date);
-    url.searchParams.set("hourly","temperature_2m,relative_humidity_2m,precipitation,snowfall,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day");
-    url.searchParams.set("daily","sunrise,sunset");
+    try{
+      const historicalForecast=setCommonParams(new URL("https://historical-forecast-api.open-meteo.com/v1/forecast"));
+      historicalForecast.searchParams.set("start_date",previousDate);
+      historicalForecast.searchParams.set("end_date",date);
+      historicalForecast.searchParams.set("hourly",hourlyPast);
+      historicalForecast.searchParams.set("daily","sunrise,sunset");
+      data=await fetchJsonWithTimeout(historicalForecast,15000);
+      source="Open-Meteo Historical Forecast";
+    }catch(firstError){
+      const archive=setCommonParams(new URL("https://archive-api.open-meteo.com/v1/archive"));
+      archive.searchParams.set("start_date",previousDate);
+      archive.searchParams.set("end_date",date);
+      archive.searchParams.set("hourly",hourlyPast);
+      archive.searchParams.set("daily","sunrise,sunset");
+      try{
+        data=await fetchJsonWithTimeout(archive,15000);
+        source="Open-Meteo Historical Weather";
+      }catch(secondError){
+        throw new Error(`Не удалось получить почасовую погоду: ${secondError.message||firstError.message}`);
+      }
+    }
   }else{
-    url=new URL("https://api.open-meteo.com/v1/forecast");
-    url.searchParams.set("past_days","1");
-    url.searchParams.set("forecast_days","16");
-    url.searchParams.set("hourly","temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,snowfall,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day");
-    url.searchParams.set("daily","sunrise,sunset");
+    const forecast=setCommonParams(new URL("https://api.open-meteo.com/v1/forecast"));
+    forecast.searchParams.set("past_days","1");
+    forecast.searchParams.set("forecast_days","16");
+    forecast.searchParams.set("hourly",hourlyForecast);
+    forecast.searchParams.set("daily","sunrise,sunset");
+    data=await fetchJsonWithTimeout(forecast,15000);
+    source="Open-Meteo Forecast";
   }
 
-  url.searchParams.set("latitude",location.lat);
-  url.searchParams.set("longitude",location.lon);
-  url.searchParams.set("temperature_unit","celsius");
-  url.searchParams.set("wind_speed_unit","kmh");
-  url.searchParams.set("precipitation_unit","mm");
-  url.searchParams.set("timezone",location.timezone||"auto");
-
-  const res=await fetch(url,{cache:"no-store"});
-  if(!res.ok)throw new Error(`Почасовой прогноз: HTTP ${res.status}`);
-  const data=await res.json();
-  if(!data.hourly?.time)throw new Error("Почасовые данные не получены.");
+  if(!data?.hourly?.time)throw new Error("Почасовые данные не получены.");
 
   const targetIndexes=[];
   data.hourly.time.forEach((t,i)=>{
@@ -1064,9 +1101,6 @@ async function fetchBiteHourlyInternet(date,location){
     isDay:data.hourly.is_day?.[i]
   }));
 
-  // Для давления добавляем до 24 часов предыдущего периода:
-  // 12 часов нужны для основного тренда, 24 часа — для суточной стабильности
-  // и дополнительного показателя длительности направления.
   const previousIndexes=[];
   for(let i=Math.max(0,targetIndexes[0]-24);i<targetIndexes[0];i++)previousIndexes.push(i);
   const previousHours=previousIndexes.map(i=>({
@@ -1080,7 +1114,7 @@ async function fetchBiteHourlyInternet(date,location){
 
   return {
     date,
-    source:isPast?"Open-Meteo Historical Weather":"Open-Meteo Forecast",
+    source,
     sunrise,
     sunset,
     hours,
@@ -1536,8 +1570,12 @@ function journalPressureCacheValid(day,key,referenceTime,city){
 }
 
 let journalPressureLoading=false;
+let journalPressureQueued=null;
 async function fillJournalPressureStability(year=null,force=false){
-  if(journalPressureLoading)return;
+  if(journalPressureLoading){
+    journalPressureQueued={year,force};
+    return;
+  }
   const targetYear=year||Number($("yearSelect").value)||Number(todayKey.slice(0,4));
   const dates=visibleJournalDates(targetYear).filter(key=>key<=todayKey);
   if(!dates.length)return;
@@ -1584,6 +1622,11 @@ async function fillJournalPressureStability(year=null,force=false){
     }
   }finally{
     journalPressureLoading=false;
+    if(journalPressureQueued){
+      const next=journalPressureQueued;
+      journalPressureQueued=null;
+      setTimeout(()=>fillJournalPressureStability(next.year,next.force),0);
+    }
   }
 }
 
@@ -1597,6 +1640,7 @@ function yearRow(key){
 }
 function renderYear(){
   const year=Number($("yearSelect").value)||new Date().getFullYear(),allDates=datesOfYear(year),dates=visibleJournalDates(year);
+  if($("journalYearLabel"))$("journalYearLabel").textContent=String(year);
   let fishingDays=0,total=0,best={date:null,total:0};const species=new Set();
   allDates.forEach(key=>{
     const day=state.days[key];
@@ -1657,7 +1701,7 @@ function buildSyncPayload(){
     const best=rows.reduce((a,r)=>r.total>a.total?r:a,{date:"",total:0});
     return {year,rows,summary:{fishingDays,total,species:species.size,bestDay:best.date,bestTotal:best.total},catches};
   });
-  return {app:"Fishing Day MVP",version:27,clientToday:todayKey,selectedDate:selectedDateKey,syncedAt:new Date().toISOString(),years:yearData};
+  return {app:"Fishing Day MVP",version:28,clientToday:todayKey,selectedDate:selectedDateKey,syncedAt:new Date().toISOString(),years:yearData};
 }
 async function syncGoogleSheets(){
   const endpoint=$("sheetEndpoint").value.trim(),status=$("syncStatus");
@@ -1891,11 +1935,12 @@ renderCityOptions(POPULAR_RU_CITIES);
 updateCustomPlaceVisibility();
 updateBaitSummary();
 renderAll();
-fetchWeather().then(()=>{
-  autoBackfillCurrentYear();
-  fetchBiteForecast();
-  fillJournalPressureStability(Number(todayKey.slice(0,4)));
-});
+// Запускаем блоки независимо: ошибка одного источника больше не должна
+// останавливать журнал, давление или прогноз клёва.
+fetchWeather();
+autoBackfillCurrentYear();
+fetchBiteForecast();
+fillJournalPressureStability(Number(todayKey.slice(0,4)));
 
 </script>
 </body>
