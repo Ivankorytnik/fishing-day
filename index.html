@@ -51,6 +51,12 @@
     .bite-table{max-height:620px}.bite-table table{min-width:980px}
     .bite-note{font-size:12px;color:var(--muted);line-height:1.5;margin-top:10px}
     .bite-pressure-up{color:#8c3f31}.bite-pressure-down{color:#0f5148}.bite-pressure-stable{color:var(--muted)}
+    .condition-list{display:flex;flex-wrap:wrap;gap:5px;min-width:230px}
+    .condition-chip{display:inline-flex;align-items:center;padding:4px 7px;border-radius:999px;background:#eef3ef;border:1px solid #d8e2dc;font-size:11px;font-weight:700;white-space:nowrap}
+    .condition-severe{background:#f6e8e4;border-color:#e7cbc4;color:#8c3f31}
+    .condition-cold{background:#edf3f6;border-color:#d6e2e8;color:#365a6b}
+    .condition-warm{background:#fff0d8;border-color:#f0d3a7;color:#855814}
+
 
     .footer-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
     @media(max-width:760px){.bite-toolbar{grid-template-columns:1fr 1fr}.bite-toolbar .btn{grid-column:1/-1}.bite-summary{grid-template-columns:1fr 1fr}.weather-grid{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr 1fr}.city-field,.fish-field,.tackle-field,.bait-field{grid-column:1/-1}.qty-field,.time-field,.method-field,.place-field,.custom-place-field{grid-column:span 1}.add-field{grid-column:1/-1}.add-field .btn{width:100%}.summary,.annual-stats{grid-template-columns:1fr 1fr}.sync-box,.comment-box{grid-template-columns:1fr}.sync-box .btn,.comment-box .btn{width:100%}}
@@ -60,7 +66,7 @@
 <body>
 <main class="wrap">
   <section class="hero">
-    <div class="version-badge">Версия 21</div>
+    <div class="version-badge">Версия 22</div>
     <small>Дневник рыболова</small>
     <h1>Рыболовный день</h1>
     <p>Учёт каждого дня года, улова, города, комментариев и погоды по выбранному городу.</p>
@@ -128,6 +134,7 @@
             <th>Время</th>
             <th>Клёв</th>
             <th>Оценка</th>
+            <th>Погодные условия</th>
             <th>Температура</th>
             <th>Давление</th>
             <th>Δ давления 3ч</th>
@@ -138,7 +145,7 @@
           </tr>
         </thead>
         <tbody id="biteTableBody">
-          <tr><td colspan="10">Загрузка прогноза…</td></tr>
+          <tr><td colspan="11">Загрузка прогноза…</td></tr>
         </tbody>
       </table>
     </div>
@@ -146,7 +153,9 @@
     <div class="bite-note">
       Индекс 0–100% — эвристическая оценка условий для клёва, а не гарантия улова.
       В расчёте учитываются почасовые температура, давление и его изменение, ветер,
-      порывы, осадки, облачность, влажность, восход/закат и особенности выбранного вида рыбы.
+      порывы, осадки, снег, облачность, влажность, восход/закат и особенности выбранного вида рыбы.
+      В колонке «Погодные условия» используются 26 категорий: от солнечной погоды и тумана
+      до грозы, метели, шторма, жары, мороза и гололёда.
     </div>
   </section>
 
@@ -598,6 +607,90 @@ function pressureTrendClass(delta){
   if(delta<-1.5)return "bite-pressure-down";
   return "bite-pressure-stable";
 }
+
+function primaryWeatherCondition(hour){
+  const code=Number(hour.weatherCode);
+  const cloud=Number(hour.cloudCover);
+  const precip=Number(hour.precipitation);
+  const snowfall=Number(hour.snowfall);
+  const temp=Number(hour.temperature);
+
+  if([56,57,66,67].includes(code))return "Гололёд";
+  if([96,99].includes(code))return "Град";
+  if(code===95)return precip>0.2?"Гроза с дождём":"Гроза";
+
+  const snowCode=[71,73,75,77,85,86].includes(code);
+  if(snowCode || snowfall>0){
+    if(temp>-1&&temp<=2.5)return "Мокрый снег";
+    if([75,86].includes(code)||snowfall>=1.5)return "Сильный снег";
+    if(code===73||snowfall>=0.5)return "Умеренный снег";
+    return "Слабый снег";
+  }
+
+  if([80,81,82].includes(code))return "Ливень";
+  if(code===65||precip>=5)return "Сильный дождь";
+  if(code===63||precip>=2)return "Умеренный дождь";
+  if(code===61||precip>0.2)return "Слабый дождь";
+
+  if([51,53,55].includes(code))return "Морось";
+  if([45,48].includes(code))return "Туман";
+
+  if(code===0 || (Number.isFinite(cloud)&&cloud<=15))return "Солнечно";
+  if(code===3 || (Number.isFinite(cloud)&&cloud>=92))return "Пасмурно";
+  if(Number.isFinite(cloud)&&cloud>=65)return "Облачно";
+  return "Переменная облачность";
+}
+
+function windCondition(hour){
+  const wind=Math.max(Number(hour.windSpeed)||0,Number(hour.windGusts)||0);
+  if(wind>=118)return "Ураган";
+  if(wind>=50)return "Шторм";
+  if(wind>=29)return "Сильный ветер";
+  if(wind>=12)return "Умеренный ветер";
+  return "Слабый ветер";
+}
+
+function extraWeatherConditions(hour,primary){
+  const result=[];
+  const temp=Number(hour.temperature);
+  const wind=Math.max(Number(hour.windSpeed)||0,Number(hour.windGusts)||0);
+  const snowfall=Number(hour.snowfall)||0;
+  const code=Number(hour.weatherCode);
+
+  if(Number.isFinite(temp)&&temp>=30)result.push("Жара");
+  if(Number.isFinite(temp)&&temp<=-10)result.push("Мороз");
+
+  const snowy=["Мокрый снег","Слабый снег","Умеренный снег","Сильный снег"].includes(primary) ||
+    snowfall>0 || [71,73,75,77,85,86].includes(code);
+  if(snowy&&wind>=29)result.push("Метель");
+
+  if([96,99].includes(code)){
+    if((Number(hour.precipitation)||0)>0.2)result.unshift("Гроза с дождём");
+    else result.unshift("Гроза");
+  }
+  return result;
+}
+
+function hourlyWeatherConditions(hour){
+  const primary=primaryWeatherCondition(hour);
+  const conditions=[primary,windCondition(hour)];
+  extraWeatherConditions(hour,primary).forEach(v=>conditions.push(v));
+  return Array.from(new Set(conditions));
+}
+
+function conditionChipClass(condition){
+  if(["Сильный дождь","Ливень","Гроза","Гроза с дождём","Град","Метель","Шторм","Ураган","Гололёд"].includes(condition))return "condition-severe";
+  if(["Мокрый снег","Слабый снег","Умеренный снег","Сильный снег","Мороз"].includes(condition))return "condition-cold";
+  if(condition==="Жара")return "condition-warm";
+  return "";
+}
+
+function weatherConditionsHtml(hour){
+  return hourlyWeatherConditions(hour)
+    .map(c=>`<span class="condition-chip ${conditionChipClass(c)}">${escapeHtml(c)}</span>`)
+    .join("");
+}
+
 function calculateBiteScore(hour,index,hours,sunrise,sunset,fishName){
   const profile=BITE_FISH_PROFILES[fishName]||BITE_FISH_PROFILES["Общий"];
   let score=45;
@@ -686,8 +779,14 @@ function calculateBiteScore(hour,index,hours,sunrise,sunset,fishName){
   }
 
   const code=Number(hour.weatherCode);
+  const conditions=hourlyWeatherConditions(hour);
   if([95,96,99].includes(code)){score-=20;reasons.push("гроза")}
   if([65,67,82,86].includes(code))score-=8;
+  if(conditions.includes("Град")){score-=8;reasons.push("град")}
+  if(conditions.includes("Метель")){score-=10;reasons.push("метель")}
+  if(conditions.includes("Шторм")){score-=12;reasons.push("шторм")}
+  if(conditions.includes("Ураган")){score-=25;reasons.push("ураган")}
+  if(conditions.includes("Гололёд")){score-=7;reasons.push("гололёд")}
 
   score=clamp(Math.round(score),5,95);
   return {score,pressureDelta,reasons};
@@ -702,13 +801,13 @@ async function fetchBiteHourlyInternet(date,location){
     url=new URL("https://archive-api.open-meteo.com/v1/archive");
     url.searchParams.set("start_date",previousDate);
     url.searchParams.set("end_date",date);
-    url.searchParams.set("hourly","temperature_2m,relative_humidity_2m,precipitation,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day");
+    url.searchParams.set("hourly","temperature_2m,relative_humidity_2m,precipitation,snowfall,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day");
     url.searchParams.set("daily","sunrise,sunset");
   }else{
     url=new URL("https://api.open-meteo.com/v1/forecast");
     url.searchParams.set("past_days","1");
     url.searchParams.set("forecast_days","16");
-    url.searchParams.set("hourly","temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day");
+    url.searchParams.set("hourly","temperature_2m,relative_humidity_2m,precipitation_probability,precipitation,snowfall,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day");
     url.searchParams.set("daily","sunrise,sunset");
   }
 
@@ -736,6 +835,7 @@ async function fetchBiteHourlyInternet(date,location){
     humidity:data.hourly.relative_humidity_2m?.[i],
     precipitationProbability:data.hourly.precipitation_probability?.[i],
     precipitation:data.hourly.precipitation?.[i],
+    snowfall:data.hourly.snowfall?.[i],
     weatherCode:data.hourly.weather_code?.[i],
     cloudCover:data.hourly.cloud_cover?.[i],
     pressure:data.hourly.pressure_msl?.[i],
@@ -814,6 +914,7 @@ function renderBiteForecast(){
       <td><b>${r.time.slice(11,16)}</b>${isNow?' <span class="yes-badge">сейчас</span>':""}</td>
       <td><span class="bite-score ${biteScoreClass(r.score)}">${r.score}%</span></td>
       <td>${biteScoreLabel(r.score)}</td>
+      <td><div class="condition-list">${weatherConditionsHtml(r)}</div></td>
       <td>${Number.isFinite(Number(r.temperature))?`${Math.round(r.temperature)} °C`:"—"}</td>
       <td>${Number.isFinite(Number(r.pressure))?`${Math.round(r.pressure)} hPa`:"—"}</td>
       <td class="${pressureTrendClass(r.pressureDelta)}">${deltaText}</td>
@@ -837,7 +938,7 @@ async function fetchBiteForecast(locationOverride=null){
     if(date>maxDate)throw new Error("Прогноз доступен максимум на 15 дней вперёд.");
 
     status.textContent="Загружаю почасовую погоду и рассчитываю вероятность клёва…";
-    $("biteTableBody").innerHTML='<tr><td colspan="10">Загрузка данных из интернета…</td></tr>';
+    $("biteTableBody").innerHTML='<tr><td colspan="11">Загрузка данных из интернета…</td></tr>';
 
     const day=ensureDay(selectedDateKey);
     const cityName=locationOverride?.city||$("cityInput").value.trim()||day.city||DEFAULT_CITY_NAME;
@@ -847,7 +948,7 @@ async function fetchBiteForecast(locationOverride=null){
     renderBiteForecast();
   }catch(e){
     biteHourlyData=null;
-    $("biteTableBody").innerHTML=`<tr><td colspan="10">${escapeHtml(e.message||"Не удалось рассчитать прогноз клёва.")}</td></tr>`;
+    $("biteTableBody").innerHTML=`<tr><td colspan="11">${escapeHtml(e.message||"Не удалось рассчитать прогноз клёва.")}</td></tr>`;
     status.textContent=e.message||"Не удалось рассчитать прогноз клёва.";
   }
 }
@@ -1111,7 +1212,7 @@ function buildSyncPayload(){
     const best=rows.reduce((a,r)=>r.total>a.total?r:a,{date:"",total:0});
     return {year,rows,summary:{fishingDays,total,species:species.size,bestDay:best.date,bestTotal:best.total},catches};
   });
-  return {app:"Fishing Day MVP",version:21,clientToday:todayKey,selectedDate:selectedDateKey,syncedAt:new Date().toISOString(),years:yearData};
+  return {app:"Fishing Day MVP",version:22,clientToday:todayKey,selectedDate:selectedDateKey,syncedAt:new Date().toISOString(),years:yearData};
 }
 async function syncGoogleSheets(){
   const endpoint=$("sheetEndpoint").value.trim(),status=$("syncStatus");
