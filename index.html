@@ -493,7 +493,7 @@ function saveDayComment(){
   day.comment=$("dayComment").value.trim();
   saveData();
   $("commentCounter").textContent=`${$("dayComment").value.length} / 2000`;
-  $("commentStatus").textContent=`Комментарий сохранён для ${formatDate(selectedDateKey)}.`;
+  $("commentStatus").textContent=`Комментарий сохранён для ${formatDate(selectedDateKey)} и будет выгружен при следующей синхронизации.`;
   renderYear();
 }
 
@@ -722,20 +722,46 @@ function buildSyncPayload(){
     const best=rows.reduce((a,r)=>r.total>a.total?r:a,{date:"",total:0});
     return {year,rows,summary:{fishingDays,total,species:species.size,bestDay:best.date,bestTotal:best.total},catches};
   });
-  return {app:"Fishing Day MVP",version:13,syncedAt:new Date().toISOString(),years:yearData};
+  return {app:"Fishing Day MVP",version:14,clientToday:todayKey,selectedDate:selectedDateKey,syncedAt:new Date().toISOString(),years:yearData};
 }
 async function syncGoogleSheets(){
   const endpoint=$("sheetEndpoint").value.trim(),status=$("syncStatus");
   if(!endpoint || !endpoint.includes("script.google.com")){status.textContent="Сначала вставьте URL веб-приложения Apps Script вида .../exec.";return}
+
+  // Важно: принудительно сохраняем текст выбранного дня прямо перед синхронизацией.
+  // Это исключает ситуацию, когда пользователь ввёл комментарий и сразу нажал
+  // «Синхронизировать», а событие blur ещё не успело сохранить значение.
+  const selectedDay=ensureDay(selectedDateKey);
+  selectedDay.comment=$("dayComment").value.trim();
+  saveData();
+  renderYear();
+  $("commentStatus").textContent=`Комментарий сохранён и подготовлен к синхронизации для ${formatDate(selectedDateKey)}.`;
+
   localStorage.setItem(ENDPOINT_KEY,endpoint);
   status.textContent="Перед выгрузкой заполняю отсутствующую погоду…";
   try{
     const years=getYearsWithData();
     for(const year of years){await fillWeatherForYear(year,false)}
-    status.textContent="Отправляю данные в Google Таблицу…";
-    await fetch(endpoint,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(buildSyncPayload())});
-    status.textContent="Запрос отправлен. Новые даты добавляются, а данные за сегодня и предыдущие 7 дней могут быть скорректированы. Более старые строки не изменяются.";
-  }catch(e){status.textContent=`Не удалось завершить выгрузку: ${e.message||e}`}
+
+    // После обновления погоды ещё раз фиксируем комментарий выбранного дня:
+    // renderAll() не должен иметь возможности затереть свежий текст.
+    ensureDay(selectedDateKey).comment=$("dayComment").value.trim();
+    saveData();
+
+    const payload=buildSyncPayload();
+    status.textContent=`Отправляю данные в Google Таблицу. Комментарий за ${formatDate(selectedDateKey)} включён в выгрузку…`;
+
+    await fetch(endpoint,{
+      method:"POST",
+      mode:"no-cors",
+      headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify(payload)
+    });
+
+    status.textContent=`Запрос отправлен. Комментарий за ${formatDate(selectedDateKey)} передан вместе с данными. Даты за сегодня и предыдущие 7 дней могут корректироваться.`;
+  }catch(e){
+    status.textContent=`Не удалось завершить выгрузку: ${e.message||e}`;
+  }
 }
 function exportCsv(){
   const rows=[["Год","Дата","День","Рыбалка","Результат","Комментарий","Город","Температура °C","Погода","Ветер","Скорость ветра км/ч"]];

@@ -1,6 +1,6 @@
 /**
  * Рыболовный дневник -> Google Sheets
- * Версия 13: накопительная синхронизация + окно корректировки 7 дней назад.
+ * Версия 14: накопительная синхронизация + окно корректировки 7 дней назад.
  *
  * Логика:
  * 1. Все новые даты после последней записи добавляются в таблицу.
@@ -49,7 +49,7 @@ function doGet() {
     return jsonResponse_({
       ok: true,
       service: "Fishing Day Sheets Sync",
-      version: 13,
+      version: 14,
       mode: "incremental-with-7-day-correction",
       spreadsheet: ss.getName(),
       spreadsheetId: SPREADSHEET_ID,
@@ -83,7 +83,13 @@ function doPost(e) {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const tz = ss.getSpreadsheetTimeZone();
 
-    const todayIso = dateToIso_(new Date(), tz);
+    // Берём календарную дату с сайта пользователя.
+    // Это устраняет расхождение, если часовой пояс самой Google Таблицы
+    // отличается от часового пояса, в котором открыт рыболовный дневник.
+    const todayIso = isIsoDate_(payload.clientToday)
+      ? payload.clientToday
+      : dateToIso_(new Date(), tz);
+
     const correctionStartIso = shiftIsoDate_(
       todayIso,
       -CORRECTION_DAYS_BACK,
@@ -95,6 +101,17 @@ function doPost(e) {
       years,
       todayIso,
       correctionStartIso
+    );
+
+    // Дополнительная адресная синхронизация комментариев.
+    // Обновляем колонку "Комментарий" по дате во всём разрешённом
+    // окне корректировки, в том числе если в листе случайно есть
+    // несколько строк одной даты после старых версий.
+    writeCommentsForCorrectionWindow_(
+      ss,
+      years,
+      correctionStartIso,
+      todayIso
     );
 
     writeCatches_(
@@ -380,6 +397,92 @@ function yearRowToValues_(r) {
 
     r.city || ""
   ];
+}
+
+
+/**
+ * Явно синхронизирует комментарий выбранных дат.
+ *
+ * Почему это отдельная функция:
+ * - комментарий является полем дня, а не улова;
+ * - старые версии могли оставить дубликаты строк одной даты;
+ * - обновляем все совпавшие строки в разрешённом окне;
+ * - если строки нет, её создаёт основной writeYearSheets_().
+ */
+function writeCommentsForCorrectionWindow_(
+  ss,
+  years,
+  correctionStartIso,
+  todayIso
+) {
+  const tz = ss.getSpreadsheetTimeZone();
+
+  years.forEach(function(yearData) {
+    const sheet = ss.getSheetByName(
+      String(yearData.year)
+    );
+
+    if (!sheet || sheet.getLastRow() < 2) {
+      return;
+    }
+
+    const sourceRows = Array.isArray(yearData.rows)
+      ? yearData.rows
+      : [];
+
+    const commentByDate = {};
+
+    sourceRows.forEach(function(row) {
+      if (
+        row.date &&
+        row.date >= correctionStartIso &&
+        row.date <= todayIso
+      ) {
+        commentByDate[row.date] =
+          row.comment === null ||
+          typeof row.comment === "undefined"
+            ? ""
+            : String(row.comment);
+      }
+    });
+
+    const lastRow = sheet.getLastRow();
+
+    const sheetDates = sheet
+      .getRange(
+        2,
+        1,
+        lastRow - 1,
+        1
+      )
+      .getValues();
+
+    sheetDates.forEach(function(row, index) {
+      const iso = cellDateToIso_(
+        row[0],
+        tz
+      );
+
+      if (
+        iso &&
+        Object.prototype.hasOwnProperty.call(
+          commentByDate,
+          iso
+        )
+      ) {
+        // Колонка 6 = "Комментарий"
+        sheet
+          .getRange(
+            index + 2,
+            6
+          )
+          .setValue(
+            commentByDate[iso]
+          )
+          .setFontFamily("Arial");
+      }
+    });
+  });
 }
 
 
@@ -1143,6 +1246,13 @@ function cellDateToIso_(
   }
 
   return "";
+}
+
+
+function isIsoDate_(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(
+    String(value || "")
+  );
 }
 
 
