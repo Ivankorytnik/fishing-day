@@ -50,7 +50,7 @@
     .bite-row-now td{background:#fff5bf!important}.bite-row-best td{box-shadow:inset 3px 0 0 #146b5f}
     .bite-table{max-height:620px}.bite-table table{min-width:980px}
     .bite-note{font-size:12px;color:var(--muted);line-height:1.5;margin-top:10px}
-    .bite-pressure-up{color:#8c3f31}.bite-pressure-down{color:#0f5148}.bite-pressure-stable{color:var(--muted)}
+    .bite-pressure-up{color:#8c3f31}.bite-pressure-down{color:#0f5148}.bite-pressure-stable{color:var(--muted)}.pressure-trend{min-width:190px}.pressure-trend b{display:block;margin-bottom:3px}.pressure-hours{font-size:11px;color:var(--muted)}
     .condition-list{display:flex;flex-wrap:wrap;gap:5px;min-width:230px}
     .condition-chip{display:inline-flex;align-items:center;padding:4px 7px;border-radius:999px;background:#eef3ef;border:1px solid #d8e2dc;font-size:11px;font-weight:700;white-space:nowrap}
     .condition-severe{background:#f6e8e4;border-color:#e7cbc4;color:#8c3f31}
@@ -66,7 +66,7 @@
 <body>
 <main class="wrap">
   <section class="hero">
-    <div class="version-badge">Версия 22</div>
+    <div class="version-badge">Версия 23</div>
     <small>Дневник рыболова</small>
     <h1>Рыболовный день</h1>
     <p>Учёт каждого дня года, улова, города, комментариев и погоды по выбранному городу.</p>
@@ -136,8 +136,9 @@
             <th>Оценка</th>
             <th>Погодные условия</th>
             <th>Температура</th>
-            <th>Давление</th>
-            <th>Δ давления 3ч</th>
+            <th>Давление, мм рт. ст.</th>
+            <th>Тренд давления за 6ч</th>
+            <th>В одном направлении</th>
             <th>Ветер</th>
             <th>Порывы</th>
             <th>Осадки</th>
@@ -145,14 +146,17 @@
           </tr>
         </thead>
         <tbody id="biteTableBody">
-          <tr><td colspan="11">Загрузка прогноза…</td></tr>
+          <tr><td colspan="12">Загрузка прогноза…</td></tr>
         </tbody>
       </table>
     </div>
 
     <div class="bite-note">
       Индекс 0–100% — эвристическая оценка условий для клёва, а не гарантия улова.
-      В расчёте учитываются почасовые температура, давление и его изменение, ветер,
+      Давление всегда сравнивается с показанием ровно 6 часов назад и переводится в мм рт. ст.
+      Используются 7 трендов: резко падает ↓↓↓, падает ↓↓, медленно падает ↓, стабильное →,
+      медленно растёт ↑, растёт ↑↑, резко растёт ↑↑↑. Отдельно показывается, сколько часов
+      давление подряд сохраняет направление. В расчёте также учитываются температура, ветер,
       порывы, осадки, снег, облачность, влажность, восход/закат и особенности выбранного вида рыбы.
       В колонке «Погодные условия» используются 26 категорий: от солнечной погоды и тумана
       до грозы, метели, шторма, жары, мороза и гололёда.
@@ -601,12 +605,65 @@ function tempScoreForFish(temp,profile){
   if(temp<profile.min-5||temp>profile.max+5)return -12;
   return -5;
 }
-function pressureTrendClass(delta){
-  if(!Number.isFinite(delta))return "bite-pressure-stable";
-  if(delta>1.5)return "bite-pressure-up";
-  if(delta<-1.5)return "bite-pressure-down";
-  return "bite-pressure-stable";
+function pressureHpaToMm(value){
+  const n=Number(value);
+  return Number.isFinite(n)?n*0.750062:null;
 }
+
+function pressureTrendInfo(deltaMm){
+  if(!Number.isFinite(deltaMm)){
+    return {key:"unknown",label:"Нет данных",arrow:"",className:"bite-pressure-stable"};
+  }
+  if(deltaMm < -5){
+    return {key:"down",label:"Резко падает",arrow:"↓↓↓",className:"bite-pressure-down"};
+  }
+  if(deltaMm <= -3){
+    return {key:"down",label:"Падает",arrow:"↓↓",className:"bite-pressure-down"};
+  }
+  if(deltaMm < -1){
+    return {key:"down",label:"Медленно падает",arrow:"↓",className:"bite-pressure-down"};
+  }
+  if(deltaMm <= 1){
+    return {key:"stable",label:"Стабильное",arrow:"→",className:"bite-pressure-stable"};
+  }
+  if(deltaMm < 3){
+    return {key:"up",label:"Медленно растёт",arrow:"↑",className:"bite-pressure-up"};
+  }
+  if(deltaMm <= 5){
+    return {key:"up",label:"Растёт",arrow:"↑↑",className:"bite-pressure-up"};
+  }
+  return {key:"up",label:"Резко растёт",arrow:"↑↑↑",className:"bite-pressure-up"};
+}
+
+function hourlyPressureDirection(deltaMm){
+  if(!Number.isFinite(deltaMm))return "unknown";
+  // Игнорируем микроколебания датчика/модели меньше ~0.15 мм за час.
+  if(deltaMm > 0.15)return "up";
+  if(deltaMm < -0.15)return "down";
+  return "stable";
+}
+
+function pressureDirectionHours(index,hours){
+  if(index<=0)return 0;
+  const current=Number(hours[index]?.pressure);
+  const previous=Number(hours[index-1]?.pressure);
+  if(!Number.isFinite(current)||!Number.isFinite(previous))return 0;
+
+  const currentDirection=hourlyPressureDirection((current-previous)*0.750062);
+  if(currentDirection==="unknown")return 0;
+
+  let duration=1;
+  for(let i=index-1;i>0;i--){
+    const pNow=Number(hours[i]?.pressure);
+    const pPrev=Number(hours[i-1]?.pressure);
+    if(!Number.isFinite(pNow)||!Number.isFinite(pPrev))break;
+    const direction=hourlyPressureDirection((pNow-pPrev)*0.750062);
+    if(direction!==currentDirection)break;
+    duration++;
+  }
+  return duration;
+}
+
 
 function primaryWeatherCondition(hour){
   const code=Number(hour.weatherCode);
@@ -710,15 +767,28 @@ function calculateBiteScore(hour,index,hours,sunrise,sunset,fishName){
   if(tScore>=10)reasons.push("температура оптимальна");
   else if(tScore<0)reasons.push("температура вне оптимума");
 
-  let pressureDelta=null;
-  if(index>=3&&Number.isFinite(Number(hours[index-3]?.pressure))){
-    pressureDelta=pressure-Number(hours[index-3].pressure);
-    const a=Math.abs(pressureDelta);
-    if(a<=1.2){score+=12;reasons.push("давление стабильное")}
-    else if(a<=2.5){score+=7;reasons.push("давление меняется плавно")}
-    else if(a<=4){score+=1}
-    else{score-=10;reasons.push("резкий скачок давления")}
+  let pressureDeltaMm=null;
+  let pressureTrend={key:"unknown",label:"Нет данных",arrow:"",className:"bite-pressure-stable"};
+  let pressureDirectionDuration=0;
+
+  if(index>=6&&Number.isFinite(Number(hours[index-6]?.pressure))){
+    pressureDeltaMm=(pressure-Number(hours[index-6].pressure))*0.750062;
+    pressureTrend=pressureTrendInfo(pressureDeltaMm);
+    pressureDirectionDuration=pressureDirectionHours(index,hours);
+
+    if(pressureTrend.label==="Стабильное"){
+      score+=12;reasons.push("давление стабильное 6 часов");
+    }else if(pressureTrend.label==="Медленно падает"){
+      score+=7;reasons.push("давление медленно падает");
+    }else if(pressureTrend.label==="Медленно растёт"){
+      score+=5;reasons.push("давление медленно растёт");
+    }else if(pressureTrend.label==="Падает"||pressureTrend.label==="Растёт"){
+      score+=1;reasons.push(`давление: ${pressureTrend.label.toLowerCase()}`);
+    }else if(pressureTrend.label==="Резко падает"||pressureTrend.label==="Резко растёт"){
+      score-=10;reasons.push(`резкое изменение давления: ${pressureTrend.label.toLowerCase()}`);
+    }
   }
+
   if(Number.isFinite(pressure)){
     if(pressure>=995&&pressure<=1025)score+=3;
     else if(pressure<985||pressure>1035)score-=5;
@@ -789,7 +859,7 @@ function calculateBiteScore(hour,index,hours,sunrise,sunset,fishName){
   if(conditions.includes("Гололёд")){score-=7;reasons.push("гололёд")}
 
   score=clamp(Math.round(score),5,95);
-  return {score,pressureDelta,reasons};
+  return {score,pressureDeltaMm,pressureTrend,pressureDirectionDuration,reasons};
 }
 
 async function fetchBiteHourlyInternet(date,location){
@@ -845,9 +915,10 @@ async function fetchBiteHourlyInternet(date,location){
     isDay:data.hourly.is_day?.[i]
   }));
 
-  // Для давления добавляем до 3 часов предыдущего дня в начало массива расчёта.
+  // Для давления добавляем до 24 часов предыдущего периода:
+  // 6 часов нужны для единого тренда, запас нужен для длительности направления.
   const previousIndexes=[];
-  for(let i=Math.max(0,targetIndexes[0]-3);i<targetIndexes[0];i++)previousIndexes.push(i);
+  for(let i=Math.max(0,targetIndexes[0]-24);i<targetIndexes[0];i++)previousIndexes.push(i);
   const previousHours=previousIndexes.map(i=>({
     time:data.hourly.time[i],
     pressure:data.hourly.pressure_msl?.[i]
@@ -903,9 +974,12 @@ function renderBiteForecast(){
     const hh=Number(r.time.slice(11,13));
     const isNow=biteHourlyData.date===todayKey&&hh===currentHour;
     const isBest=r.time===best.time;
-    const deltaText=Number.isFinite(r.pressureDelta)
-      ?`${r.pressureDelta>0?"+":""}${r.pressureDelta.toFixed(1)} hPa`
+    const pressureMm=pressureHpaToMm(r.pressure);
+    const deltaText=Number.isFinite(r.pressureDeltaMm)
+      ?`${r.pressureDeltaMm>0?"+":""}${r.pressureDeltaMm.toFixed(1)} мм`
       :"—";
+    const trend=r.pressureTrend||pressureTrendInfo(r.pressureDeltaMm);
+    const directionHours=r.pressureDirectionDuration||0;
     const rainProb=Number.isFinite(Number(r.precipitationProbability))
       ?`${Math.round(r.precipitationProbability)}% · `
       :"";
@@ -916,8 +990,12 @@ function renderBiteForecast(){
       <td>${biteScoreLabel(r.score)}</td>
       <td><div class="condition-list">${weatherConditionsHtml(r)}</div></td>
       <td>${Number.isFinite(Number(r.temperature))?`${Math.round(r.temperature)} °C`:"—"}</td>
-      <td>${Number.isFinite(Number(r.pressure))?`${Math.round(r.pressure)} hPa`:"—"}</td>
-      <td class="${pressureTrendClass(r.pressureDelta)}">${deltaText}</td>
+      <td>${Number.isFinite(pressureMm)?`${Math.round(pressureMm)} мм`:"—"}</td>
+      <td class="pressure-trend ${trend.className}">
+        <b>${trend.label} ${trend.arrow}</b>
+        <span>${deltaText} за 6 ч</span>
+      </td>
+      <td><b>${directionHours?`${directionHours} ч`:"—"}</b><div class="pressure-hours">${directionHours?`${trend.key==="stable"?"стабильно":trend.key==="up"?"рост":"падение"} подряд`:"нет данных"}</div></td>
       <td>${Number.isFinite(Number(r.windSpeed))?`${Math.round(r.windSpeed)} км/ч ${windDirection(Number(r.windDirection)||0)}`:"—"}</td>
       <td>${Number.isFinite(Number(r.windGusts))?`${Math.round(r.windGusts)} км/ч`:"—"}</td>
       <td>${rainProb}${Number.isFinite(Number(r.precipitation))?`${Number(r.precipitation).toFixed(1)} мм`:"—"}</td>
@@ -938,7 +1016,7 @@ async function fetchBiteForecast(locationOverride=null){
     if(date>maxDate)throw new Error("Прогноз доступен максимум на 15 дней вперёд.");
 
     status.textContent="Загружаю почасовую погоду и рассчитываю вероятность клёва…";
-    $("biteTableBody").innerHTML='<tr><td colspan="11">Загрузка данных из интернета…</td></tr>';
+    $("biteTableBody").innerHTML='<tr><td colspan="12">Загрузка данных из интернета…</td></tr>';
 
     const day=ensureDay(selectedDateKey);
     const cityName=locationOverride?.city||$("cityInput").value.trim()||day.city||DEFAULT_CITY_NAME;
@@ -948,7 +1026,7 @@ async function fetchBiteForecast(locationOverride=null){
     renderBiteForecast();
   }catch(e){
     biteHourlyData=null;
-    $("biteTableBody").innerHTML=`<tr><td colspan="11">${escapeHtml(e.message||"Не удалось рассчитать прогноз клёва.")}</td></tr>`;
+    $("biteTableBody").innerHTML=`<tr><td colspan="12">${escapeHtml(e.message||"Не удалось рассчитать прогноз клёва.")}</td></tr>`;
     status.textContent=e.message||"Не удалось рассчитать прогноз клёва.";
   }
 }
@@ -1212,7 +1290,7 @@ function buildSyncPayload(){
     const best=rows.reduce((a,r)=>r.total>a.total?r:a,{date:"",total:0});
     return {year,rows,summary:{fishingDays,total,species:species.size,bestDay:best.date,bestTotal:best.total},catches};
   });
-  return {app:"Fishing Day MVP",version:22,clientToday:todayKey,selectedDate:selectedDateKey,syncedAt:new Date().toISOString(),years:yearData};
+  return {app:"Fishing Day MVP",version:23,clientToday:todayKey,selectedDate:selectedDateKey,syncedAt:new Date().toISOString(),years:yearData};
 }
 async function syncGoogleSheets(){
   const endpoint=$("sheetEndpoint").value.trim(),status=$("syncStatus");
