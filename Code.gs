@@ -1,6 +1,6 @@
 /**
  * Рыболовный дневник -> Google Sheets
- * Версия 16: накопительная синхронизация + окно корректировки 7 дней назад.
+ * Версия 18: накопительная синхронизация + окно корректировки 7 дней назад.
  *
  * Логика:
  * 1. Все новые даты после последней записи добавляются в таблицу.
@@ -60,7 +60,7 @@ function doGet() {
     return jsonResponse_({
       ok: true,
       service: "Fishing Day Sheets Sync",
-      version: 16,
+      version: 18,
       mode: "incremental-with-7-day-correction",
       spreadsheet: ss.getName(),
       spreadsheetId: SPREADSHEET_ID,
@@ -93,6 +93,13 @@ function doPost(e) {
 
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const tz = ss.getSpreadsheetTimeZone();
+
+    // Сначала восстанавливаем технический размер существующих листов.
+    // Это исправляет старые годовые листы, оставшиеся шириной A-Z.
+    repairSheetStructure_(
+      ss,
+      years
+    );
 
     // Берём календарную дату с сайта пользователя.
     // Это устраняет расхождение, если часовой пояс самой Google Таблицы
@@ -176,10 +183,14 @@ function doPost(e) {
     });
 
   } catch (error) {
-    console.error(error);
+    console.error(
+      "SYNC ERROR: " +
+      String(error)
+    );
 
     return jsonResponse_({
       ok: false,
+      version: 18,
       error: String(error),
       syncedAt: new Date().toISOString()
     });
@@ -189,6 +200,76 @@ function doPost(e) {
       lock.releaseLock();
     } catch (ignore) {}
   }
+}
+
+
+/**
+ * Автоматически подготавливает существующие листы к актуальной структуре.
+ * Данные не очищаются и не перезаписываются — добавляются только
+ * недостающие технические строки/колонки и актуальная шапка.
+ */
+function repairSheetStructure_(
+  ss,
+  years
+) {
+  years.forEach(function(yearData) {
+    const sheet = getOrCreateSheet_(
+      ss,
+      String(yearData.year)
+    );
+
+    ensureSheetCapacity_(
+      sheet,
+      Math.max(
+        sheet.getLastRow(),
+        2
+      ),
+      YEAR_HEADERS.length
+    );
+
+    ensureHeaders_(
+      sheet,
+      YEAR_HEADERS
+    );
+  });
+
+  const catchSheet = getOrCreateSheet_(
+    ss,
+    "Улов"
+  );
+
+  ensureSheetCapacity_(
+    catchSheet,
+    Math.max(
+      catchSheet.getLastRow(),
+      2
+    ),
+    CATCH_HEADERS.length
+  );
+
+  ensureHeaders_(
+    catchSheet,
+    CATCH_HEADERS
+  );
+
+  const summarySheet = getOrCreateSheet_(
+    ss,
+    "Сводка"
+  );
+
+  ensureSheetCapacity_(
+    summarySheet,
+    Math.max(
+      summarySheet.getLastRow(),
+      2
+    ),
+    SUMMARY_HEADERS.length
+  );
+
+  ensureHeaders_(
+    summarySheet,
+    SUMMARY_HEADERS
+  );
 }
 
 
@@ -261,6 +342,12 @@ function writeYearSheets_(ss, years, todayIso, correctionStartIso) {
       }
 
       const row = sheet.getLastRow() + 1;
+
+      ensureSheetCapacity_(
+        sheet,
+        row,
+        YEAR_HEADERS.length
+      );
 
       sheet
         .getRange(
@@ -835,6 +922,12 @@ function writeCatches_(
   if (rowsToAppend.length) {
     const startRow = sheet.getLastRow() + 1;
 
+    ensureSheetCapacity_(
+      sheet,
+      startRow + rowsToAppend.length - 1,
+      CATCH_HEADERS.length
+    );
+
     sheet
       .getRange(
         startRow,
@@ -959,6 +1052,12 @@ function updateSummary_(ss, years, syncInfo) {
 
     } else {
       const row = sheet.getLastRow() + 1;
+
+      ensureSheetCapacity_(
+        sheet,
+        row,
+        SUMMARY_HEADERS.length
+      );
 
       sheet
         .getRange(
@@ -1311,10 +1410,51 @@ function findSummaryYearRow_(
 }
 
 
+/**
+ * Гарантирует, что на листе достаточно строк и колонок для записи.
+ *
+ * Особенно важно для YEAR_HEADERS: после добавления полей улова
+ * количество колонок стало больше стандартных 26 (A-Z).
+ */
+function ensureSheetCapacity_(
+  sheet,
+  requiredRows,
+  requiredColumns
+) {
+  const maxColumns = sheet.getMaxColumns();
+
+  if (maxColumns < requiredColumns) {
+    sheet.insertColumnsAfter(
+      maxColumns,
+      requiredColumns - maxColumns
+    );
+  }
+
+  const maxRows = sheet.getMaxRows();
+
+  if (maxRows < requiredRows) {
+    sheet.insertRowsAfter(
+      maxRows,
+      requiredRows - maxRows
+    );
+  }
+}
+
+
 function ensureHeaders_(
   sheet,
   headers
 ) {
+  // Google Sheets обычно создаёт новый лист только с 26 колонками (A-Z).
+  // Годовой лист сейчас использует больше колонок, поэтому перед записью
+  // автоматически расширяем лист. Иначе getRange() завершается ошибкой,
+  // а сайт из-за no-cors не может показать эту ошибку пользователю.
+  ensureSheetCapacity_(
+    sheet,
+    1,
+    headers.length
+  );
+
   sheet
     .getRange(
       1,
@@ -1608,6 +1748,71 @@ function jsonResponse_(data) {
 /**
  * Проверка подключения и окна корректировки.
  */
+/**
+ * Ручная проверка/ремонт структуры Google Таблицы.
+ *
+ * Можно выбрать эту функцию в Apps Script и нажать "Выполнить".
+ * Она не удаляет рыболовные данные, а только добавляет недостающие
+ * колонки и восстанавливает актуальные заголовки.
+ */
+function repairGoogleSheetsStructure() {
+  const ss = SpreadsheetApp.openById(
+    SPREADSHEET_ID
+  );
+
+  const years = ss
+    .getSheets()
+    .map(function(sheet) {
+      return sheet.getName();
+    })
+    .filter(function(name) {
+      return /^\d{4}$/.test(name);
+    })
+    .map(function(name) {
+      return {
+        year: Number(name)
+      };
+    });
+
+  // Если годового листа ещё нет, добавляем текущий год.
+  const currentYear = Number(
+    Utilities.formatDate(
+      new Date(),
+      ss.getSpreadsheetTimeZone(),
+      "yyyy"
+    )
+  );
+
+  if (
+    !years.some(function(item) {
+      return item.year === currentYear;
+    })
+  ) {
+    years.push({
+      year: currentYear
+    });
+  }
+
+  repairSheetStructure_(
+    ss,
+    years
+  );
+
+  SpreadsheetApp.flush();
+
+  console.log(
+    "Структура таблицы исправлена."
+  );
+
+  console.log(
+    "Колонок в годовом листе требуется: " +
+    YEAR_HEADERS.length
+  );
+
+  return true;
+}
+
+
 function testConnection() {
   const ss =
     SpreadsheetApp.openById(

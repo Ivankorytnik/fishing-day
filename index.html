@@ -51,7 +51,7 @@
 <body>
 <main class="wrap">
   <section class="hero">
-    <div class="version-badge">Версия 17</div>
+    <div class="version-badge">Версия 18</div>
     <small>Дневник рыболова</small>
     <h1>Рыболовный день</h1>
     <p>Учёт каждого дня года, улова, города, комментариев и погоды по выбранному городу.</p>
@@ -737,7 +737,7 @@ function buildSyncPayload(){
     const best=rows.reduce((a,r)=>r.total>a.total?r:a,{date:"",total:0});
     return {year,rows,summary:{fishingDays,total,species:species.size,bestDay:best.date,bestTotal:best.total},catches};
   });
-  return {app:"Fishing Day MVP",version:17,clientToday:todayKey,selectedDate:selectedDateKey,syncedAt:new Date().toISOString(),years:yearData};
+  return {app:"Fishing Day MVP",version:18,clientToday:todayKey,selectedDate:selectedDateKey,syncedAt:new Date().toISOString(),years:yearData};
 }
 async function syncGoogleSheets(){
   const endpoint=$("sheetEndpoint").value.trim(),status=$("syncStatus");
@@ -764,7 +764,7 @@ async function syncGoogleSheets(){
     saveData();
 
     const payload=buildSyncPayload();
-    status.textContent=`Отправляю данные в Google Таблицу. Комментарий за ${formatDate(selectedDateKey)} включён в выгрузку…`;
+    status.textContent=`Отправляю комментарий и все поля улова за ${formatDate(selectedDateKey)} в Google Таблицу…`;
 
     await fetch(endpoint,{
       method:"POST",
@@ -773,7 +773,7 @@ async function syncGoogleSheets(){
       body:JSON.stringify(payload)
     });
 
-    status.textContent=`Запрос отправлен. Комментарий за ${formatDate(selectedDateKey)} передан вместе с данными. Даты за сегодня и предыдущие 7 дней могут корректироваться.`;
+    status.textContent=`Запрос отправлен. Комментарий и поля «Добавить улов» за ${formatDate(selectedDateKey)} включены в синхронизацию. Доступно исправление за сегодня и предыдущие 7 дней.`;
   }catch(e){
     status.textContent=`Не удалось завершить выгрузку: ${e.message||e}`;
   }
