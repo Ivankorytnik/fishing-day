@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#123f39" />
+  <title>Рыболовный день — MVP</title>
+  <style>
+    :root{
+      --bg:#f4f2e8;
+      --surface:#fffdf6;
+      --surface-2:#edf4ee;
+      --text:#17342f;
+      --muted:#6b7d77;
+      --accent:#146b5f;
+      --accent-dark:#0f5148;
+      --line:#d9dfd7;
+      --danger:#a44736;
+      --shadow:0 12px 30px rgba(31,54,48,.10);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Arial, Helvetica, sans-serif;
+      background:linear-gradient(180deg,#e9f1ea 0,#f4f2e8 240px);
+      color:var(--text);
+    }
+    button,input,select{font:inherit}
+    .wrap{max-width:920px;margin:0 auto;padding:20px 16px 60px}
+    .hero{
+      background:linear-gradient(135deg,#123f39,#1d7568);
+      color:#fff;
+      border-radius:24px;
+      padding:24px;
+      box-shadow:var(--shadow);
+      margin-bottom:16px;
+    }
+    .eyebrow{font-size:13px;letter-spacing:.08em;text-transform:uppercase;opacity:.75}
+    h1{font-size:30px;line-height:1.05;margin:8px 0}
+    .hero p{margin:6px 0 0;opacity:.88}
+    .grid{display:grid;gap:16px}
+    .weather-grid{grid-template-columns:repeat(4,1fr)}
+    .card{
+      background:var(--surface);
+      border:1px solid rgba(23,52,47,.08);
+      border-radius:var(--radius);
+      padding:18px;
+      box-shadow:0 7px 20px rgba(31,54,48,.06);
+    }
+    .section-title{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin:0 0 14px;
+    }
+    .section-title h2{font-size:19px;margin:0}
+    .stat{
+      background:var(--surface-2);
+      border-radius:15px;
+      padding:14px;
+      min-height:92px;
+    }
+    .stat-label{font-size:12px;color:var(--muted);margin-bottom:7px}
+    .stat-value{font-size:20px;font-weight:700;word-break:break-word}
+    .stat-sub{font-size:12px;color:var(--muted);margin-top:5px}
+    .status{
+      font-size:13px;
+      color:var(--muted);
+      margin-top:12px;
+      min-height:18px;
+    }
+    .btn{
+      border:0;
+      border-radius:12px;
+      padding:11px 15px;
+      cursor:pointer;
+      background:var(--accent);
+      color:white;
+      font-weight:700;
+    }
+    .btn:hover{background:var(--accent-dark)}
+    .btn.secondary{
+      background:#e7efea;
+      color:var(--accent-dark);
+      border:1px solid #cedbd4;
+    }
+    .btn.danger{
+      background:#f6e8e4;
+      color:var(--danger);
+      border:1px solid #ead1ca;
+    }
+    .form-grid{
+      display:grid;
+      grid-template-columns:2fr 1fr 1fr auto;
+      gap:12px;
+      align-items:end;
+    }
+    label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+    input,select{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fff;
+      color:var(--text);
+      padding:11px 12px;
+      outline:none;
+    }
+    input:focus,select:focus{border-color:#6ca79d;box-shadow:0 0 0 3px rgba(20,107,95,.10)}
+    .summary{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:10px;
+      margin-bottom:14px;
+    }
+    .summary .mini{
+      background:#f3f7f3;
+      border-radius:12px;
+      padding:12px;
+    }
+    .mini b{display:block;font-size:21px}
+    .mini span{font-size:12px;color:var(--muted)}
+    .empty{
+      padding:26px 10px;
+      text-align:center;
+      color:var(--muted);
+      border:1px dashed var(--line);
+      border-radius:14px;
+    }
+    .catch-list{display:flex;flex-direction:column;gap:9px}
+    .catch-row{
+      display:grid;
+      grid-template-columns:74px 1fr 86px 42px;
+      gap:10px;
+      align-items:center;
+      padding:12px;
+      border:1px solid var(--line);
+      border-radius:13px;
+      background:#fff;
+    }
+    .catch-time{font-weight:700}
+    .catch-fish{font-weight:700}
+    .catch-qty{color:var(--muted);text-align:right}
+    .icon-btn{
+      border:0;
+      background:#f7ece9;
+      color:var(--danger);
+      height:34px;
+      width:34px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:700;
+    }
+    .history-day{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+      border-top:1px solid var(--line);
+      padding:12px 0;
+    }
+    .history-day:first-child{border-top:0}
+    .history-day small{display:block;color:var(--muted);margin-top:3px}
+    .footer-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .note{font-size:12px;color:var(--muted);line-height:1.45;margin-top:12px}
+    @media (max-width:720px){
+      .weather-grid{grid-template-columns:1fr 1fr}
+      .form-grid{grid-template-columns:1fr 1fr}
+      .form-grid .fish-field{grid-column:1/-1}
+      .form-grid .add-field{grid-column:1/-1}
+      .form-grid .add-field .btn{width:100%}
+    }
+    @media (max-width:480px){
+      .hero{padding:20px}
+      h1{font-size:26px}
+      .weather-grid{grid-template-columns:1fr 1fr}
+      .summary{grid-template-columns:1fr 1fr}
+      .summary .mini:last-child{grid-column:1/-1}
+      .catch-row{grid-template-columns:60px 1fr 66px 36px;gap:7px}
+      .catch-row{font-size:14px}
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <div class="eyebrow">Дневник рыболова</div>
+      <h1>Рыболовный день</h1>
+      <p>Погода из интернета по геолокации. Улов — за несколько секунд.</p>
+    </section>
+
+    <section class="card">
+      <div class="section-title">
+        <h2>Условия сегодня</h2>
+        <button class="btn secondary" id="refreshWeather">Обновить погоду</button>
+      </div>
+
+      <div class="grid weather-grid">
+        <div class="stat">
+          <div class="stat-label">Дата</div>
+          <div class="stat-value" id="dateValue">—</div>
+          <div class="stat-sub" id="locationValue"></div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Температура</div>
+          <div class="stat-value" id="tempValue">—</div>
+          <div class="stat-sub" id="feelsValue"></div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Погода</div>
+          <div class="stat-value" id="weatherValue">—</div>
+          <div class="stat-sub" id="cloudValue"></div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Направление ветра</div>
+          <div class="stat-value" id="windValue">—</div>
+          <div class="stat-sub" id="windSpeedValue"></div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Порывы ветра</div>
+          <div class="stat-value" id="gustValue">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Влажность</div>
+          <div class="stat-value" id="humidityValue">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Давление</div>
+          <div class="stat-value" id="pressureValue">—</div>
+          <div class="stat-sub" id="pressureMmValue"></div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Осадки сейчас</div>
+          <div class="stat-value" id="precipValue">—</div>
+        </div>
+      </div>
+      <div class="status" id="weatherStatus">Определяю местоположение и погоду…</div>
+    </section>
+
+    <section class="card" style="margin-top:16px">
+      <div class="section-title">
+        <h2>Добавить улов</h2>
+      </div>
+
+      <form id="catchForm" class="form-grid">
+        <div class="fish-field">
+          <label for="fish">Рыба</label>
+          <select id="fish" required>
+            <option>Карась</option>
+            <option>Лещ</option>
+            <option>Карп</option>
+            <option>Сазан</option>
+            <option>Сом</option>
+            <option>Судак</option>
+            <option>Подлещик</option>
+            <option>Густера</option>
+            <option>Ёрш</option>
+            <option>Щука</option>
+            <option>Окунь</option>
+          </select>
+        </div>
+        <div>
+          <label for="qty">Количество</label>
+          <input id="qty" type="number" inputmode="numeric" min="1" step="1" value="1" required />
+        </div>
+        <div>
+          <label for="catchTime">Время</label>
+          <input id="catchTime" type="time" required />
+        </div>
+        <div class="add-field">
+          <button class="btn" type="submit">+ Добавить</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card" style="margin-top:16px">
+      <div class="section-title">
+        <h2>Улов за день</h2>
+      </div>
+
+      <div class="summary">
+        <div class="mini"><b id="totalQty">0</b><span>всего рыб</span></div>
+        <div class="mini"><b id="speciesQty">0</b><span>видов</span></div>
+        <div class="mini"><b id="firstCatch">—</b><span>первая поимка</span></div>
+      </div>
+
+      <div id="catchList"></div>
+
+      <div class="footer-actions">
+        <button class="btn secondary" id="exportCsv" type="button">Экспорт CSV</button>
+        <button class="btn danger" id="clearToday" type="button">Очистить сегодняшний улов</button>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:16px">
+      <div class="section-title">
+        <h2>Последние рыболовные дни</h2>
+      </div>
+      <div id="history"></div>
+      <div class="note">Данные сохраняются только на этом устройстве в localStorage браузера.</div>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "fishing-day-mvp-v1";
+    const todayKey = localDateKey();
+
+    const $ = (id) => document.getElementById(id);
+
+    function localDateKey(date = new Date()) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const d = String(date.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+
+    function formatDate(key) {
+      const [y,m,d] = key.split("-").map(Number);
+      return new Intl.DateTimeFormat("ru-RU", {
+        day:"2-digit", month:"long", year:"numeric"
+      }).format(new Date(y, m - 1, d));
+    }
+
+    function currentTime() {
+      const d = new Date();
+      return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+    }
+
+    function loadData() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { days:{} };
+      } catch {
+        return { days:{} };
+      }
+    }
+
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function getToday() {
+      if (!state.days[todayKey]) {
+        state.days[todayKey] = { catches:[], weather:null };
+      }
+      return state.days[todayKey];
+    }
+
+    function weatherText(code) {
+      const map = {
+        0:"Ясно",
+        1:"Преимущественно ясно",
+        2:"Переменная облачность",
+        3:"Пасмурно",
+        45:"Туман",
+        48:"Изморозь / туман",
+        51:"Лёгкая морось",
+        53:"Морось",
+        55:"Сильная морось",
+        56:"Ледяная морось",
+        57:"Сильная ледяная морось",
+        61:"Небольшой дождь",
+        63:"Дождь",
+        65:"Сильный дождь",
+        66:"Ледяной дождь",
+        67:"Сильный ледяной дождь",
+        71:"Небольшой снег",
+        73:"Снег",
+        75:"Сильный снег",
+        77:"Снежная крупа",
+        80:"Небольшой ливень",
+        81:"Ливень",
+        82:"Сильный ливень",
+        85:"Небольшой снегопад",
+        86:"Сильный снегопад",
+        95:"Гроза",
+        96:"Гроза с градом",
+        99:"Сильная гроза с градом"
+      };
+      return map[code] || `Код ${code}`;
+    }
+
+    function windDirection(deg) {
+      const dirs = ["С","СВ","В","ЮВ","Ю","ЮЗ","З","СЗ"];
+      return dirs[Math.round(deg / 45) % 8];
+    }
+
+    function renderWeather() {
+      const day = getToday();
+      $("dateValue").textContent = formatDate(todayKey);
+
+      const emptyIds = ["tempValue","weatherValue","windValue","gustValue","humidityValue","pressureValue","precipValue"];
+      if (!day.weather) {
+        emptyIds.forEach(id => $(id).textContent = "—");
+        ["feelsValue","cloudValue","windSpeedValue","pressureMmValue","locationValue"].forEach(id => $(id).textContent = "");
+        return;
+      }
+
+      const w = day.weather;
+      $("tempValue").textContent = `${Math.round(w.temperature)} °C`;
+      $("feelsValue").textContent = `Ощущается как ${Math.round(w.apparentTemperature)} °C`;
+      $("weatherValue").textContent = weatherText(w.weatherCode);
+      $("cloudValue").textContent = `Облачность ${Math.round(w.cloudCover)}%`;
+      $("windValue").textContent = `${windDirection(w.windDirection)} · ${Math.round(w.windDirection)}°`;
+      $("windSpeedValue").textContent = `Скорость ${Math.round(w.windSpeed)} км/ч`;
+      $("gustValue").textContent = `${Math.round(w.windGusts)} км/ч`;
+      $("humidityValue").textContent = `${Math.round(w.humidity)}%`;
+      $("pressureValue").textContent = `${Math.round(w.pressure)} hPa`;
+      $("pressureMmValue").textContent = `${Math.round(w.pressure * 0.750062)} мм рт. ст.`;
+      $("precipValue").textContent = `${Number(w.precipitation).toFixed(1)} мм`;
+      $("locationValue").textContent = w.coords
+        ? `${w.coords.lat.toFixed(3)}, ${w.coords.lon.toFixed(3)}`
+        : "";
+    }
+
+    async function fetchWeather() {
+      const status = $("weatherStatus");
+
+      if (!navigator.geolocation) {
+        status.textContent = "Геолокация не поддерживается этим браузером.";
+        return;
+      }
+
+      status.textContent = "Определяю местоположение…";
+
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        status.textContent = "Получаю актуальную погоду из интернета…";
+
+        const url = new URL("https://api.open-meteo.com/v1/forecast");
+        url.searchParams.set("latitude", lat);
+        url.searchParams.set("longitude", lon);
+        url.searchParams.set("current", "temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m");
+        url.searchParams.set("temperature_unit", "celsius");
+        url.searchParams.set("wind_speed_unit", "kmh");
+        url.searchParams.set("precipitation_unit", "mm");
+        url.searchParams.set("timezone", "auto");
+
+        try {
+          const res = await fetch(url, { cache: "no-store" });
+          if (!res.ok) throw new Error(`weather request failed: ${res.status}`);
+          const data = await res.json();
+          const c = data.current;
+
+          getToday().weather = {
+            temperature: c.temperature_2m,
+            apparentTemperature: c.apparent_temperature,
+            humidity: c.relative_humidity_2m,
+            precipitation: c.precipitation,
+            weatherCode: c.weather_code,
+            cloudCover: c.cloud_cover,
+            pressure: c.pressure_msl,
+            windSpeed: c.wind_speed_10m,
+            windDirection: c.wind_direction_10m,
+            windGusts: c.wind_gusts_10m,
+            coords: {lat, lon},
+            source: "Open-Meteo",
+            observationTime: c.time,
+            loadedAt: new Date().toISOString()
+          };
+          saveData();
+          renderWeather();
+          status.textContent = `Данные из интернета · Open-Meteo · обновлено в ${currentTime()}.`;
+        } catch (err) {
+          renderWeather();
+          if (getToday().weather) {
+            status.textContent = "Сейчас нет связи с погодным сервисом. Показаны последние сохранённые данные; нажмите «Обновить погоду», когда появится интернет.";
+          } else {
+            status.textContent = "Не удалось получить погоду из интернета. Проверьте подключение и нажмите «Обновить погоду».";
+          }
+        }
+      }, (err) => {
+        const messages = {
+          1:"Разрешите доступ к геолокации, чтобы погода загружалась из интернета для вашего места рыбалки.",
+          2:"Не удалось определить местоположение.",
+          3:"Определение местоположения заняло слишком много времени."
+        };
+        status.textContent = messages[err.code] || "Не удалось определить местоположение.";
+      }, {
+        enableHighAccuracy:false,
+        timeout:12000,
+        maximumAge:5 * 60 * 1000
+      });
+    }
+
+    function renderCatches() {
+      const catches = [...getToday().catches].sort((a,b) => a.time.localeCompare(b.time));
+      const list = $("catchList");
+
+      const total = catches.reduce((sum, item) => sum + item.qty, 0);
+      const species = new Set(catches.map(item => item.fish)).size;
+
+      $("totalQty").textContent = total;
+      $("speciesQty").textContent = species;
+      $("firstCatch").textContent = catches.length ? catches[0].time : "—";
+
+      if (!catches.length) {
+        list.innerHTML = `<div class="empty">Пока улова нет. Добавьте первую пойманную рыбу.</div>`;
+        return;
+      }
+
+      list.className = "catch-list";
+      list.innerHTML = catches.map(item => `
+        <div class="catch-row">
+          <div class="catch-time">${escapeHtml(item.time)}</div>
+          <div class="catch-fish">${escapeHtml(item.fish)}</div>
+          <div class="catch-qty">${item.qty} шт.</div>
+          <button class="icon-btn" type="button" title="Удалить" data-id="${item.id}">×</button>
+        </div>
+      `).join("");
+
+      list.querySelectorAll("[data-id]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const day = getToday();
+          day.catches = day.catches.filter(x => x.id !== btn.dataset.id);
+          saveData();
+          renderAll();
+        });
+      });
+    }
+
+    function renderHistory() {
+      const container = $("history");
+      const days = Object.entries(state.days)
+        .filter(([_, day]) => day.catches && day.catches.length)
+        .sort((a,b) => b[0].localeCompare(a[0]))
+        .slice(0,7);
+
+      if (!days.length) {
+        container.innerHTML = `<div class="empty">История появится после первого улова.</div>`;
+        return;
+      }
+
+      container.innerHTML = days.map(([date, day]) => {
+        const total = day.catches.reduce((s,c) => s + c.qty, 0);
+        const names = [...new Set(day.catches.map(c => c.fish))].join(", ");
+        const weather = day.weather
+          ? `${Math.round(day.weather.temperature)} °C · ${weatherText(day.weather.weatherCode)} · ветер ${windDirection(day.weather.windDirection)}`
+          : "без данных о погоде";
+        return `
+          <div class="history-day">
+            <div>
+              <b>${escapeHtml(formatDate(date))}</b>
+              <small>${escapeHtml(names)} · ${escapeHtml(weather)}</small>
+            </div>
+            <b>${total} шт.</b>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function exportCsv() {
+      const rows = [["Дата","Температура, °C","Ощущается, °C","Влажность, %","Давление, hPa","Давление, мм рт. ст.","Осадки, мм","Облачность, %","Направление ветра","Скорость ветра, км/ч","Порывы, км/ч","Погода","Рыба","Количество","Время"]];
+      Object.entries(state.days)
+        .sort((a,b) => a[0].localeCompare(b[0]))
+        .forEach(([date, day]) => {
+          const w = day.weather;
+          (day.catches || []).forEach(c => {
+            rows.push([
+              date,
+              w ? Math.round(w.temperature) : "",
+              w ? Math.round(w.apparentTemperature) : "",
+              w ? Math.round(w.humidity) : "",
+              w ? Math.round(w.pressure) : "",
+              w ? Math.round(w.pressure * 0.750062) : "",
+              w ? Number(w.precipitation).toFixed(1) : "",
+              w ? Math.round(w.cloudCover) : "",
+              w ? `${windDirection(w.windDirection)} (${Math.round(w.windDirection)}°)` : "",
+              w ? Math.round(w.windSpeed) : "",
+              w ? Math.round(w.windGusts) : "",
+              w ? weatherText(w.weatherCode) : "",
+              c.fish,
+              c.qty,
+              c.time
+            ]);
+          });
+        });
+
+      if (rows.length === 1) {
+        alert("Пока нечего экспортировать.");
+        return;
+      }
+
+      const csv = "\uFEFF" + rows.map(row =>
+        row.map(v => `"${String(v).replaceAll('"','""')}"`).join(";")
+      ).join("\n");
+
+      const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `fishing-log-${todayKey}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function renderAll() {
+      renderWeather();
+      renderCatches();
+      renderHistory();
+    }
+
+    let state = loadData();
+    getToday();
+    saveData();
+
+    $("catchTime").value = currentTime();
+
+    $("catchForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const qty = Number($("qty").value);
+      if (!Number.isInteger(qty) || qty < 1) return;
+
+      getToday().catches.push({
+        id: (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`),
+        fish: $("fish").value,
+        qty,
+        time: $("catchTime").value
+      });
+
+      saveData();
+      $("qty").value = 1;
+      $("catchTime").value = currentTime();
+      renderAll();
+    });
+
+    $("refreshWeather").addEventListener("click", fetchWeather);
+    $("exportCsv").addEventListener("click", exportCsv);
+
+    $("clearToday").addEventListener("click", () => {
+      if (!getToday().catches.length) return;
+      if (confirm("Удалить весь улов за сегодняшний день?")) {
+        getToday().catches = [];
+        saveData();
+        renderAll();
+      }
+    });
+
+    renderAll();
+
+    // При каждом открытии страницы запрашиваем свежую погоду из интернета.
+    // Сохранённые данные используются только как резерв, если сеть недоступна.
+    fetchWeather();
+  </script>
+</body>
+</html>
