@@ -58,6 +58,7 @@
       <div class="field"><label for="editDate">Выберите дату</label><input id="editDate" type="date"></div>
     </div>
     <div class="editing-banner" id="editingBanner">Сейчас редактируется сегодняшний день.</div>
+    <div class="status">Изменения за сегодня и предыдущие 7 дней синхронизируются с Google Таблицей. Более старые даты можно просматривать в журнале, но Google-история по ним не перезаписывается.</div>
   </section>
 
   <section class="card">
@@ -175,11 +176,11 @@
         <label for="sheetEndpoint">URL веб-приложения Google Apps Script</label>
         <input id="sheetEndpoint" type="url" placeholder="https://script.google.com/macros/s/.../exec">
       </div>
-      <button class="btn" id="syncSheets" type="button">Выгрузить все годы</button>
+      <button class="btn" id="syncSheets" type="button">Синхронизировать</button>
     </div>
     <div class="footer-actions"><button class="btn secondary" id="saveEndpoint" type="button">Сохранить URL</button></div>
-    <div class="status" id="syncStatus">После настройки Apps Script данные будут выгружаться в лист «Сводка», годовые вкладки и лист «Улов» со снастью, способом ловли, местом и приманками.</div>
-    <div class="sync-note">Вкладка каждого года содержит все 365/366 календарных дней, включая комментарий к каждому дню. Если рыбалка была, но улова не было — в строке будет «Рыбалка: Да» и результат «Без улова».</div>
+    <div class="status" id="syncStatus">Новые даты добавляются в Google Таблицу автоматически при синхронизации. Сегодня и предыдущие 7 дней можно исправлять; более старые даты остаются зафиксированной историей.</div>
+    <div class="sync-note">Окно корректировки: сегодня + 7 предыдущих календарных дней. Если синхронизация была пропущена на более долгий срок, все отсутствующие даты после последней записи всё равно будут добавлены.</div>
   </section>
 </main>
 
@@ -226,11 +227,11 @@ function renderWeather(){
   const day=ensureDay(selectedDateKey),w=day.weather;
   $("dateValue").textContent=formatDate(selectedDateKey);
   $("refreshWeather").disabled=false;
-  $("refreshWeather").textContent=selectedDateKey===todayKey?"Обновить погоду":"Загрузить погоду за день";
+  $("refreshWeather").textContent=selectedDateKey===todayKey?"Обновить погоду":"Обновить погоду из интернета";
   if(!w){
     ["tempValue","weatherValue","windValue","gustValue","humidityValue","pressureValue","precipValue"].forEach(id=>$(id).textContent="—");
     ["feelsValue","cloudValue","windSpeedValue","pressureMmValue","locationValue"].forEach(id=>$(id).textContent="");
-    $("weatherStatus").textContent=selectedDateKey===todayKey?"Погода за сегодня будет загружена из интернета.":"Погода за этот день ещё не загружена. Нажмите «Загрузить погоду за день».";
+    $("weatherStatus").textContent=selectedDateKey===todayKey?"Погода за сегодня будет загружена из интернета.":"Историческая погода будет автоматически загружена из интернета при открытии этого дня.";
     return;
   }
   $("tempValue").textContent=`${Math.round(w.temperature)} °C`;
@@ -245,7 +246,7 @@ function renderWeather(){
   $("pressureMmValue").textContent=`${Math.round(w.pressure*.750062)} мм рт. ст.`;
   $("precipValue").textContent=`${Number(w.precipitation).toFixed(1)} мм`;
   $("locationValue").textContent=w.coords?`${w.coords.lat.toFixed(3)}, ${w.coords.lon.toFixed(3)}`:"";
-  $("weatherStatus").textContent=w.source?.includes("historical")?"Историческая погода Open-Meteo за выбранный календарный день.":"Погода Open-Meteo за выбранный календарный день.";
+  $("weatherStatus").textContent=w.source?.includes("historical")?"Историческая погода загружена из интернета Open-Meteo за выбранный календарный день.":"Погода Open-Meteo за выбранный календарный день.";
 }
 
 function savedWeatherCoords(){
@@ -279,7 +280,7 @@ function dailyWeatherFromApi(d,i,coords,source){
   };
 }
 async function fetchHistoricalWeatherRange(startDate,endDate,coords){
-  const url=new URL("https://historical-forecast-api.open-meteo.com/v1/forecast");
+  const url=new URL("https://archive-api.open-meteo.com/v1/archive");
   url.searchParams.set("latitude",coords.lat);url.searchParams.set("longitude",coords.lon);
   url.searchParams.set("start_date",startDate);url.searchParams.set("end_date",endDate);
   url.searchParams.set("daily","weather_code,temperature_2m_mean,apparent_temperature_mean,relative_humidity_2m_mean,precipitation_sum,cloud_cover_mean,pressure_msl_mean,wind_speed_10m_mean,wind_direction_10m_dominant,wind_gusts_10m_max");
@@ -308,7 +309,7 @@ async function fetchWeather(){
       ensureDay(selectedDateKey).weather=await fetchCurrentWeather(coords);
     }else{
       const d=await fetchHistoricalWeatherRange(selectedDateKey,selectedDateKey,coords);
-      ensureDay(selectedDateKey).weather=dailyWeatherFromApi(d,0,coords,"Open-Meteo historical forecast");
+      ensureDay(selectedDateKey).weather=dailyWeatherFromApi(d,0,coords,"Open-Meteo historical archive");
     }
     saveData();renderAll();status.textContent=`Погода загружена для ${formatDate(selectedDateKey)}.`;
   }catch(e){renderWeather();status.textContent=e.message||"Не удалось загрузить погоду."}
@@ -326,7 +327,7 @@ async function fillWeatherForYear(year,showStatus=true){
     const historicalEnd=year===currentYear?localDateKey(new Date(new Date().setDate(new Date().getDate()-1))):end;
     if(historicalEnd>=start){
       const d=await fetchHistoricalWeatherRange(start,historicalEnd,coords);
-      d.time.forEach((key,i)=>{ensureDay(key).weather=dailyWeatherFromApi(d,i,coords,"Open-Meteo historical forecast")});
+      d.time.forEach((key,i)=>{ensureDay(key).weather=dailyWeatherFromApi(d,i,coords,"Open-Meteo historical archive")});
     }
     if(year===currentYear){ensureDay(todayKey).weather=await fetchCurrentWeather(coords)}
     saveData();renderAll();
@@ -490,7 +491,13 @@ function selectDay(key,scrollToEditor=true){
   buildYearSelect();
   if([...$("yearSelect").options].some(o=>Number(o.value)===year))$("yearSelect").value=String(year);
   renderWeather();renderFishing();renderComment();renderCatches();renderYear();
-  if(!ensureDay(selectedDateKey).weather) fetchWeather();
+  if(selectedDateKey===todayKey){
+    if(!ensureDay(selectedDateKey).weather) fetchWeather();
+  }else{
+    // Для любой прошлой даты погоду всегда обновляем из интернета,
+    // даже если ранее она уже была сохранена локально.
+    fetchWeather();
+  }
   if(scrollToEditor)$("dayEditor").scrollIntoView({behavior:"smooth",block:"start"});
 }
 
@@ -561,7 +568,7 @@ function buildSyncPayload(){
     const best=rows.reduce((a,r)=>r.total>a.total?r:a,{date:"",total:0});
     return {year,rows,summary:{fishingDays,total,species:species.size,bestDay:best.date,bestTotal:best.total},catches};
   });
-  return {app:"Fishing Day MVP",version:7,syncedAt:new Date().toISOString(),years:yearData};
+  return {app:"Fishing Day MVP",version:10,syncedAt:new Date().toISOString(),years:yearData};
 }
 async function syncGoogleSheets(){
   const endpoint=$("sheetEndpoint").value.trim(),status=$("syncStatus");
@@ -573,7 +580,7 @@ async function syncGoogleSheets(){
     for(const year of years){await fillWeatherForYear(year,false)}
     status.textContent="Отправляю данные в Google Таблицу…";
     await fetch(endpoint,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(buildSyncPayload())});
-    status.textContent="Данные отправлены. Погода выгружена для всех прошедших календарных дней, независимо от рыбалки.";
+    status.textContent="Запрос отправлен. Новые даты добавляются, а данные за сегодня и предыдущие 7 дней могут быть скорректированы. Более старые строки не изменяются.";
   }catch(e){status.textContent=`Не удалось завершить выгрузку: ${e.message||e}`}
 }
 function exportCsv(){
