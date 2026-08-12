@@ -51,7 +51,7 @@
 <body>
 <main class="wrap">
   <section class="hero">
-    <div class="version-badge">Версия 18</div>
+    <div class="version-badge">Версия 20</div>
     <small>Дневник рыболова</small>
     <h1>Рыболовный день</h1>
     <p>Учёт каждого дня года, улова, города, комментариев и погоды по выбранному городу.</p>
@@ -199,6 +199,7 @@
 <script>
 const STORAGE_KEY="fishing-day-mvp-v3";
 const ENDPOINT_KEY="fishing-day-google-endpoint";
+const GOOGLE_SHEET_URL="https://docs.google.com/spreadsheets/d/1H7H2AUwtfeqYaaWE0LCZq4QFm7o5Rp7M8eYg70uJLkM/edit";
 const CITY_CACHE_KEY="fishing-day-city-cache-v1";
 const WEATHER_BACKFILL_KEY="fishing-day-weather-backfill-v13-date";
 const DEFAULT_CITY_NAME="Конаково";
@@ -737,15 +738,52 @@ function buildSyncPayload(){
     const best=rows.reduce((a,r)=>r.total>a.total?r:a,{date:"",total:0});
     return {year,rows,summary:{fishingDays,total,species:species.size,bestDay:best.date,bestTotal:best.total},catches};
   });
-  return {app:"Fishing Day MVP",version:18,clientToday:todayKey,selectedDate:selectedDateKey,syncedAt:new Date().toISOString(),years:yearData};
+  return {app:"Fishing Day MVP",version:20,clientToday:todayKey,selectedDate:selectedDateKey,syncedAt:new Date().toISOString(),years:yearData};
 }
 async function syncGoogleSheets(){
   const endpoint=$("sheetEndpoint").value.trim(),status=$("syncStatus");
-  if(!endpoint || !endpoint.includes("script.google.com")){status.textContent="Сначала вставьте URL веб-приложения Apps Script вида .../exec.";return}
+  if(!endpoint || !endpoint.includes("script.google.com")){
+    status.textContent="Сначала вставьте URL веб-приложения Apps Script вида .../exec.";
+    return;
+  }
 
-  // Важно: принудительно сохраняем текст выбранного дня прямо перед синхронизацией.
-  // Это исключает ситуацию, когда пользователь ввёл комментарий и сразу нажал
-  // «Синхронизировать», а событие blur ещё не успело сохранить значение.
+  // Окно открываем сразу внутри пользовательского клика.
+  // Так браузер реже блокирует его как всплывающее.
+  let sheetWindow=null;
+  try{
+    sheetWindow=window.open(
+      "about:blank",
+      "FishingGoogleSheetWindow",
+      "popup=yes,width=1400,height=900,resizable=yes,scrollbars=yes"
+    );
+
+    if(sheetWindow){
+      sheetWindow.document.open();
+      sheetWindow.document.write(`<!doctype html>
+        <html lang="ru">
+        <head>
+          <meta charset="utf-8">
+          <title>Синхронизация рыболовного дневника</title>
+          <style>
+            body{font-family:Arial,sans-serif;background:#f5f7f4;color:#17342f;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
+            .box{max-width:520px;background:white;padding:28px;border-radius:18px;box-shadow:0 14px 40px rgba(20,55,48,.14);text-align:center}
+            h2{margin:0 0 10px}p{margin:0;color:#66756f;line-height:1.5}
+          </style>
+        </head>
+        <body>
+          <div class="box">
+            <h2>Синхронизация…</h2>
+            <p>Данные отправляются в Google Таблицу. После завершения здесь откроется сама таблица.</p>
+          </div>
+        </body>
+        </html>`);
+      sheetWindow.document.close();
+    }
+  }catch(ignore){
+    sheetWindow=null;
+  }
+
+  // Принудительно сохраняем комментарий выбранного дня.
   const selectedDay=ensureDay(selectedDateKey);
   selectedDay.comment=$("dayComment").value.trim();
   saveData();
@@ -754,12 +792,13 @@ async function syncGoogleSheets(){
 
   localStorage.setItem(ENDPOINT_KEY,endpoint);
   status.textContent="Перед выгрузкой заполняю отсутствующую погоду…";
+
   try{
     const years=getYearsWithData();
-    for(const year of years){await fillWeatherForYear(year,false)}
+    for(const year of years){
+      await fillWeatherForYear(year,false);
+    }
 
-    // После обновления погоды ещё раз фиксируем комментарий выбранного дня:
-    // renderAll() не должен иметь возможности затереть свежий текст.
     ensureDay(selectedDateKey).comment=$("dayComment").value.trim();
     saveData();
 
@@ -773,9 +812,31 @@ async function syncGoogleSheets(){
       body:JSON.stringify(payload)
     });
 
-    status.textContent=`Запрос отправлен. Комментарий и поля «Добавить улов» за ${formatDate(selectedDateKey)} включены в синхронизацию. Доступно исправление за сегодня и предыдущие 7 дней.`;
+    status.textContent=sheetWindow
+      ?`Синхронизация отправлена. Google Таблица открыта в отдельном окне.`
+      :`Синхронизация отправлена. Браузер заблокировал отдельное окно — разрешите всплывающие окна для этого сайта.`;
+
+    if(sheetWindow && !sheetWindow.closed){
+      try{
+        sheetWindow.location.replace(GOOGLE_SHEET_URL);
+        sheetWindow.focus();
+      }catch(ignore){
+        window.open(GOOGLE_SHEET_URL,"_blank");
+      }
+    }
   }catch(e){
     status.textContent=`Не удалось завершить выгрузку: ${e.message||e}`;
+
+    if(sheetWindow && !sheetWindow.closed){
+      try{
+        sheetWindow.document.body.innerHTML=`
+          <div style="font-family:Arial,sans-serif;padding:30px">
+            <h2>Ошибка синхронизации</h2>
+            <p>${escapeHtml(String(e.message||e))}</p>
+            <p><a href="${GOOGLE_SHEET_URL}" target="_self">Открыть Google Таблицу</a></p>
+          </div>`;
+      }catch(ignore){}
+    }
   }
 }
 function exportCsv(){

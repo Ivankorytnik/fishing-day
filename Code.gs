@@ -1,33 +1,47 @@
 /**
  * Рыболовный дневник -> Google Sheets
- * Версия 18: накопительная синхронизация + окно корректировки 7 дней назад.
+ * Версия 19.
  *
- * Логика:
- * 1. Все новые даты после последней записи добавляются в таблицу.
- *    Поэтому если синхронизацию не запускали несколько дней, промежуток не потеряется.
- * 2. Сегодня + 7 предыдущих календарных дней разрешено корректировать.
- * 3. Даты старше этого окна НЕ перезаписываются.
- * 4. Лист "Улов" работает по той же логике:
- *    новые даты добавляются, а улов в окне корректировки пересобирается.
- * 5. Будущие строки, оставшиеся от старых версий, удаляются.
+ * Главная задача версии:
+ * привести старые, новые и отредактированные строки к ОДНОЙ структуре.
+ *
+ * Что делает скрипт:
+ * - один раз создаёт скрытые резервные копии рабочих листов;
+ * - мигрирует старые схемы колонок в текущую каноническую;
+ * - не меняет смысл исторических значений;
+ * - выравнивает форматирование всех строк;
+ * - новые даты добавляет после последней записи;
+ * - сегодня + 7 предыдущих дней разрешает редактировать;
+ * - более старые даты после миграции не перезаписывает;
+ * - данные формы "Добавить улов" сохраняет и в листе года, и в листе "Улов".
  */
 
 const SPREADSHEET_ID = "1H7H2AUwtfeqYaaWE0LCZq4QFm7o5Rp7M8eYg70uJLkM";
-
-// Сегодня + семь предыдущих дней.
-// Например, 12 августа можно исправлять 5–12 августа включительно.
 const CORRECTION_DAYS_BACK = 7;
+const MIGRATION_PROPERTY = "FISHING_DAY_UNIFIED_FORMAT_V19";
 
 const YEAR_HEADERS = [
-  "Дата", "День недели", "Рыбалка", "Количество", "Результат дня", "Комментарий",
-  "Температура, °C", "Ощущается, °C", "Погода",
-  "Направление ветра", "Ветер, °", "Скорость ветра, км/ч", "Порывы ветра, км/ч",
-  "Влажность, %", "Давление, hPa", "Давление, мм рт. ст.",
-  "Осадки, мм", "Облачность, %",
+  "Дата",
+  "День недели",
+  "Рыбалка",
+  "Количество",
+  "Результат дня",
+  "Комментарий",
+
+  "Температура, °C",
+  "Ощущается, °C",
+  "Погода",
+  "Направление ветра",
+  "Ветер, °",
+  "Скорость ветра, км/ч",
+  "Порывы ветра, км/ч",
+  "Влажность, %",
+  "Давление, hPa",
+  "Давление, мм рт. ст.",
+  "Осадки, мм",
+  "Облачность, %",
   "Город погоды",
 
-  // Данные из блока «Добавить улов».
-  // Добавлены в конец, чтобы не сдвигать старые исторические столбцы.
   "Город улова",
   "Рыба",
   "Количество по записям",
@@ -39,15 +53,76 @@ const YEAR_HEADERS = [
 ];
 
 const CATCH_HEADERS = [
-  "Год", "Дата", "Время", "Рыба", "Количество",
-  "Снасть", "Способ ловли", "Место ловли", "Приманка",
+  "Год",
+  "Дата",
+  "Время",
+  "Рыба",
+  "Количество",
+  "Снасть",
+  "Способ ловли",
+  "Место ловли",
+  "Приманка",
   "Город"
 ];
 
 const SUMMARY_HEADERS = [
-  "Год", "Дней с рыбалкой", "Всего поймано", "Видов рыбы",
-  "Лучший день", "Улов в лучший день", "Последняя синхронизация"
+  "Год",
+  "Дней с рыбалкой",
+  "Всего поймано",
+  "Видов рыбы",
+  "Лучший день",
+  "Улов в лучший день",
+  "Последняя синхронизация"
 ];
+
+const YEAR_ALIASES = {
+  "Дата": ["Дата"],
+  "День недели": ["День недели"],
+  "Рыбалка": ["Рыбалка"],
+  "Количество": ["Количество"],
+  "Результат дня": ["Результат дня"],
+  "Комментарий": ["Комментарий"],
+
+  "Температура, °C": ["Температура, °C", "Температура °C"],
+  "Ощущается, °C": ["Ощущается, °C", "Ощущается °C"],
+  "Погода": ["Погода"],
+  "Направление ветра": ["Направление ветра"],
+  "Ветер, °": ["Ветер, °", "Ветер °"],
+  "Скорость ветра, км/ч": ["Скорость ветра, км/ч", "Скорость ветра км/ч"],
+  "Порывы ветра, км/ч": ["Порывы ветра, км/ч", "Порывы ветра км/ч", "Порывы км/ч"],
+  "Влажность, %": ["Влажность, %", "Влажность %"],
+  "Давление, hPa": ["Давление, hPa", "Давление hPa"],
+  "Давление, мм рт. ст.": [
+    "Давление, мм рт. ст.",
+    "Давление мм рт. ст.",
+    "Давление мм рт ст"
+  ],
+  "Осадки, мм": ["Осадки, мм", "Осадки мм"],
+  "Облачность, %": ["Облачность, %", "Облачность %"],
+  "Город погоды": ["Город погоды"],
+
+  "Город улова": ["Город улова"],
+  "Рыба": ["Рыба"],
+  "Количество по записям": ["Количество по записям"],
+  "Время улова": ["Время улова"],
+  "Снасть": ["Снасть"],
+  "Способ ловли": ["Способ ловли"],
+  "Место ловли": ["Место ловли"],
+  "Приманка": ["Приманка"]
+};
+
+const CATCH_ALIASES = {
+  "Год": ["Год"],
+  "Дата": ["Дата"],
+  "Время": ["Время"],
+  "Рыба": ["Рыба"],
+  "Количество": ["Количество"],
+  "Снасть": ["Снасть"],
+  "Способ ловли": ["Способ ловли"],
+  "Место ловли": ["Место ловли"],
+  "Приманка": ["Приманка"],
+  "Город": ["Город"]
+};
 
 
 function doGet() {
@@ -55,23 +130,25 @@ function doGet() {
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const tz = ss.getSpreadsheetTimeZone();
     const todayIso = dateToIso_(new Date(), tz);
-    const correctionStartIso = shiftIsoDate_(todayIso, -CORRECTION_DAYS_BACK, tz);
 
     return jsonResponse_({
       ok: true,
       service: "Fishing Day Sheets Sync",
-      version: 18,
-      mode: "incremental-with-7-day-correction",
+      version: 19,
+      schema: "unified-v19",
       spreadsheet: ss.getName(),
-      spreadsheetId: SPREADSHEET_ID,
       today: todayIso,
-      correctionFrom: correctionStartIso,
-      correctionTo: todayIso
+      correctionFrom: shiftIsoDate_(
+        todayIso,
+        -CORRECTION_DAYS_BACK,
+        tz
+      )
     });
 
   } catch (error) {
     return jsonResponse_({
       ok: false,
+      version: 19,
       error: String(error)
     });
   }
@@ -89,21 +166,13 @@ function doPost(e) {
     }
 
     const payload = JSON.parse(e.postData.contents);
-    const years = Array.isArray(payload.years) ? payload.years : [];
+    const years = Array.isArray(payload.years)
+      ? payload.years
+      : [];
 
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const tz = ss.getSpreadsheetTimeZone();
 
-    // Сначала восстанавливаем технический размер существующих листов.
-    // Это исправляет старые годовые листы, оставшиеся шириной A-Z.
-    repairSheetStructure_(
-      ss,
-      years
-    );
-
-    // Берём календарную дату с сайта пользователя.
-    // Это устраняет расхождение, если часовой пояс самой Google Таблицы
-    // отличается от часового пояса, в котором открыт рыболовный дневник.
     const todayIso = isIsoDate_(payload.clientToday)
       ? payload.clientToday
       : dateToIso_(new Date(), tz);
@@ -114,40 +183,18 @@ function doPost(e) {
       tz
     );
 
+    // Первая синхронизация версии 19:
+    // резервная копия + миграция старой структуры.
+    ensureUnifiedMigrationV19_(ss);
+
+    // На каждой синхронизации выполняется лёгкая проверка схемы.
+    normalizeWorkingSheets_(ss);
+
     const syncInfo = writeYearSheets_(
       ss,
       years,
       todayIso,
       correctionStartIso
-    );
-
-    // Дополнительная адресная синхронизация комментариев.
-    // Обновляем колонку "Комментарий" по дате во всём разрешённом
-    // окне корректировки, в том числе если в листе случайно есть
-    // несколько строк одной даты после старых версий.
-    writeCommentsForCorrectionWindow_(
-      ss,
-      years,
-      correctionStartIso,
-      todayIso
-    );
-
-    // Явно обновляем колонку "Город погоды" для разрешённого
-    // 7-дневного окна корректировки.
-    writeWeatherCityForCorrectionWindow_(
-      ss,
-      years,
-      correctionStartIso,
-      todayIso
-    );
-
-    // Обновляем поля «Добавить улов» прямо в строке дня
-    // за сегодня и предыдущие 7 дней.
-    writeCatchFieldsForCorrectionWindow_(
-      ss,
-      years,
-      correctionStartIso,
-      todayIso
     );
 
     writeCatches_(
@@ -158,17 +205,23 @@ function doPost(e) {
       correctionStartIso
     );
 
+    // Годовые поля улова формируем из детального листа "Улов".
+    // Так старые и новые строки выглядят одинаково.
+    rebuildYearCatchColumnsFromCatchSheet_(ss);
+
     updateSummary_(
       ss,
       years,
       syncInfo
     );
 
+    applyUnifiedFormatting_(ss);
     SpreadsheetApp.flush();
 
     return jsonResponse_({
       ok: true,
-      message: "Синхронизация завершена",
+      version: 19,
+      schema: "unified-v19",
       correctionFrom: correctionStartIso,
       correctionTo: todayIso,
       result: Object.keys(syncInfo).map(function(year) {
@@ -184,13 +237,13 @@ function doPost(e) {
 
   } catch (error) {
     console.error(
-      "SYNC ERROR: " +
+      "SYNC ERROR V19: " +
       String(error)
     );
 
     return jsonResponse_({
       ok: false,
-      version: 18,
+      version: 19,
       error: String(error),
       syncedAt: new Date().toISOString()
     });
@@ -204,198 +257,767 @@ function doPost(e) {
 
 
 /**
- * Автоматически подготавливает существующие листы к актуальной структуре.
- * Данные не очищаются и не перезаписываются — добавляются только
- * недостающие технические строки/колонки и актуальная шапка.
+ * Выполняется автоматически один раз.
+ * Создаёт резервные копии и приводит старые листы к единой схеме.
  */
-function repairSheetStructure_(
-  ss,
-  years
-) {
-  years.forEach(function(yearData) {
-    const sheet = getOrCreateSheet_(
-      ss,
-      String(yearData.year)
-    );
+function ensureUnifiedMigrationV19_(ss) {
+  const properties = PropertiesService.getScriptProperties();
 
-    ensureSheetCapacity_(
-      sheet,
-      Math.max(
-        sheet.getLastRow(),
-        2
-      ),
-      YEAR_HEADERS.length
-    );
+  if (
+    properties.getProperty(
+      MIGRATION_PROPERTY
+    ) === "done"
+  ) {
+    return;
+  }
 
-    ensureHeaders_(
-      sheet,
-      YEAR_HEADERS
-    );
+  createMigrationBackups_(ss);
+
+  const yearSheets = getYearSheets_(ss);
+
+  yearSheets.forEach(function(sheet) {
+    normalizeYearSheet_(sheet, ss);
   });
 
-  const catchSheet = getOrCreateSheet_(
-    ss,
-    "Улов"
+  normalizeCatchSheet_(
+    getOrCreateSheet_(ss, "Улов"),
+    ss
   );
 
-  ensureSheetCapacity_(
-    catchSheet,
-    Math.max(
-      catchSheet.getLastRow(),
-      2
-    ),
-    CATCH_HEADERS.length
+  normalizeSummarySheet_(
+    getOrCreateSheet_(ss, "Сводка")
   );
 
-  ensureHeaders_(
-    catchSheet,
-    CATCH_HEADERS
-  );
+  rebuildYearCatchColumnsFromCatchSheet_(ss);
+  applyUnifiedFormatting_(ss);
 
-  const summarySheet = getOrCreateSheet_(
-    ss,
-    "Сводка"
-  );
-
-  ensureSheetCapacity_(
-    summarySheet,
-    Math.max(
-      summarySheet.getLastRow(),
-      2
-    ),
-    SUMMARY_HEADERS.length
-  );
-
-  ensureHeaders_(
-    summarySheet,
-    SUMMARY_HEADERS
+  properties.setProperty(
+    MIGRATION_PROPERTY,
+    "done"
   );
 }
 
 
 /**
- * Годовые листы.
+ * Ручная функция.
+ * Можно один раз выбрать её сверху в Apps Script и нажать "Выполнить".
  *
- * 1. Добавляем все новые даты после последней записи.
- * 2. Отдельно обновляем существующие строки в окне:
- *    correctionStartIso ... todayIso.
- * 3. Всё старше correctionStartIso не трогаем.
+ * Она:
+ * - создаёт резервные копии, если их ещё нет;
+ * - заново приводит рабочие листы к канонической структуре;
+ * - не удаляет исходные резервные копии.
  */
-function writeYearSheets_(ss, years, todayIso, correctionStartIso) {
+function migrateGoogleSheetsToUnifiedFormat() {
+  const ss = SpreadsheetApp.openById(
+    SPREADSHEET_ID
+  );
+
+  createMigrationBackups_(ss);
+
+  getYearSheets_(ss).forEach(function(sheet) {
+    normalizeYearSheet_(sheet, ss);
+  });
+
+  normalizeCatchSheet_(
+    getOrCreateSheet_(ss, "Улов"),
+    ss
+  );
+
+  normalizeSummarySheet_(
+    getOrCreateSheet_(ss, "Сводка")
+  );
+
+  rebuildYearCatchColumnsFromCatchSheet_(ss);
+  applyUnifiedFormatting_(ss);
+
+  PropertiesService
+    .getScriptProperties()
+    .setProperty(
+      MIGRATION_PROPERTY,
+      "done"
+    );
+
+  SpreadsheetApp.flush();
+
+  console.log(
+    "Миграция в единый формат v19 завершена."
+  );
+}
+
+
+/**
+ * Если нужно повторно прогнать миграцию после ручных изменений,
+ * запустите эту функцию, а затем migrateGoogleSheetsToUnifiedFormat().
+ */
+function resetUnifiedMigrationFlag() {
+  PropertiesService
+    .getScriptProperties()
+    .deleteProperty(
+      MIGRATION_PROPERTY
+    );
+}
+
+
+/**
+ * Резервные копии создаются только один раз и скрываются.
+ */
+function createMigrationBackups_(ss) {
+  const names = ["Улов", "Сводка"];
+
+  getYearSheets_(ss).forEach(function(sheet) {
+    names.push(
+      sheet.getName()
+    );
+  });
+
+  names.forEach(function(name) {
+    const source = ss.getSheetByName(name);
+
+    if (!source) {
+      return;
+    }
+
+    const backupName =
+      "_backup_v18_" + name;
+
+    if (
+      ss.getSheetByName(
+        backupName
+      )
+    ) {
+      return;
+    }
+
+    const backup = source
+      .copyTo(ss)
+      .setName(
+        backupName
+      );
+
+    try {
+      backup.hideSheet();
+    } catch (ignore) {}
+  });
+}
+
+
+/**
+ * Проверка структуры при каждой синхронизации.
+ * Никакие резервные копии здесь уже не создаются.
+ */
+function normalizeWorkingSheets_(ss) {
+  getYearSheets_(ss).forEach(function(sheet) {
+    normalizeYearSheet_(sheet, ss);
+  });
+
+  normalizeCatchSheet_(
+    getOrCreateSheet_(ss, "Улов"),
+    ss
+  );
+
+  normalizeSummarySheet_(
+    getOrCreateSheet_(ss, "Сводка")
+  );
+}
+
+
+/**
+ * Миграция годового листа.
+ *
+ * Значения раскладываются по названиям колонок, а не по старым номерам.
+ * Это исправляет ситуации, когда старые строки были записаны по одной
+ * схеме, а заголовок позднее был изменён.
+ */
+function normalizeYearSheet_(sheet, ss) {
+  const lastRow = Math.max(
+    sheet.getLastRow(),
+    1
+  );
+
+  const lastColumn = Math.max(
+    sheet.getLastColumn(),
+    1
+  );
+
+  ensureSheetCapacity_(
+    sheet,
+    lastRow,
+    YEAR_HEADERS.length
+  );
+
+  if (lastRow === 1) {
+    sheet
+      .getRange(
+        1,
+        1,
+        1,
+        YEAR_HEADERS.length
+      )
+      .setValues([
+        YEAR_HEADERS
+      ]);
+
+    return;
+  }
+
+  const raw = sheet
+    .getRange(
+      1,
+      1,
+      lastRow,
+      Math.max(
+        lastColumn,
+        YEAR_HEADERS.length
+      )
+    )
+    .getValues();
+
+  const oldHeaders = raw[0];
+  const indexMap = buildCanonicalIndex_(
+    oldHeaders,
+    YEAR_HEADERS,
+    YEAR_ALIASES
+  );
+
+  const canonicalRows = [];
+
+  for (
+    let r = 1;
+    r < raw.length;
+    r++
+  ) {
+    const source = raw[r];
+
+    if (
+      source.every(
+        isEmptyValue_
+      )
+    ) {
+      continue;
+    }
+
+    let row = YEAR_HEADERS.map(function(header) {
+      const index = indexMap[header];
+
+      return index >= 0
+        ? source[index]
+        : "";
+    });
+
+    // Если заголовок уже был перезаписан новой версией,
+    // но сама строка осталась из самой ранней схемы без "Комментария",
+    // распознаём характерный сдвиг погодных колонок и исправляем его.
+    row = repairLegacyNoCommentShift_(
+      row
+    );
+
+    canonicalRows.push(
+      row
+    );
+  }
+
+  const mergedRows = mergeYearRowsByDate_(
+    canonicalRows,
+    ss.getSpreadsheetTimeZone()
+  );
+
+  const clearColumns = Math.max(
+    lastColumn,
+    YEAR_HEADERS.length
+  );
+
+  sheet
+    .getRange(
+      1,
+      1,
+      Math.max(
+        lastRow,
+        mergedRows.length + 1
+      ),
+      clearColumns
+    )
+    .clearContent();
+
+  ensureSheetCapacity_(
+    sheet,
+    mergedRows.length + 1,
+    YEAR_HEADERS.length
+  );
+
+  sheet
+    .getRange(
+      1,
+      1,
+      1,
+      YEAR_HEADERS.length
+    )
+    .setValues([
+      YEAR_HEADERS
+    ]);
+
+  if (mergedRows.length) {
+    sheet
+      .getRange(
+        2,
+        1,
+        mergedRows.length,
+        YEAR_HEADERS.length
+      )
+      .setValues(
+        mergedRows
+      );
+  }
+}
+
+
+/**
+ * Старейшая схема не содержала колонку "Комментарий".
+ * Если заголовок уже был заменён поздней версией, температура могла
+ * визуально оказаться под "Комментарий". Этот сдвиг исправляется здесь.
+ */
+function repairLegacyNoCommentShift_(row) {
+  const comment = row[5];
+  const temperature = row[6];
+  const apparent = row[7];
+
+  const looksShifted =
+    isNumberLike_(comment) &&
+    isNumberLike_(temperature) &&
+    typeof apparent === "string" &&
+    apparent !== "" &&
+    !isNumberLike_(apparent);
+
+  if (!looksShifted) {
+    return row;
+  }
+
+  const fixed = row.slice();
+
+  // Старые F:Q -> новые G:R.
+  for (
+    let target = 17;
+    target >= 6;
+    target--
+  ) {
+    fixed[target] =
+      row[target - 1];
+  }
+
+  fixed[5] = "";
+
+  return fixed;
+}
+
+
+/**
+ * Если после старых версий появились дубли даты,
+ * оставляем одну строку и объединяем непустые значения.
+ * Более поздняя строка имеет приоритет.
+ */
+function mergeYearRowsByDate_(
+  rows,
+  timeZone
+) {
+  const byDate = {};
+  const withoutDate = [];
+
+  rows.forEach(function(row) {
+    const iso = cellDateToIso_(
+      row[0],
+      timeZone
+    );
+
+    if (!iso) {
+      withoutDate.push(row);
+      return;
+    }
+
+    if (!byDate[iso]) {
+      byDate[iso] =
+        row.slice();
+      return;
+    }
+
+    const target = byDate[iso];
+
+    row.forEach(function(value, index) {
+      if (!isEmptyValue_(value)) {
+        target[index] = value;
+      }
+    });
+  });
+
+  const datedRows = Object.keys(
+    byDate
+  )
+    .sort()
+    .map(function(key) {
+      return byDate[key];
+    });
+
+  return datedRows.concat(
+    withoutDate
+  );
+}
+
+
+/**
+ * Приведение листа "Улов" к одной схеме.
+ * Старые версии имели 5, 9 или 10 колонок — значения сохраняются.
+ */
+function normalizeCatchSheet_(sheet, ss) {
+  const lastRow = Math.max(
+    sheet.getLastRow(),
+    1
+  );
+
+  const lastColumn = Math.max(
+    sheet.getLastColumn(),
+    1
+  );
+
+  ensureSheetCapacity_(
+    sheet,
+    lastRow,
+    CATCH_HEADERS.length
+  );
+
+  if (lastRow === 1) {
+    sheet
+      .getRange(
+        1,
+        1,
+        1,
+        CATCH_HEADERS.length
+      )
+      .setValues([
+        CATCH_HEADERS
+      ]);
+
+    return;
+  }
+
+  const raw = sheet
+    .getRange(
+      1,
+      1,
+      lastRow,
+      Math.max(
+        lastColumn,
+        CATCH_HEADERS.length
+      )
+    )
+    .getValues();
+
+  const indexMap = buildCanonicalIndex_(
+    raw[0],
+    CATCH_HEADERS,
+    CATCH_ALIASES
+  );
+
+  const rows = [];
+
+  for (
+    let r = 1;
+    r < raw.length;
+    r++
+  ) {
+    const source = raw[r];
+
+    if (
+      source.every(
+        isEmptyValue_
+      )
+    ) {
+      continue;
+    }
+
+    const row = CATCH_HEADERS.map(function(header) {
+      const index = indexMap[header];
+
+      return index >= 0
+        ? source[index]
+        : "";
+    });
+
+    rows.push(row);
+  }
+
+  rows.sort(function(a, b) {
+    const aIso = cellDateToIso_(
+      a[1],
+      ss.getSpreadsheetTimeZone()
+    );
+
+    const bIso = cellDateToIso_(
+      b[1],
+      ss.getSpreadsheetTimeZone()
+    );
+
+    if (aIso !== bIso) {
+      return aIso.localeCompare(
+        bIso
+      );
+    }
+
+    return String(a[2] || "")
+      .localeCompare(
+        String(b[2] || "")
+      );
+  });
+
+  sheet
+    .getRange(
+      1,
+      1,
+      Math.max(
+        lastRow,
+        rows.length + 1
+      ),
+      Math.max(
+        lastColumn,
+        CATCH_HEADERS.length
+      )
+    )
+    .clearContent();
+
+  ensureSheetCapacity_(
+    sheet,
+    rows.length + 1,
+    CATCH_HEADERS.length
+  );
+
+  sheet
+    .getRange(
+      1,
+      1,
+      1,
+      CATCH_HEADERS.length
+    )
+    .setValues([
+      CATCH_HEADERS
+    ]);
+
+  if (rows.length) {
+    sheet
+      .getRange(
+        2,
+        1,
+        rows.length,
+        CATCH_HEADERS.length
+      )
+      .setValues(rows);
+  }
+}
+
+
+function normalizeSummarySheet_(sheet) {
+  ensureSheetCapacity_(
+    sheet,
+    Math.max(
+      sheet.getLastRow(),
+      2
+    ),
+    SUMMARY_HEADERS.length
+  );
+
+  sheet
+    .getRange(
+      1,
+      1,
+      1,
+      SUMMARY_HEADERS.length
+    )
+    .setValues([
+      SUMMARY_HEADERS
+    ]);
+}
+
+
+/**
+ * Находит старую колонку по названию/алиасу.
+ */
+function buildCanonicalIndex_(
+  oldHeaders,
+  canonicalHeaders,
+  aliases
+) {
+  const normalizedOld = {};
+
+  oldHeaders.forEach(function(header, index) {
+    const key = normalizeHeader_(
+      header
+    );
+
+    if (
+      key &&
+      typeof normalizedOld[key] === "undefined"
+    ) {
+      normalizedOld[key] =
+        index;
+    }
+  });
+
+  const result = {};
+
+  canonicalHeaders.forEach(function(header) {
+    const candidates =
+      aliases[header] ||
+      [header];
+
+    let found = -1;
+
+    candidates.some(function(candidate) {
+      const key = normalizeHeader_(
+        candidate
+      );
+
+      if (
+        typeof normalizedOld[key] !==
+        "undefined"
+      ) {
+        found =
+          normalizedOld[key];
+
+        return true;
+      }
+
+      return false;
+    });
+
+    result[header] =
+      found;
+  });
+
+  return result;
+}
+
+
+function normalizeHeader_(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/ё/g, "е")
+    .replace(
+      /[^a-zа-я0-9]+/gi,
+      ""
+    );
+}
+
+
+/**
+ * Добавление новых дат + обновление только разрешённого окна.
+ */
+function writeYearSheets_(
+  ss,
+  years,
+  todayIso,
+  correctionStartIso
+) {
   const tz = ss.getSpreadsheetTimeZone();
   const info = {};
 
   years.forEach(function(yearData) {
-    const year = String(yearData.year);
-    const sheet = getOrCreateSheet_(ss, year);
+    const year = String(
+      yearData.year
+    );
 
-    ensureHeaders_(sheet, YEAR_HEADERS);
+    const sheet = getOrCreateSheet_(
+      ss,
+      year
+    );
 
-    // Переход со старых версий: убираем заранее созданное будущее.
+    normalizeYearSheet_(
+      sheet,
+      ss
+    );
+
     removeFutureRows_(
       sheet,
-      1,
       todayIso,
       tz
     );
 
-    const sourceRows = Array.isArray(yearData.rows)
+    const dateRows = buildDateRowMap_(
+      sheet,
+      tz
+    );
+
+    const lastDate = getLastDateFromMap_(
+      dateRows
+    );
+
+    const sourceRows = Array.isArray(
+      yearData.rows
+    )
       ? yearData.rows.slice()
       : [];
 
     sourceRows.sort(function(a, b) {
-      return String(a.date).localeCompare(String(b.date));
-    });
-
-    const lastBefore = getLastDateInfo_(
-      sheet,
-      1,
-      tz
-    );
-
-    const lastIsoBefore = lastBefore
-      ? lastBefore.iso
-      : "";
-
-    // Все даты после последней записи должны быть добавлены,
-    // даже если пользователь не синхронизировал таблицу несколько недель.
-    const newRows = sourceRows.filter(function(r) {
-      if (!r.date) return false;
-      if (r.date > todayIso) return false;
-
-      return !lastIsoBefore ||
-        r.date > lastIsoBefore;
+      return String(a.date)
+        .localeCompare(
+          String(b.date)
+        );
     });
 
     const newDates = [];
+    const correctionDates = [];
 
-    newRows.forEach(function(r) {
-      const existing = findDateRow_(
-        sheet,
-        1,
-        r.date,
-        tz
-      );
+    sourceRows.forEach(function(sourceRow) {
+      const date = sourceRow.date;
 
-      if (existing) {
+      if (
+        !date ||
+        date > todayIso
+      ) {
         return;
       }
 
-      const row = sheet.getLastRow() + 1;
+      const existingRow =
+        dateRows[date];
 
-      ensureSheetCapacity_(
-        sheet,
-        row,
-        YEAR_HEADERS.length
-      );
+      const canCorrect =
+        date >= correctionStartIso &&
+        date <= todayIso;
 
-      sheet
-        .getRange(
+      if (existingRow) {
+        if (!canCorrect) {
+          return;
+        }
+
+        sheet
+          .getRange(
+            existingRow,
+            1,
+            1,
+            YEAR_HEADERS.length
+          )
+          .setValues([
+            yearRowToValues_(
+              sourceRow
+            )
+          ]);
+
+        correctionDates.push(
+          date
+        );
+
+        return;
+      }
+
+      // Новые даты добавляются только после последней существующей даты.
+      // Если таблица пустая — добавляем всё до сегодня.
+      if (
+        !lastDate ||
+        date > lastDate
+      ) {
+        const row =
+          sheet.getLastRow() + 1;
+
+        ensureSheetCapacity_(
+          sheet,
           row,
-          1,
-          1,
           YEAR_HEADERS.length
-        )
-        .setValues([
-          yearRowToValues_(r)
-        ]);
-
-      sheet
-        .getRange(row, 1)
-        .setNumberFormat("dd.mm.yyyy");
-
-      formatDataRows_(
-        sheet,
-        row,
-        1,
-        YEAR_HEADERS.length
-      );
-
-      newDates.push(r.date);
-    });
-
-
-    // Последние 7 дней + сегодня можно исправлять.
-    const correctionRows = sourceRows.filter(function(r) {
-      return r.date &&
-        r.date >= correctionStartIso &&
-        r.date <= todayIso;
-    });
-
-    const correctionDates = [];
-
-    correctionRows.forEach(function(r) {
-      let existing = findDateRow_(
-        sheet,
-        1,
-        r.date,
-        tz
-      );
-
-      // Если внутри окна почему-то есть пропуск,
-      // создаём недостающую строку.
-      if (!existing) {
-        const row = sheet.getLastRow() + 1;
+        );
 
         sheet
           .getRange(
@@ -405,80 +1027,34 @@ function writeYearSheets_(ss, years, todayIso, correctionStartIso) {
             YEAR_HEADERS.length
           )
           .setValues([
-            yearRowToValues_(r)
+            yearRowToValues_(
+              sourceRow
+            )
           ]);
 
-        sheet
-          .getRange(row, 1)
-          .setNumberFormat("dd.mm.yyyy");
+        dateRows[date] =
+          row;
 
-        formatDataRows_(
-          sheet,
-          row,
-          1,
-          YEAR_HEADERS.length
-        );
-
-        existing = {
-          row: row,
-          iso: r.date
-        };
-
-        if (newDates.indexOf(r.date) === -1) {
-          newDates.push(r.date);
-        }
-
-      } else {
-        // Перезаписывать разрешено только в окне корректировки.
-        sheet
-          .getRange(
-            existing.row,
-            1,
-            1,
-            YEAR_HEADERS.length
-          )
-          .setValues([
-            yearRowToValues_(r)
-          ]);
-
-        sheet
-          .getRange(existing.row, 1)
-          .setNumberFormat("dd.mm.yyyy");
-
-        formatDataRows_(
-          sheet,
-          existing.row,
-          1,
-          YEAR_HEADERS.length
+        newDates.push(
+          date
         );
       }
-
-      correctionDates.push(r.date);
     });
 
-
-    formatHeader_(
-      sheet,
-      YEAR_HEADERS.length
-    );
-
-    ensureFilter_(
-      sheet,
-      YEAR_HEADERS.length
-    );
-
-    const lastAfter = getLastDateInfo_(
-      sheet,
-      1,
-      tz
+    formatYearSheet_(
+      sheet
     );
 
     info[year] = {
       newDates: unique_(newDates),
       correctionDates: unique_(correctionDates),
-      lastDate: lastAfter
-        ? lastAfter.iso
-        : ""
+      lastDate:
+        getLastDateFromMap_(
+          buildDateRowMap_(
+            sheet,
+            tz
+          )
+        )
     };
   });
 
@@ -498,24 +1074,17 @@ function yearRowToValues_(r) {
     value_(r.temperature),
     value_(r.apparentTemperature),
     r.weather || "",
-
     r.windDirection || "",
     value_(r.windDegrees),
     value_(r.windSpeed),
     value_(r.windGusts),
-
     value_(r.humidity),
     value_(r.pressureHpa),
     value_(r.pressureMm),
-
     value_(r.precipitation),
     value_(r.cloudCover),
-
-    // Пишем именно город, по которому реально получены погодные данные.
-    // Если погода не была загружена, значение остаётся пустым.
     r.weatherCity || "",
 
-    // Все поля из формы «Добавить улов».
     r.catchCities || "",
     r.catchFish || "",
     r.catchQuantities || "",
@@ -529,298 +1098,7 @@ function yearRowToValues_(r) {
 
 
 /**
- * Явно синхронизирует комментарий выбранных дат.
- *
- * Почему это отдельная функция:
- * - комментарий является полем дня, а не улова;
- * - старые версии могли оставить дубликаты строк одной даты;
- * - обновляем все совпавшие строки в разрешённом окне;
- * - если строки нет, её создаёт основной writeYearSheets_().
- */
-function writeCommentsForCorrectionWindow_(
-  ss,
-  years,
-  correctionStartIso,
-  todayIso
-) {
-  const tz = ss.getSpreadsheetTimeZone();
-
-  years.forEach(function(yearData) {
-    const sheet = ss.getSheetByName(
-      String(yearData.year)
-    );
-
-    if (!sheet || sheet.getLastRow() < 2) {
-      return;
-    }
-
-    const sourceRows = Array.isArray(yearData.rows)
-      ? yearData.rows
-      : [];
-
-    const commentByDate = {};
-
-    sourceRows.forEach(function(row) {
-      if (
-        row.date &&
-        row.date >= correctionStartIso &&
-        row.date <= todayIso
-      ) {
-        commentByDate[row.date] =
-          row.comment === null ||
-          typeof row.comment === "undefined"
-            ? ""
-            : String(row.comment);
-      }
-    });
-
-    const lastRow = sheet.getLastRow();
-
-    const sheetDates = sheet
-      .getRange(
-        2,
-        1,
-        lastRow - 1,
-        1
-      )
-      .getValues();
-
-    sheetDates.forEach(function(row, index) {
-      const iso = cellDateToIso_(
-        row[0],
-        tz
-      );
-
-      if (
-        iso &&
-        Object.prototype.hasOwnProperty.call(
-          commentByDate,
-          iso
-        )
-      ) {
-        // Колонка 6 = "Комментарий"
-        sheet
-          .getRange(
-            index + 2,
-            6
-          )
-          .setValue(
-            commentByDate[iso]
-          )
-          .setFontFamily("Arial");
-      }
-    });
-  });
-}
-
-
-/**
- * Явно записывает город, по которому получена погода.
- *
- * Колонка "Город погоды" находится в последнем столбце YEAR_HEADERS.
- * Значение берётся из weatherCity, сформированного сайтом из weather.city
- * и weather.region. Поэтому город формы не подменяет фактический город погоды.
- */
-function writeWeatherCityForCorrectionWindow_(
-  ss,
-  years,
-  correctionStartIso,
-  todayIso
-) {
-  const tz = ss.getSpreadsheetTimeZone();
-  const cityColumn = YEAR_HEADERS.indexOf("Город погоды") + 1;
-
-  if (cityColumn <= 0) {
-    return;
-  }
-
-  years.forEach(function(yearData) {
-    const sheet = ss.getSheetByName(
-      String(yearData.year)
-    );
-
-    if (!sheet || sheet.getLastRow() < 2) {
-      return;
-    }
-
-    const sourceRows = Array.isArray(yearData.rows)
-      ? yearData.rows
-      : [];
-
-    const cityByDate = {};
-
-    sourceRows.forEach(function(row) {
-      if (
-        row.date &&
-        row.date >= correctionStartIso &&
-        row.date <= todayIso
-      ) {
-        cityByDate[row.date] =
-          row.weatherCity === null ||
-          typeof row.weatherCity === "undefined"
-            ? ""
-            : String(row.weatherCity);
-      }
-    });
-
-    const lastRow = sheet.getLastRow();
-
-    const sheetDates = sheet
-      .getRange(
-        2,
-        1,
-        lastRow - 1,
-        1
-      )
-      .getValues();
-
-    sheetDates.forEach(function(row, index) {
-      const iso = cellDateToIso_(
-        row[0],
-        tz
-      );
-
-      if (
-        iso &&
-        Object.prototype.hasOwnProperty.call(
-          cityByDate,
-          iso
-        )
-      ) {
-        sheet
-          .getRange(
-            index + 2,
-            cityColumn
-          )
-          .setValue(
-            cityByDate[iso]
-          )
-          .setFontFamily("Arial");
-      }
-    });
-  });
-}
-
-
-/**
- * Записывает данные формы «Добавить улов» прямо в годовой лист.
- *
- * На годовом листе одна строка = один день, поэтому при нескольких
- * записях улова значения объединяются через " | ".
- * Детальная структура "одна поимка = одна строка" сохраняется на листе "Улов".
- */
-function writeCatchFieldsForCorrectionWindow_(
-  ss,
-  years,
-  correctionStartIso,
-  todayIso
-) {
-  const tz = ss.getSpreadsheetTimeZone();
-
-  const columns = {
-    catchCities: YEAR_HEADERS.indexOf("Город улова") + 1,
-    catchFish: YEAR_HEADERS.indexOf("Рыба") + 1,
-    catchQuantities: YEAR_HEADERS.indexOf("Количество по записям") + 1,
-    catchTimes: YEAR_HEADERS.indexOf("Время улова") + 1,
-    catchTackles: YEAR_HEADERS.indexOf("Снасть") + 1,
-    catchMethods: YEAR_HEADERS.indexOf("Способ ловли") + 1,
-    catchPlaces: YEAR_HEADERS.indexOf("Место ловли") + 1,
-    catchBaits: YEAR_HEADERS.indexOf("Приманка") + 1
-  };
-
-  years.forEach(function(yearData) {
-    const sheet = ss.getSheetByName(
-      String(yearData.year)
-    );
-
-    if (!sheet || sheet.getLastRow() < 2) {
-      return;
-    }
-
-    const sourceRows = Array.isArray(yearData.rows)
-      ? yearData.rows
-      : [];
-
-    const byDate = {};
-
-    sourceRows.forEach(function(row) {
-      if (
-        row.date &&
-        row.date >= correctionStartIso &&
-        row.date <= todayIso
-      ) {
-        byDate[row.date] = {
-          catchCities: row.catchCities || "",
-          catchFish: row.catchFish || "",
-          catchQuantities: row.catchQuantities || "",
-          catchTimes: row.catchTimes || "",
-          catchTackles: row.catchTackles || "",
-          catchMethods: row.catchMethods || "",
-          catchPlaces: row.catchPlaces || "",
-          catchBaits: row.catchBaits || ""
-        };
-      }
-    });
-
-    const sheetDates = sheet
-      .getRange(
-        2,
-        1,
-        sheet.getLastRow() - 1,
-        1
-      )
-      .getValues();
-
-    sheetDates.forEach(function(dateRow, index) {
-      const iso = cellDateToIso_(
-        dateRow[0],
-        tz
-      );
-
-      if (
-        !iso ||
-        !Object.prototype.hasOwnProperty.call(
-          byDate,
-          iso
-        )
-      ) {
-        return;
-      }
-
-      const values = byDate[iso];
-
-      Object.keys(columns).forEach(function(key) {
-        const column = columns[key];
-
-        if (column > 0) {
-          sheet
-            .getRange(
-              index + 2,
-              column
-            )
-            .setValue(
-              values[key]
-            )
-            .setFontFamily("Arial");
-        }
-      });
-    });
-  });
-}
-
-
-/**
- * Лист "Улов".
- *
- * Для последних 7 дней + сегодня:
- * - удаляем старую детализацию;
- * - записываем актуальные данные с сайта заново.
- *
- * Для совершенно новых дат:
- * - просто добавляем улов.
- *
- * Всё, что старше окна корректировки и уже находится
- * в Google Таблице, остаётся неизменным.
+ * Детальный лист "Улов".
  */
 function writeCatches_(
   ss,
@@ -829,19 +1107,20 @@ function writeCatches_(
   todayIso,
   correctionStartIso
 ) {
-  const tz = ss.getSpreadsheetTimeZone();
-
   const sheet = getOrCreateSheet_(
     ss,
     "Улов"
   );
 
-  ensureHeaders_(
+  normalizeCatchSheet_(
     sheet,
-    CATCH_HEADERS
+    ss
   );
 
-  // Разрешаем пересобрать улов только за последние 7 дней + сегодня.
+  const tz =
+    ss.getSpreadsheetTimeZone();
+
+  // Пересобираем только разрешённое окно корректировки.
   deleteCatchRowsForRange_(
     sheet,
     correctionStartIso,
@@ -852,18 +1131,16 @@ function writeCatches_(
   const rowsToAppend = [];
 
   years.forEach(function(yearData) {
-    const year = String(yearData.year);
-
-    const newDates = syncInfo[year]
-      ? syncInfo[year].newDates
-      : [];
-
-    const allowedDates = new Set(
-      newDates
+    const year = String(
+      yearData.year
     );
 
-    // В окне корректировки разрешаем актуальную запись независимо
-    // от того, была ли эта дата "новой".
+    const allowedDates = new Set(
+      syncInfo[year]
+        ? syncInfo[year].newDates
+        : []
+    );
+
     dateRangeIso_(
       correctionStartIso,
       todayIso,
@@ -872,14 +1149,20 @@ function writeCatches_(
       allowedDates.add(date);
     });
 
-    const catches = Array.isArray(yearData.catches)
+    const catches = Array.isArray(
+      yearData.catches
+    )
       ? yearData.catches
       : [];
 
     catches.forEach(function(c) {
-      if (!c.date) return;
-      if (c.date > todayIso) return;
-      if (!allowedDates.has(c.date)) return;
+      if (
+        !c.date ||
+        c.date > todayIso ||
+        !allowedDates.has(c.date)
+      ) {
+        return;
+      }
 
       rowsToAppend.push([
         yearData.year || "",
@@ -898,33 +1181,35 @@ function writeCatches_(
     });
   });
 
-
   rowsToAppend.sort(function(a, b) {
-    const da = a[1] instanceof Date
-      ? a[1].getTime()
-      : 0;
+    const da = cellDateToIso_(
+      a[1],
+      tz
+    );
 
-    const db = b[1] instanceof Date
-      ? b[1].getTime()
-      : 0;
+    const db = cellDateToIso_(
+      b[1],
+      tz
+    );
 
     if (da !== db) {
-      return da - db;
+      return da.localeCompare(db);
     }
 
-    return String(a[2])
+    return String(a[2] || "")
       .localeCompare(
-        String(b[2])
+        String(b[2] || "")
       );
   });
 
-
   if (rowsToAppend.length) {
-    const startRow = sheet.getLastRow() + 1;
+    const startRow =
+      sheet.getLastRow() + 1;
 
     ensureSheetCapacity_(
       sheet,
-      startRow + rowsToAppend.length - 1,
+      startRow +
+        rowsToAppend.length - 1,
       CATCH_HEADERS.length
     );
 
@@ -938,79 +1223,270 @@ function writeCatches_(
       .setValues(
         rowsToAppend
       );
-
-    sheet
-      .getRange(
-        startRow,
-        2,
-        rowsToAppend.length,
-        1
-      )
-      .setNumberFormat(
-        "dd.mm.yyyy"
-      );
-
-    formatDataRows_(
-      sheet,
-      startRow,
-      rowsToAppend.length,
-      CATCH_HEADERS.length
-    );
   }
 
-
-  formatHeader_(
-    sheet,
-    CATCH_HEADERS.length
-  );
-
-  ensureFilter_(
-    sheet,
-    CATCH_HEADERS.length
+  formatCatchSheet_(
+    sheet
   );
 }
 
 
 /**
- * Сводка пересчитывается по фактическим данным,
- * уже находящимся в Google Таблице.
+ * Заполняет колонки "Город улова" ... "Приманка"
+ * на годовых листах из детального листа "Улов".
  *
- * Старые строки при этом не меняются —
- * меняется только итоговая сводка года.
+ * Благодаря этому исторические и новые строки имеют одну структуру.
  */
-function updateSummary_(ss, years, syncInfo) {
+function rebuildYearCatchColumnsFromCatchSheet_(ss) {
+  const catchSheet = ss.getSheetByName(
+    "Улов"
+  );
+
+  if (
+    !catchSheet ||
+    catchSheet.getLastRow() < 2
+  ) {
+    return;
+  }
+
+  normalizeCatchSheet_(
+    catchSheet,
+    ss
+  );
+
+  const tz =
+    ss.getSpreadsheetTimeZone();
+
+  const catchValues = catchSheet
+    .getRange(
+      2,
+      1,
+      catchSheet.getLastRow() - 1,
+      CATCH_HEADERS.length
+    )
+    .getValues();
+
+  const groups = {};
+
+  catchValues.forEach(function(row) {
+    const year = String(
+      row[0] || ""
+    );
+
+    const date = cellDateToIso_(
+      row[1],
+      tz
+    );
+
+    if (
+      !year ||
+      !date
+    ) {
+      return;
+    }
+
+    const key =
+      year + "|" + date;
+
+    if (!groups[key]) {
+      groups[key] = [];
+    }
+
+    groups[key].push(row);
+  });
+
+  getYearSheets_(ss).forEach(function(sheet) {
+    const year =
+      sheet.getName();
+
+    normalizeYearSheet_(
+      sheet,
+      ss
+    );
+
+    if (
+      sheet.getLastRow() < 2
+    ) {
+      return;
+    }
+
+    const dates = sheet
+      .getRange(
+        2,
+        1,
+        sheet.getLastRow() - 1,
+        1
+      )
+      .getValues();
+
+    dates.forEach(function(dateRow, index) {
+      const date = cellDateToIso_(
+        dateRow[0],
+        tz
+      );
+
+      if (!date) {
+        return;
+      }
+
+      const catches =
+        groups[
+          year + "|" + date
+        ];
+
+      // Если детальных исторических записей нет,
+      // уже существующие значения годового листа не затираем.
+      if (
+        !catches ||
+        !catches.length
+      ) {
+        return;
+      }
+
+      const joined = [
+        joinNonEmpty_(
+          catches.map(
+            function(c) {
+              return c[9];
+            }
+          )
+        ),
+        joinNonEmpty_(
+          catches.map(
+            function(c) {
+              return c[3];
+            }
+          )
+        ),
+        joinNonEmpty_(
+          catches.map(
+            function(c) {
+              return c[4];
+            }
+          )
+        ),
+        joinNonEmpty_(
+          catches.map(
+            function(c) {
+              return c[2];
+            }
+          )
+        ),
+        joinNonEmpty_(
+          catches.map(
+            function(c) {
+              return c[5];
+            }
+          )
+        ),
+        joinNonEmpty_(
+          catches.map(
+            function(c) {
+              return c[6];
+            }
+          )
+        ),
+        joinNonEmpty_(
+          catches.map(
+            function(c) {
+              return c[7];
+            }
+          )
+        ),
+        joinNonEmpty_(
+          catches.map(
+            function(c) {
+              return c[8];
+            }
+          )
+        )
+      ];
+
+      // T:AA = колонки 20-27.
+      sheet
+        .getRange(
+          index + 2,
+          20,
+          1,
+          8
+        )
+        .setValues([
+          joined
+        ]);
+    });
+
+    formatYearSheet_(
+      sheet
+    );
+  });
+}
+
+
+function joinNonEmpty_(values) {
+  return values
+    .filter(function(value) {
+      return !isEmptyValue_(
+        value
+      );
+    })
+    .map(function(value) {
+      return String(value);
+    })
+    .join(" | ");
+}
+
+
+/**
+ * Сводка считается уже по приведённым к одной схеме листам.
+ */
+function updateSummary_(
+  ss,
+  years,
+  syncInfo
+) {
   const sheet = getOrCreateSheet_(
     ss,
     "Сводка"
   );
 
-  ensureHeaders_(
-    sheet,
-    SUMMARY_HEADERS
+  normalizeSummarySheet_(
+    sheet
   );
 
   years.forEach(function(yearData) {
-    const year = String(yearData.year);
+    const year = String(
+      yearData.year
+    );
 
-    const changed = syncInfo[year] &&
+    const changed =
+      syncInfo[year] &&
       (
         syncInfo[year].newDates.length > 0 ||
         syncInfo[year].correctionDates.length > 0
       );
 
-    const existingRow = findSummaryYearRow_(
-      sheet,
-      Number(yearData.year)
-    );
+    const existingRow =
+      findSummaryYearRow_(
+        sheet,
+        Number(
+          yearData.year
+        )
+      );
 
-    if (existingRow && !changed) {
+    if (
+      existingRow &&
+      !changed
+    ) {
       return;
     }
 
-    const summary = calculateSummaryFromSheets_(
-      ss,
-      Number(yearData.year)
-    );
+    const summary =
+      calculateSummaryFromSheets_(
+        ss,
+        Number(
+          yearData.year
+        )
+      );
 
     const values = [[
       Number(yearData.year),
@@ -1018,82 +1494,44 @@ function updateSummary_(ss, years, syncInfo) {
       summary.total,
       summary.species,
       summary.bestDay
-        ? parseDate_(summary.bestDay)
+        ? parseDate_(
+            summary.bestDay
+          )
         : "",
       summary.bestTotal,
       new Date()
     ]];
 
+    const row =
+      existingRow ||
+      sheet.getLastRow() + 1;
 
-    if (existingRow) {
-      sheet
-        .getRange(
-          existingRow,
-          1,
-          1,
-          SUMMARY_HEADERS.length
-        )
-        .setValues(values);
+    ensureSheetCapacity_(
+      sheet,
+      row,
+      SUMMARY_HEADERS.length
+    );
 
-      sheet
-        .getRange(existingRow, 5)
-        .setNumberFormat("dd.mm.yyyy");
-
-      sheet
-        .getRange(existingRow, 7)
-        .setNumberFormat("dd.mm.yyyy hh:mm");
-
-      formatDataRows_(
-        sheet,
-        existingRow,
-        1,
-        SUMMARY_HEADERS.length
-      );
-
-    } else {
-      const row = sheet.getLastRow() + 1;
-
-      ensureSheetCapacity_(
-        sheet,
-        row,
-        SUMMARY_HEADERS.length
-      );
-
-      sheet
-        .getRange(
-          row,
-          1,
-          1,
-          SUMMARY_HEADERS.length
-        )
-        .setValues(values);
-
-      sheet
-        .getRange(row, 5)
-        .setNumberFormat("dd.mm.yyyy");
-
-      sheet
-        .getRange(row, 7)
-        .setNumberFormat("dd.mm.yyyy hh:mm");
-
-      formatDataRows_(
-        sheet,
+    sheet
+      .getRange(
         row,
         1,
+        1,
         SUMMARY_HEADERS.length
-      );
-    }
+      )
+      .setValues(values);
   });
 
-
-  formatHeader_(
-    sheet,
-    SUMMARY_HEADERS.length
+  formatSummarySheet_(
+    sheet
   );
 }
 
 
-function calculateSummaryFromSheets_(ss, year) {
+function calculateSummaryFromSheets_(
+  ss,
+  year
+) {
   const yearSheet = ss.getSheetByName(
     String(year)
   );
@@ -1117,12 +1555,12 @@ function calculateSummaryFromSheets_(ss, year) {
       .getValues();
 
     data.forEach(function(row) {
-      const date = row[0];
-
       const fishing =
-        String(row[2]).toLowerCase() === "да";
+        String(row[2] || "")
+          .toLowerCase() === "да";
 
-      const qty = number_(row[3]);
+      const qty =
+        number_(row[3]);
 
       if (fishing) {
         fishingDays++;
@@ -1134,22 +1572,21 @@ function calculateSummaryFromSheets_(ss, year) {
         bestTotal = qty;
 
         bestDay =
-          date instanceof Date
-            ? dateToIso_(
-                date,
-                ss.getSpreadsheetTimeZone()
-              )
-            : "";
+          cellDateToIso_(
+            row[0],
+            ss.getSpreadsheetTimeZone()
+          );
       }
     });
   }
 
+  const species =
+    new Set();
 
-  const species = new Set();
-
-  const catchSheet = ss.getSheetByName(
-    "Улов"
-  );
+  const catchSheet =
+    ss.getSheetByName(
+      "Улов"
+    );
 
   if (
     catchSheet &&
@@ -1166,7 +1603,8 @@ function calculateSummaryFromSheets_(ss, year) {
 
     catches.forEach(function(row) {
       if (
-        Number(row[0]) === Number(year) &&
+        Number(row[0]) ===
+          Number(year) &&
         row[3]
       ) {
         species.add(
@@ -1175,7 +1613,6 @@ function calculateSummaryFromSheets_(ss, year) {
       }
     });
   }
-
 
   return {
     fishingDays: fishingDays,
@@ -1188,288 +1625,256 @@ function calculateSummaryFromSheets_(ss, year) {
 
 
 /**
- * Удаляем строки листа "Улов" только внутри разрешённого окна.
+ * Единое оформление старых и новых строк.
  */
-function deleteCatchRowsForRange_(
-  sheet,
-  fromIso,
-  toIso,
-  timeZone
-) {
-  const lastRow = sheet.getLastRow();
-
-  if (lastRow < 2) {
-    return;
-  }
-
-  const dates = sheet
-    .getRange(
-      2,
-      2,
-      lastRow - 1,
-      1
-    )
-    .getValues();
-
-  // Снизу вверх, чтобы номера строк не сдвигались.
-  for (
-    let i = dates.length - 1;
-    i >= 0;
-    i--
-  ) {
-    const iso = cellDateToIso_(
-      dates[i][0],
-      timeZone
+function applyUnifiedFormatting_(ss) {
+  getYearSheets_(ss).forEach(function(sheet) {
+    formatYearSheet_(
+      sheet
     );
-
-    if (
-      iso &&
-      iso >= fromIso &&
-      iso <= toIso
-    ) {
-      sheet.deleteRow(i + 2);
-    }
-  }
-}
-
-
-/**
- * Удаляет только будущие строки,
- * созданные старыми версиями приложения.
- */
-function removeFutureRows_(
-  sheet,
-  dateColumn,
-  todayIso,
-  timeZone
-) {
-  const lastRow = sheet.getLastRow();
-
-  if (lastRow < 2) {
-    return;
-  }
-
-  const values = sheet
-    .getRange(
-      2,
-      dateColumn,
-      lastRow - 1,
-      1
-    )
-    .getValues();
-
-  const rowsToDelete = [];
-
-  values.forEach(function(row, index) {
-    const iso = cellDateToIso_(
-      row[0],
-      timeZone
-    );
-
-    if (
-      iso &&
-      iso > todayIso
-    ) {
-      rowsToDelete.push(
-        index + 2
-      );
-    }
   });
 
-  // Удаляем снизу вверх.
-  rowsToDelete
-    .reverse()
-    .forEach(function(rowNumber) {
-      sheet.deleteRow(rowNumber);
-    });
-}
-
-
-function getLastDateInfo_(
-  sheet,
-  dateColumn,
-  timeZone
-) {
-  const lastRow = sheet.getLastRow();
-
-  if (lastRow < 2) {
-    return null;
-  }
-
-  const values = sheet
-    .getRange(
-      2,
-      dateColumn,
-      lastRow - 1,
-      1
-    )
-    .getValues();
-
-  let best = null;
-
-  values.forEach(function(row, index) {
-    const iso = cellDateToIso_(
-      row[0],
-      timeZone
+  const catchSheet =
+    ss.getSheetByName(
+      "Улов"
     );
 
-    if (
-      iso &&
-      (
-        !best ||
-        iso > best.iso
-      )
-    ) {
-      best = {
-        iso: iso,
-        row: index + 2
-      };
-    }
-  });
-
-  return best;
-}
-
-
-function findDateRow_(
-  sheet,
-  dateColumn,
-  isoDate,
-  timeZone
-) {
-  const lastRow = sheet.getLastRow();
-
-  if (lastRow < 2) {
-    return null;
-  }
-
-  const values = sheet
-    .getRange(
-      2,
-      dateColumn,
-      lastRow - 1,
-      1
-    )
-    .getValues();
-
-  for (
-    let i = 0;
-    i < values.length;
-    i++
-  ) {
-    if (
-      cellDateToIso_(
-        values[i][0],
-        timeZone
-      ) === isoDate
-    ) {
-      return {
-        row: i + 2,
-        iso: isoDate
-      };
-    }
-  }
-
-  return null;
-}
-
-
-function findSummaryYearRow_(
-  sheet,
-  year
-) {
-  const lastRow = sheet.getLastRow();
-
-  if (lastRow < 2) {
-    return null;
-  }
-
-  const values = sheet
-    .getRange(
-      2,
-      1,
-      lastRow - 1,
-      1
-    )
-    .getValues();
-
-  for (
-    let i = 0;
-    i < values.length;
-    i++
-  ) {
-    if (
-      Number(values[i][0]) ===
-      Number(year)
-    ) {
-      return i + 2;
-    }
-  }
-
-  return null;
-}
-
-
-/**
- * Гарантирует, что на листе достаточно строк и колонок для записи.
- *
- * Особенно важно для YEAR_HEADERS: после добавления полей улова
- * количество колонок стало больше стандартных 26 (A-Z).
- */
-function ensureSheetCapacity_(
-  sheet,
-  requiredRows,
-  requiredColumns
-) {
-  const maxColumns = sheet.getMaxColumns();
-
-  if (maxColumns < requiredColumns) {
-    sheet.insertColumnsAfter(
-      maxColumns,
-      requiredColumns - maxColumns
+  if (catchSheet) {
+    formatCatchSheet_(
+      catchSheet
     );
   }
 
-  const maxRows = sheet.getMaxRows();
+  const summarySheet =
+    ss.getSheetByName(
+      "Сводка"
+    );
 
-  if (maxRows < requiredRows) {
-    sheet.insertRowsAfter(
-      maxRows,
-      requiredRows - maxRows
+  if (summarySheet) {
+    formatSummarySheet_(
+      summarySheet
     );
   }
 }
 
 
-function ensureHeaders_(
-  sheet,
-  headers
-) {
-  // Google Sheets обычно создаёт новый лист только с 26 колонками (A-Z).
-  // Годовой лист сейчас использует больше колонок, поэтому перед записью
-  // автоматически расширяем лист. Иначе getRange() завершается ошибкой,
-  // а сайт из-за no-cors не может показать эту ошибку пользователю.
+function formatYearSheet_(sheet) {
+  const lastRow = Math.max(
+    sheet.getLastRow(),
+    1
+  );
+
   ensureSheetCapacity_(
     sheet,
-    1,
-    headers.length
+    lastRow,
+    YEAR_HEADERS.length
+  );
+
+  const range = sheet
+    .getRange(
+      1,
+      1,
+      lastRow,
+      YEAR_HEADERS.length
+    );
+
+  range
+    .setFontFamily("Arial")
+    .setFontColor("#000000")
+    .setVerticalAlignment("middle");
+
+  if (lastRow > 1) {
+    sheet
+      .getRange(
+        2,
+        1,
+        lastRow - 1,
+        YEAR_HEADERS.length
+      )
+      .setBackground("#ffffff")
+      .setFontWeight("normal");
+
+    sheet
+      .getRange(
+        2,
+        1,
+        lastRow - 1,
+        1
+      )
+      .setNumberFormat(
+        "dd.mm.yyyy"
+      );
+
+    sheet
+      .getRange(
+        2,
+        5,
+        lastRow - 1,
+        YEAR_HEADERS.length - 4
+      )
+      .setWrap(true);
+  }
+
+  formatHeader_(
+    sheet,
+    YEAR_HEADERS.length
+  );
+
+  setYearColumnWidths_(
+    sheet
+  );
+
+  ensureFilter_(
+    sheet,
+    YEAR_HEADERS.length
+  );
+}
+
+
+function formatCatchSheet_(sheet) {
+  const lastRow = Math.max(
+    sheet.getLastRow(),
+    1
+  );
+
+  ensureSheetCapacity_(
+    sheet,
+    lastRow,
+    CATCH_HEADERS.length
   );
 
   sheet
     .getRange(
       1,
       1,
-      1,
-      headers.length
+      lastRow,
+      CATCH_HEADERS.length
     )
-    .setValues([
-      headers
-    ]);
+    .setFontFamily("Arial")
+    .setFontColor("#000000")
+    .setVerticalAlignment("middle");
+
+  if (lastRow > 1) {
+    sheet
+      .getRange(
+        2,
+        1,
+        lastRow - 1,
+        CATCH_HEADERS.length
+      )
+      .setBackground("#ffffff")
+      .setFontWeight("normal")
+      .setWrap(true);
+
+    sheet
+      .getRange(
+        2,
+        2,
+        lastRow - 1,
+        1
+      )
+      .setNumberFormat(
+        "dd.mm.yyyy"
+      );
+  }
 
   formatHeader_(
     sheet,
-    headers.length
+    CATCH_HEADERS.length
   );
+
+  const widths = [
+    70, 95, 75, 120, 90,
+    150, 130, 160, 180, 150
+  ];
+
+  widths.forEach(function(width, index) {
+    sheet.setColumnWidth(
+      index + 1,
+      width
+    );
+  });
+
+  ensureFilter_(
+    sheet,
+    CATCH_HEADERS.length
+  );
+}
+
+
+function formatSummarySheet_(sheet) {
+  const lastRow = Math.max(
+    sheet.getLastRow(),
+    1
+  );
+
+  ensureSheetCapacity_(
+    sheet,
+    lastRow,
+    SUMMARY_HEADERS.length
+  );
+
+  sheet
+    .getRange(
+      1,
+      1,
+      lastRow,
+      SUMMARY_HEADERS.length
+    )
+    .setFontFamily("Arial")
+    .setFontColor("#000000")
+    .setVerticalAlignment("middle");
+
+  if (lastRow > 1) {
+    sheet
+      .getRange(
+        2,
+        1,
+        lastRow - 1,
+        SUMMARY_HEADERS.length
+      )
+      .setBackground("#ffffff")
+      .setFontWeight("normal");
+
+    sheet
+      .getRange(
+        2,
+        5,
+        lastRow - 1,
+        1
+      )
+      .setNumberFormat(
+        "dd.mm.yyyy"
+      );
+
+    sheet
+      .getRange(
+        2,
+        7,
+        lastRow - 1,
+        1
+      )
+      .setNumberFormat(
+        "dd.mm.yyyy hh:mm"
+      );
+  }
+
+  formatHeader_(
+    sheet,
+    SUMMARY_HEADERS.length
+  );
+
+  const widths = [
+    75, 130, 120, 110,
+    110, 140, 170
+  ];
+
+  widths.forEach(function(width, index) {
+    sheet.setColumnWidth(
+      index + 1,
+      width
+    );
+  });
 }
 
 
@@ -1488,31 +1893,27 @@ function formatHeader_(
     .setBackground("#F4DC4F")
     .setFontColor("#000000")
     .setFontWeight("bold")
-    .setVerticalAlignment("middle");
+    .setVerticalAlignment("middle")
+    .setWrap(true);
 
   sheet.setFrozenRows(1);
 }
 
 
-function formatDataRows_(
-  sheet,
-  startRow,
-  rowCount,
-  columnCount
-) {
-  if (rowCount <= 0) {
-    return;
-  }
+function setYearColumnWidths_(sheet) {
+  const widths = [
+    95, 105, 80, 90, 220, 240,
+    105, 105, 140, 130, 80, 120, 120,
+    95, 105, 125, 90, 95, 190,
+    150, 140, 145, 120, 150, 140, 170, 190
+  ];
 
-  sheet
-    .getRange(
-      startRow,
-      1,
-      rowCount,
-      columnCount
-    )
-    .setFontFamily("Arial")
-    .setVerticalAlignment("middle");
+  widths.forEach(function(width, index) {
+    sheet.setColumnWidth(
+      index + 1,
+      width
+    );
+  });
 }
 
 
@@ -1527,19 +1928,62 @@ function ensureFilter_(
     existing.remove();
   }
 
-  const lastRow =
-    sheet.getLastRow();
-
-  if (lastRow >= 2) {
+  if (sheet.getLastRow() >= 2) {
     sheet
       .getRange(
         1,
         1,
-        lastRow,
+        sheet.getLastRow(),
         columnCount
       )
       .createFilter();
   }
+}
+
+
+function ensureSheetCapacity_(
+  sheet,
+  requiredRows,
+  requiredColumns
+) {
+  const maxColumns =
+    sheet.getMaxColumns();
+
+  if (
+    maxColumns <
+    requiredColumns
+  ) {
+    sheet.insertColumnsAfter(
+      maxColumns,
+      requiredColumns -
+        maxColumns
+    );
+  }
+
+  const maxRows =
+    sheet.getMaxRows();
+
+  if (
+    maxRows <
+    requiredRows
+  ) {
+    sheet.insertRowsAfter(
+      maxRows,
+      requiredRows -
+        maxRows
+    );
+  }
+}
+
+
+function getYearSheets_(ss) {
+  return ss
+    .getSheets()
+    .filter(function(sheet) {
+      return /^\d{4}$/.test(
+        sheet.getName()
+      );
+    });
 }
 
 
@@ -1554,12 +1998,254 @@ function getOrCreateSheet_(
 }
 
 
-function parseDate_(isoDate) {
+function buildDateRowMap_(
+  sheet,
+  timeZone
+) {
+  const map = {};
+
+  if (
+    sheet.getLastRow() < 2
+  ) {
+    return map;
+  }
+
+  const values = sheet
+    .getRange(
+      2,
+      1,
+      sheet.getLastRow() - 1,
+      1
+    )
+    .getValues();
+
+  values.forEach(function(row, index) {
+    const iso =
+      cellDateToIso_(
+        row[0],
+        timeZone
+      );
+
+    if (iso) {
+      map[iso] =
+        index + 2;
+    }
+  });
+
+  return map;
+}
+
+
+function getLastDateFromMap_(
+  map
+) {
+  const dates =
+    Object.keys(map)
+      .sort();
+
+  return dates.length
+    ? dates[
+        dates.length - 1
+      ]
+    : "";
+}
+
+
+function removeFutureRows_(
+  sheet,
+  todayIso,
+  timeZone
+) {
+  if (
+    sheet.getLastRow() < 2
+  ) {
+    return;
+  }
+
+  const dates = sheet
+    .getRange(
+      2,
+      1,
+      sheet.getLastRow() - 1,
+      1
+    )
+    .getValues();
+
+  for (
+    let index =
+      dates.length - 1;
+    index >= 0;
+    index--
+  ) {
+    const iso =
+      cellDateToIso_(
+        dates[index][0],
+        timeZone
+      );
+
+    if (
+      iso &&
+      iso > todayIso
+    ) {
+      sheet.deleteRow(
+        index + 2
+      );
+    }
+  }
+}
+
+
+function deleteCatchRowsForRange_(
+  sheet,
+  fromIso,
+  toIso,
+  timeZone
+) {
+  if (
+    sheet.getLastRow() < 2
+  ) {
+    return;
+  }
+
+  const dates = sheet
+    .getRange(
+      2,
+      2,
+      sheet.getLastRow() - 1,
+      1
+    )
+    .getValues();
+
+  for (
+    let index =
+      dates.length - 1;
+    index >= 0;
+    index--
+  ) {
+    const iso =
+      cellDateToIso_(
+        dates[index][0],
+        timeZone
+      );
+
+    if (
+      iso &&
+      iso >= fromIso &&
+      iso <= toIso
+    ) {
+      sheet.deleteRow(
+        index + 2
+      );
+    }
+  }
+}
+
+
+function findSummaryYearRow_(
+  sheet,
+  year
+) {
+  if (
+    sheet.getLastRow() < 2
+  ) {
+    return null;
+  }
+
+  const values = sheet
+    .getRange(
+      2,
+      1,
+      sheet.getLastRow() - 1,
+      1
+    )
+    .getValues();
+
+  for (
+    let index = 0;
+    index < values.length;
+    index++
+  ) {
+    if (
+      Number(values[index][0]) ===
+      Number(year)
+    ) {
+      return index + 2;
+    }
+  }
+
+  return null;
+}
+
+
+function dateRangeIso_(
+  fromIso,
+  toIso,
+  timeZone
+) {
+  const result = [];
+  let current = fromIso;
+
+  while (
+    current <= toIso
+  ) {
+    result.push(
+      current
+    );
+
+    current =
+      shiftIsoDate_(
+        current,
+        1,
+        timeZone
+      );
+  }
+
+  return result;
+}
+
+
+function shiftIsoDate_(
+  isoDate,
+  days,
+  timeZone
+) {
+  const parts = String(
+    isoDate
+  )
+    .split("-")
+    .map(Number);
+
+  const date = new Date(
+    parts[0],
+    parts[1] - 1,
+    parts[2],
+    12,
+    0,
+    0
+  );
+
+  date.setDate(
+    date.getDate() +
+      days
+  );
+
+  return dateToIso_(
+    date,
+    timeZone
+  );
+}
+
+
+function parseDate_(
+  isoDate
+) {
   if (!isoDate) {
     return "";
   }
 
-  const parts = String(isoDate)
+  const parts = String(
+    isoDate
+  )
     .split("-")
     .map(Number);
 
@@ -1572,8 +2258,6 @@ function parseDate_(isoDate) {
     return isoDate;
   }
 
-  // Полдень уменьшает риск сдвига даты
-  // из-за часового пояса.
   return new Date(
     parts[0],
     parts[1] - 1,
@@ -1591,7 +2275,9 @@ function cellDateToIso_(
 ) {
   if (
     value instanceof Date &&
-    !isNaN(value.getTime())
+    !isNaN(
+      value.getTime()
+    )
   ) {
     return dateToIso_(
       value,
@@ -1604,31 +2290,29 @@ function cellDateToIso_(
       .trim();
 
   if (
-    /^\d{4}-\d{2}-\d{2}$/.test(text)
+    /^\d{4}-\d{2}-\d{2}$/.test(
+      text
+    )
   ) {
     return text;
   }
 
-  const match = text.match(
-    /^(\d{1,2})[./](\d{1,2})[./](\d{4})$/
-  );
+  const match =
+    text.match(
+      /^(\d{1,2})[./](\d{1,2})[./](\d{4})$/
+    );
 
   if (match) {
     return [
       match[3],
-      String(match[2]).padStart(2, "0"),
-      String(match[1]).padStart(2, "0")
+      String(match[2])
+        .padStart(2, "0"),
+      String(match[1])
+        .padStart(2, "0")
     ].join("-");
   }
 
   return "";
-}
-
-
-function isIsoDate_(value) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(
-    String(value || "")
-  );
 }
 
 
@@ -1645,88 +2329,62 @@ function dateToIso_(
 }
 
 
-/**
- * Сдвигает ISO-дату на указанное число календарных дней.
- */
-function shiftIsoDate_(
-  isoDate,
-  days,
-  timeZone
+function isIsoDate_(
+  value
 ) {
-  const parts = isoDate
-    .split("-")
-    .map(Number);
-
-  const date = new Date(
-    parts[0],
-    parts[1] - 1,
-    parts[2],
-    12,
-    0,
-    0
-  );
-
-  date.setDate(
-    date.getDate() + days
-  );
-
-  return dateToIso_(
-    date,
-    timeZone
-  );
-}
-
-
-/**
- * Возвращает все ISO-даты в диапазоне включительно.
- */
-function dateRangeIso_(
-  fromIso,
-  toIso,
-  timeZone
-) {
-  const result = [];
-
-  let current = fromIso;
-
-  while (
-    current <= toIso
-  ) {
-    result.push(current);
-
-    current = shiftIsoDate_(
-      current,
-      1,
-      timeZone
+  return /^\d{4}-\d{2}-\d{2}$/
+    .test(
+      String(value || "")
     );
-  }
-
-  return result;
 }
 
 
-function unique_(array) {
-  return Array.from(
-    new Set(array)
+function isEmptyValue_(
+  value
+) {
+  return (
+    value === "" ||
+    value === null ||
+    typeof value ===
+      "undefined"
   );
 }
 
 
-function value_(value) {
+function isNumberLike_(
+  value
+) {
   if (
     value === "" ||
     value === null ||
-    typeof value === "undefined"
+    typeof value ===
+      "undefined"
   ) {
-    return "";
+    return false;
   }
 
-  return value;
+  return !isNaN(
+    Number(value)
+  );
 }
 
 
-function number_(value) {
-  const number = Number(value);
+function value_(
+  value
+) {
+  return isEmptyValue_(
+    value
+  )
+    ? ""
+    : value;
+}
+
+
+function number_(
+  value
+) {
+  const number =
+    Number(value);
 
   return isNaN(number)
     ? 0
@@ -1734,7 +2392,18 @@ function number_(value) {
 }
 
 
-function jsonResponse_(data) {
+function unique_(
+  values
+) {
+  return Array.from(
+    new Set(values)
+  );
+}
+
+
+function jsonResponse_(
+  data
+) {
   return ContentService
     .createTextOutput(
       JSON.stringify(data)
@@ -1745,95 +2414,10 @@ function jsonResponse_(data) {
 }
 
 
-/**
- * Проверка подключения и окна корректировки.
- */
-/**
- * Ручная проверка/ремонт структуры Google Таблицы.
- *
- * Можно выбрать эту функцию в Apps Script и нажать "Выполнить".
- * Она не удаляет рыболовные данные, а только добавляет недостающие
- * колонки и восстанавливает актуальные заголовки.
- */
-function repairGoogleSheetsStructure() {
+function testConnection() {
   const ss = SpreadsheetApp.openById(
     SPREADSHEET_ID
   );
-
-  const years = ss
-    .getSheets()
-    .map(function(sheet) {
-      return sheet.getName();
-    })
-    .filter(function(name) {
-      return /^\d{4}$/.test(name);
-    })
-    .map(function(name) {
-      return {
-        year: Number(name)
-      };
-    });
-
-  // Если годового листа ещё нет, добавляем текущий год.
-  const currentYear = Number(
-    Utilities.formatDate(
-      new Date(),
-      ss.getSpreadsheetTimeZone(),
-      "yyyy"
-    )
-  );
-
-  if (
-    !years.some(function(item) {
-      return item.year === currentYear;
-    })
-  ) {
-    years.push({
-      year: currentYear
-    });
-  }
-
-  repairSheetStructure_(
-    ss,
-    years
-  );
-
-  SpreadsheetApp.flush();
-
-  console.log(
-    "Структура таблицы исправлена."
-  );
-
-  console.log(
-    "Колонок в годовом листе требуется: " +
-    YEAR_HEADERS.length
-  );
-
-  return true;
-}
-
-
-function testConnection() {
-  const ss =
-    SpreadsheetApp.openById(
-      SPREADSHEET_ID
-    );
-
-  const tz =
-    ss.getSpreadsheetTimeZone();
-
-  const today =
-    dateToIso_(
-      new Date(),
-      tz
-    );
-
-  const from =
-    shiftIsoDate_(
-      today,
-      -CORRECTION_DAYS_BACK,
-      tz
-    );
 
   console.log(
     "Подключение успешно."
@@ -1841,13 +2425,10 @@ function testConnection() {
 
   console.log(
     "Таблица: " +
-    ss.getName()
+      ss.getName()
   );
 
   console.log(
-    "Окно корректировки: " +
-    from +
-    " — " +
-    today
+    "Версия схемы: unified-v19"
   );
 }
