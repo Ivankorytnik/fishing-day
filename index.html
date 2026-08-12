@@ -26,10 +26,10 @@
     .btn.secondary{background:#e7efea;color:var(--accent2);border:1px solid #cedbd4}.btn.danger{background:#f6e8e4;color:var(--danger);border:1px solid #ead1ca}
     .status{font-size:13px;color:var(--muted);margin-top:12px;min-height:18px}
     .fish-status{display:flex;gap:8px;flex-wrap:wrap}.choice{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:12px;padding:11px 18px;cursor:pointer;font-weight:700}.choice.active.yes{background:#dfeee8;border-color:#8ab8aa;color:#0f5148}.choice.active.no{background:#f1eee6;border-color:#cbc5b6}
-    .form-grid{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:12px;align-items:end}
+    .form-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;align-items:end}.fish-field{grid-column:span 4}.qty-field{grid-column:span 2}.time-field{grid-column:span 2}.tackle-field{grid-column:span 4}.method-field{grid-column:span 3}.place-field{grid-column:span 3}.custom-place-field{grid-column:span 3}.bait-field{grid-column:span 6}.add-field{grid-column:span 3}
     label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}input,select,textarea{width:100%;border:1px solid var(--line);border-radius:12px;background:white;color:var(--text);padding:11px 12px;outline:none;font-family:Arial,Helvetica,sans-serif}textarea{resize:vertical;min-height:110px;line-height:1.45}.comment-box{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end}.comment-cell{min-width:260px;white-space:pre-wrap}.comment-counter{font-size:12px;color:var(--muted);margin-top:6px;text-align:right}
     .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}.mini{background:#f3f7f3;border-radius:12px;padding:12px}.mini b{display:block;font-size:20px}.mini span{font-size:12px;color:var(--muted)}
-    .catch-list{display:flex;flex-direction:column;gap:8px}.catch-row{display:grid;grid-template-columns:72px 1fr 80px 38px 38px;gap:9px;align-items:center;padding:11px;border:1px solid var(--line);border-radius:12px;background:white}.catch-time,.catch-fish{font-weight:700}.catch-qty{text-align:right;color:var(--muted)}
+    .catch-list{display:flex;flex-direction:column;gap:8px}.catch-row{display:grid;grid-template-columns:72px minmax(220px,1fr) 80px 38px 38px;gap:9px;align-items:center;padding:11px;border:1px solid var(--line);border-radius:12px;background:white}.catch-time,.catch-fish{font-weight:700}.catch-qty{text-align:right;color:var(--muted)}.catch-meta{font-size:12px;color:var(--muted);font-weight:400;margin-top:4px;line-height:1.45}.multi-select{position:relative}.multi-select summary{list-style:none;cursor:pointer;border:1px solid var(--line);border-radius:12px;background:white;padding:11px 12px;min-height:42px}.multi-select summary::-webkit-details-marker{display:none}.multi-select[open] summary{border-color:#6ca79d;box-shadow:0 0 0 3px rgba(20,107,95,.10)}.multi-options{position:absolute;z-index:20;left:0;right:0;top:calc(100% + 6px);background:white;border:1px solid var(--line);border-radius:12px;padding:8px;box-shadow:0 10px 28px rgba(31,54,48,.16);max-height:260px;overflow:auto}.multi-option{display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;cursor:pointer}.multi-option:hover{background:#f3f7f3}.multi-option input{width:auto;margin:0}.multi-option label{margin:0;color:var(--text);font-size:14px;cursor:pointer;flex:1}
     .icon-btn{border:0;background:#f7ece9;color:var(--danger);height:34px;width:34px;border-radius:9px;cursor:pointer;font-weight:700}.edit-icon{background:#e7efea;color:var(--accent2)}
     .edit-toolbar{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.edit-toolbar .field{min-width:190px;flex:1}.editing-banner{margin-top:12px;padding:11px 13px;border-radius:12px;background:#edf4ee;color:var(--accent2);font-size:13px}.hidden{display:none!important}.row-edit-btn{border:1px solid #cedbd4;background:#e7efea;color:var(--accent2);border-radius:9px;padding:6px 9px;cursor:pointer;font-weight:700;font-size:12px}.selected-row td{background:#f7fbf8}
     .empty{padding:24px 10px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:13px}
@@ -40,8 +40,8 @@
     .result-cell{min-width:230px}.weather-cell{min-width:220px;color:var(--muted)}.comment-cell{color:var(--text)}
     .sync-box{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end}.sync-note{font-size:12px;color:var(--muted);line-height:1.45;margin-top:10px}
     .footer-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-    @media(max-width:760px){.weather-grid{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr 1fr}.fish-field,.add-field{grid-column:1/-1}.add-field .btn{width:100%}.summary,.annual-stats{grid-template-columns:1fr 1fr}.sync-box,.comment-box{grid-template-columns:1fr}.sync-box .btn,.comment-box .btn{width:100%}}
-    @media(max-width:480px){.weather-grid{grid-template-columns:1fr 1fr}.hero h1{font-size:26px}.catch-row{grid-template-columns:54px 1fr 58px 32px 32px;gap:5px;font-size:13px}.edit-toolbar{display:grid;grid-template-columns:1fr}.edit-toolbar .field{min-width:0}}
+    @media(max-width:760px){.weather-grid{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr 1fr}.fish-field,.tackle-field,.bait-field{grid-column:1/-1}.qty-field,.time-field,.method-field,.place-field,.custom-place-field{grid-column:span 1}.add-field{grid-column:1/-1}.add-field .btn{width:100%}.summary,.annual-stats{grid-template-columns:1fr 1fr}.sync-box,.comment-box{grid-template-columns:1fr}.sync-box .btn,.comment-box .btn{width:100%}}
+    @media(max-width:480px){.weather-grid{grid-template-columns:1fr 1fr}.hero h1{font-size:26px}.catch-row{grid-template-columns:52px minmax(150px,1fr) 54px 32px 32px;gap:5px;font-size:13px}.edit-toolbar{display:grid;grid-template-columns:1fr}.edit-toolbar .field{min-width:0}.qty-field,.time-field,.method-field,.place-field,.custom-place-field{grid-column:1/-1}}
   </style>
 </head>
 <body>
@@ -49,7 +49,7 @@
   <section class="hero">
     <small>Дневник рыболова</small>
     <h1>Рыболовный день</h1>
-    <p>Учёт каждого дня года, улова, комментариев и погодных условий.</p>
+    <p>Учёт каждого дня года, улова, комментариев и погоды — независимо от того, была рыбалка или нет.</p>
   </section>
 
   <section class="card" id="dayEditor">
@@ -103,8 +103,29 @@
       <div class="fish-field"><label for="fish">Рыба</label><select id="fish" required>
         <option>Карась</option><option>Лещ</option><option>Карп</option><option>Сазан</option><option>Сом</option><option>Судак</option><option>Подлещик</option><option>Густера</option><option>Ёрш</option><option>Щука</option><option>Окунь</option>
       </select></div>
-      <div><label for="qty">Количество</label><input id="qty" type="number" min="1" step="1" value="1" required></div>
-      <div><label for="catchTime">Время</label><input id="catchTime" type="time" required></div>
+      <div class="qty-field"><label for="qty">Количество</label><input id="qty" type="number" min="1" step="1" value="1" required></div>
+      <div class="time-field"><label for="catchTime">Время</label><input id="catchTime" type="time" required></div>
+      <div class="tackle-field"><label for="tackle">Снасть</label><select id="tackle" required>
+        <option>Удочка</option><option>Спиннинг</option><option>Фидер</option><option>Донка</option><option>Закидушка</option><option>Жерлица</option><option>Кружки</option><option>Нахлыст</option><option>Маховая удочка</option><option>Болонская удочка</option><option>Матчевая удочка</option><option>Карповое удилище</option><option>Зимняя удочка</option><option>Троллинговое удилище</option>
+      </select></div>
+      <div class="method-field"><label for="fishingMethod">Способ ловли</label><select id="fishingMethod" required><option>С берега</option><option>Лодка</option></select></div>
+      <div class="place-field"><label for="fishingPlace">Место ловли</label><select id="fishingPlace" required><option>Пьяный мост</option><option>Мост</option><option>Бор</option><option>Причал</option><option>Груз.Причал</option><option>Другое</option></select></div>
+      <div class="custom-place-field hidden" id="customPlaceWrap"><label for="customPlace">Другое место</label><input id="customPlace" type="text" maxlength="100" placeholder="Напишите место"></div>
+      <div class="bait-field"><label>Приманка — можно выбрать несколько</label>
+        <details class="multi-select" id="baitSelect">
+          <summary id="baitSummary">Выберите приманку</summary>
+          <div class="multi-options">
+            <div class="multi-option"><input id="baitBread" type="checkbox" name="bait" value="Хлеб"><label for="baitBread">Хлеб</label></div>
+            <div class="multi-option"><input id="baitMastyrka" type="checkbox" name="bait" value="Мастырка"><label for="baitMastyrka">Мастырка</label></div>
+            <div class="multi-option"><input id="baitWorm" type="checkbox" name="bait" value="Червь"><label for="baitWorm">Червь</label></div>
+            <div class="multi-option"><input id="baitMaggot" type="checkbox" name="bait" value="Опарыш"><label for="baitMaggot">Опарыш</label></div>
+            <div class="multi-option"><input id="baitBloodworm" type="checkbox" name="bait" value="Мотыль"><label for="baitBloodworm">Мотыль</label></div>
+            <div class="multi-option"><input id="baitLure" type="checkbox" name="bait" value="Блесна"><label for="baitLure">Блесна</label></div>
+            <div class="multi-option"><input id="baitMakukh" type="checkbox" name="bait" value="Макух"><label for="baitMakukh">Макух</label></div>
+            <div class="multi-option"><input id="baitBoilie" type="checkbox" name="bait" value="Бойл"><label for="baitBoilie">Бойл</label></div>
+          </div>
+        </details>
+      </div>
       <div class="add-field"><button class="btn" id="saveCatchBtn" type="submit">+ Добавить</button><button class="btn secondary hidden" id="cancelCatchEdit" type="button" style="margin-top:8px">Отменить изменение</button></div>
     </form>
   </section>
@@ -130,7 +151,9 @@
       <div class="field"><label for="yearSelect">Год</label><select id="yearSelect"></select></div>
       <button class="btn secondary" id="prevYear" type="button">← Предыдущий</button>
       <button class="btn secondary" id="nextYear" type="button">Следующий →</button>
+      <button class="btn" id="fillYearWeather" type="button">Заполнить погоду за год</button>
     </div>
+    <div class="status" id="yearWeatherStatus">Погода может быть заполнена для всех прошедших дней года, даже если рыбалки не было.</div>
     <div class="annual-stats">
       <div class="mini"><b id="yearFishingDays">0</b><span>дней с рыбалкой</span></div>
       <div class="mini"><b id="yearCatchTotal">0</b><span>рыб поймано</span></div>
@@ -155,7 +178,7 @@
       <button class="btn" id="syncSheets" type="button">Выгрузить все годы</button>
     </div>
     <div class="footer-actions"><button class="btn secondary" id="saveEndpoint" type="button">Сохранить URL</button></div>
-    <div class="status" id="syncStatus">После настройки Apps Script данные будут выгружаться в лист «Сводка», годовые вкладки и лист «Улов».</div>
+    <div class="status" id="syncStatus">После настройки Apps Script данные будут выгружаться в лист «Сводка», годовые вкладки и лист «Улов» со снастью, способом ловли, местом и приманками.</div>
     <div class="sync-note">Вкладка каждого года содержит все 365/366 календарных дней, включая комментарий к каждому дню. Если рыбалка была, но улова не было — в строке будет «Рыбалка: Да» и результат «Без улова».</div>
   </section>
 </main>
@@ -163,6 +186,8 @@
 <script>
 const STORAGE_KEY="fishing-day-mvp-v3";
 const ENDPOINT_KEY="fishing-day-google-endpoint";
+const WEATHER_LOCATION_KEY="fishing-day-weather-location";
+const WEATHER_BACKFILL_KEY="fishing-day-weather-backfill-date";
 const $=id=>document.getElementById(id);
 const todayKey=localDateKey();
 let selectedDateKey=todayKey;
@@ -200,13 +225,12 @@ function escapeHtml(value){return String(value??"").replaceAll("&","&amp;").repl
 function renderWeather(){
   const day=ensureDay(selectedDateKey),w=day.weather;
   $("dateValue").textContent=formatDate(selectedDateKey);
-  const isToday=selectedDateKey===todayKey;
-  $("refreshWeather").disabled=!isToday;
-  $("refreshWeather").textContent=isToday?"Обновить погоду":"Погода сохранена за день";
+  $("refreshWeather").disabled=false;
+  $("refreshWeather").textContent=selectedDateKey===todayKey?"Обновить погоду":"Загрузить погоду за день";
   if(!w){
     ["tempValue","weatherValue","windValue","gustValue","humidityValue","pressureValue","precipValue"].forEach(id=>$(id).textContent="—");
     ["feelsValue","cloudValue","windSpeedValue","pressureMmValue","locationValue"].forEach(id=>$(id).textContent="");
-    $("weatherStatus").textContent=isToday?"Погода за сегодня будет загружена из интернета.":"За выбранный день погодные данные ранее не сохранялись.";
+    $("weatherStatus").textContent=selectedDateKey===todayKey?"Погода за сегодня будет загружена из интернета.":"Погода за этот день ещё не загружена. Нажмите «Загрузить погоду за день».";
     return;
   }
   $("tempValue").textContent=`${Math.round(w.temperature)} °C`;
@@ -221,30 +245,105 @@ function renderWeather(){
   $("pressureMmValue").textContent=`${Math.round(w.pressure*.750062)} мм рт. ст.`;
   $("precipValue").textContent=`${Number(w.precipitation).toFixed(1)} мм`;
   $("locationValue").textContent=w.coords?`${w.coords.lat.toFixed(3)}, ${w.coords.lon.toFixed(3)}`:"";
-  $("weatherStatus").textContent=isToday?"Сохранённые данные за сегодня. Можно обновить из интернета.":"Показаны погодные данные, сохранённые для этого дня.";
+  $("weatherStatus").textContent=w.source?.includes("historical")?"Историческая погода Open-Meteo за выбранный календарный день.":"Погода Open-Meteo за выбранный календарный день.";
+}
+
+function savedWeatherCoords(){
+  try{return JSON.parse(localStorage.getItem(WEATHER_LOCATION_KEY)||"null")}catch{return null}
+}
+function getWeatherCoords(force=false){
+  return new Promise((resolve,reject)=>{
+    const saved=savedWeatherCoords();
+    if(saved && !force){resolve(saved);return}
+    if(!navigator.geolocation){reject(new Error("Геолокация не поддерживается браузером."));return}
+    navigator.geolocation.getCurrentPosition(pos=>{
+      const coords={lat:pos.coords.latitude,lon:pos.coords.longitude};
+      localStorage.setItem(WEATHER_LOCATION_KEY,JSON.stringify(coords));
+      resolve(coords);
+    },err=>reject(new Error(err.code===1?"Разрешите доступ к геолокации.":"Не удалось определить местоположение.")),{timeout:12000,maximumAge:300000});
+  });
+}
+function dailyWeatherFromApi(d,i,coords,source){
+  return {
+    temperature:d.temperature_2m_mean?.[i]??d.temperature_2m_max?.[i]??0,
+    apparentTemperature:d.apparent_temperature_mean?.[i]??d.apparent_temperature_max?.[i]??0,
+    humidity:d.relative_humidity_2m_mean?.[i]??0,
+    precipitation:d.precipitation_sum?.[i]??0,
+    weatherCode:d.weather_code?.[i]??0,
+    cloudCover:d.cloud_cover_mean?.[i]??0,
+    pressure:d.pressure_msl_mean?.[i]??0,
+    windSpeed:d.wind_speed_10m_mean?.[i]??d.wind_speed_10m_max?.[i]??0,
+    windDirection:d.wind_direction_10m_dominant?.[i]??0,
+    windGusts:d.wind_gusts_10m_max?.[i]??0,
+    coords,source,observationTime:d.time?.[i]||"",loadedAt:new Date().toISOString()
+  };
+}
+async function fetchHistoricalWeatherRange(startDate,endDate,coords){
+  const url=new URL("https://historical-forecast-api.open-meteo.com/v1/forecast");
+  url.searchParams.set("latitude",coords.lat);url.searchParams.set("longitude",coords.lon);
+  url.searchParams.set("start_date",startDate);url.searchParams.set("end_date",endDate);
+  url.searchParams.set("daily","weather_code,temperature_2m_mean,apparent_temperature_mean,relative_humidity_2m_mean,precipitation_sum,cloud_cover_mean,pressure_msl_mean,wind_speed_10m_mean,wind_direction_10m_dominant,wind_gusts_10m_max");
+  url.searchParams.set("temperature_unit","celsius");url.searchParams.set("wind_speed_unit","kmh");url.searchParams.set("precipitation_unit","mm");url.searchParams.set("timezone","auto");
+  const res=await fetch(url,{cache:"no-store"});
+  if(!res.ok)throw new Error(`Историческая погода: HTTP ${res.status}`);
+  const data=await res.json();
+  if(!data.daily?.time)throw new Error("Историческая погода не получена.");
+  return data.daily;
+}
+async function fetchCurrentWeather(coords){
+  const url=new URL("https://api.open-meteo.com/v1/forecast");
+  url.searchParams.set("latitude",coords.lat);url.searchParams.set("longitude",coords.lon);
+  url.searchParams.set("current","temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m");
+  url.searchParams.set("temperature_unit","celsius");url.searchParams.set("wind_speed_unit","kmh");url.searchParams.set("precipitation_unit","mm");url.searchParams.set("timezone","auto");
+  const res=await fetch(url,{cache:"no-store"});if(!res.ok)throw new Error(`Текущая погода: HTTP ${res.status}`);
+  const c=(await res.json()).current;
+  return {temperature:c.temperature_2m,apparentTemperature:c.apparent_temperature,humidity:c.relative_humidity_2m,precipitation:c.precipitation,weatherCode:c.weather_code,cloudCover:c.cloud_cover,pressure:c.pressure_msl,windSpeed:c.wind_speed_10m,windDirection:c.wind_direction_10m,windGusts:c.wind_gusts_10m,coords,source:"Open-Meteo current",observationTime:c.time,loadedAt:new Date().toISOString()};
 }
 async function fetchWeather(){
   const status=$("weatherStatus");
-  if(selectedDateKey!==todayKey){status.textContent="Автоматическое обновление погоды доступно только для сегодняшнего дня.";return}
-  if(!navigator.geolocation){status.textContent="Геолокация не поддерживается этим браузером.";return}
-  status.textContent="Определяю местоположение…";
-  navigator.geolocation.getCurrentPosition(async pos=>{
-    const lat=pos.coords.latitude,lon=pos.coords.longitude;
-    status.textContent="Получаю актуальную погоду из интернета…";
-    const url=new URL("https://api.open-meteo.com/v1/forecast");
-    url.searchParams.set("latitude",lat);url.searchParams.set("longitude",lon);
-    url.searchParams.set("current","temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m");
-    url.searchParams.set("temperature_unit","celsius");url.searchParams.set("wind_speed_unit","kmh");url.searchParams.set("precipitation_unit","mm");url.searchParams.set("timezone","auto");
-    try{
-      const res=await fetch(url,{cache:"no-store"});if(!res.ok)throw new Error("weather");
-      const c=(await res.json()).current;
-      ensureDay(todayKey).weather={temperature:c.temperature_2m,apparentTemperature:c.apparent_temperature,humidity:c.relative_humidity_2m,precipitation:c.precipitation,weatherCode:c.weather_code,cloudCover:c.cloud_cover,pressure:c.pressure_msl,windSpeed:c.wind_speed_10m,windDirection:c.wind_direction_10m,windGusts:c.wind_gusts_10m,coords:{lat,lon},source:"Open-Meteo",observationTime:c.time,loadedAt:new Date().toISOString()};
-      saveData();renderAll();status.textContent=`Данные из интернета · Open-Meteo · ${currentTime()}`;
-    }catch(e){renderWeather();status.textContent=ensureDay(todayKey).weather?"Нет связи. Показаны последние сохранённые данные.":"Не удалось получить погоду из интернета."}
-  },err=>{
-    const m={1:"Разрешите доступ к геолокации для автоматической погоды.",2:"Не удалось определить местоположение.",3:"Истекло время определения местоположения."};
-    status.textContent=m[err.code]||"Не удалось определить местоположение.";
-  },{timeout:12000,maximumAge:300000});
+  try{
+    status.textContent="Получаю погоду из интернета…";
+    const coords=await getWeatherCoords(selectedDateKey===todayKey);
+    if(selectedDateKey===todayKey){
+      ensureDay(selectedDateKey).weather=await fetchCurrentWeather(coords);
+    }else{
+      const d=await fetchHistoricalWeatherRange(selectedDateKey,selectedDateKey,coords);
+      ensureDay(selectedDateKey).weather=dailyWeatherFromApi(d,0,coords,"Open-Meteo historical forecast");
+    }
+    saveData();renderAll();status.textContent=`Погода загружена для ${formatDate(selectedDateKey)}.`;
+  }catch(e){renderWeather();status.textContent=e.message||"Не удалось загрузить погоду."}
+}
+async function fillWeatherForYear(year,showStatus=true){
+  const status=$("yearWeatherStatus");
+  const currentYear=Number(todayKey.slice(0,4));
+  if(year>currentYear){if(showStatus)status.textContent="Для будущего года фактическая погода пока недоступна.";return}
+  try{
+    if(showStatus)status.textContent=`Загружаю погоду за ${year} год…`;
+    const coords=await getWeatherCoords(false);
+    const start=`${year}-01-01`;
+    let end=year===currentYear?todayKey:`${year}-12-31`;
+    if(year===currentYear && todayKey===start){end=start}
+    const historicalEnd=year===currentYear?localDateKey(new Date(new Date().setDate(new Date().getDate()-1))):end;
+    if(historicalEnd>=start){
+      const d=await fetchHistoricalWeatherRange(start,historicalEnd,coords);
+      d.time.forEach((key,i)=>{ensureDay(key).weather=dailyWeatherFromApi(d,i,coords,"Open-Meteo historical forecast")});
+    }
+    if(year===currentYear){ensureDay(todayKey).weather=await fetchCurrentWeather(coords)}
+    saveData();renderAll();
+    if(showStatus)status.textContent=`Погода заполнена за все прошедшие дни ${year} года, независимо от рыбалки.`;
+  }catch(e){if(showStatus)status.textContent=`Не удалось заполнить погоду за ${year}: ${e.message}`;throw e}
+}
+
+
+async function autoBackfillCurrentYear(){
+  if(localStorage.getItem(WEATHER_BACKFILL_KEY)===todayKey)return;
+  try{
+    await fillWeatherForYear(Number(todayKey.slice(0,4)),false);
+    localStorage.setItem(WEATHER_BACKFILL_KEY,todayKey);
+    $("yearWeatherStatus").textContent=`Погода автоматически заполнена за все прошедшие дни ${todayKey.slice(0,4)} года, включая дни без рыбалки.`;
+  }catch(e){
+    $("yearWeatherStatus").textContent="Автозаполнение погоды за год не завершено. Можно повторить кнопкой «Заполнить погоду за год».";
+  }
 }
 
 
@@ -286,11 +385,58 @@ function resultText(day){
   catches.forEach(c=>{by[c.fish]=(by[c.fish]||0)+Number(c.qty||0);total+=Number(c.qty||0)});
   return `${total} шт. — `+Object.entries(by).map(([fish,qty])=>`${fish}: ${qty}`).join(", ");
 }
+function selectedBaits(){
+  return [...document.querySelectorAll('input[name="bait"]:checked')].map(x=>x.value);
+}
+function setSelectedBaits(values){
+  const selected=new Set(Array.isArray(values)?values:[]);
+  document.querySelectorAll('input[name="bait"]').forEach(x=>x.checked=selected.has(x.value));
+  updateBaitSummary();
+}
+function updateBaitSummary(){
+  const baits=selectedBaits();
+  $("baitSummary").textContent=baits.length?baits.join(", "):"Выберите приманку";
+}
+function updateCustomPlaceVisibility(){
+  const isOther=$("fishingPlace").value==="Другое";
+  $("customPlaceWrap").classList.toggle("hidden",!isOther);
+  $("customPlace").required=isOther;
+  if(!isOther)$("customPlace").value="";
+}
+function catchPlaceValue(){
+  return $("fishingPlace").value==="Другое" ? ($("customPlace").value.trim()||"Другое") : $("fishingPlace").value;
+}
+function setCatchPlace(value){
+  const standard=["Пьяный мост","Мост","Бор","Причал","Груз.Причал"];
+  if(standard.includes(value)){
+    $("fishingPlace").value=value;
+    $("customPlace").value="";
+  }else{
+    $("fishingPlace").value="Другое";
+    $("customPlace").value=value&&value!=="Другое"?value:"";
+  }
+  updateCustomPlaceVisibility();
+}
+function normalizeCatch(c){
+  if(!c.tackle)c.tackle="Удочка";
+  if(!c.method)c.method="С берега";
+  if(!c.place)c.place="";
+  if(!Array.isArray(c.baits))c.baits=[];
+  return c;
+}
+
 function cancelCatchEditing(){
   editingCatchId=null;
   $("fish").selectedIndex=0;
   $("qty").value=1;
   $("catchTime").value=selectedDateKey===todayKey?currentTime():"12:00";
+  $("tackle").value="Удочка";
+  $("fishingMethod").value="С берега";
+  $("fishingPlace").value="Пьяный мост";
+  $("customPlace").value="";
+  updateCustomPlaceVisibility();
+  setSelectedBaits([]);
+  $("baitSelect").open=false;
   $("saveCatchBtn").textContent="+ Добавить";
   $("cancelCatchEdit").classList.add("hidden");
   $("catchFormTitle").textContent="Добавить улов";
@@ -298,17 +444,22 @@ function cancelCatchEditing(){
 function startCatchEditing(id){
   const item=ensureDay(selectedDateKey).catches.find(c=>c.id===id);
   if(!item)return;
+  normalizeCatch(item);
   editingCatchId=id;
   $("fish").value=item.fish;
   $("qty").value=item.qty;
   $("catchTime").value=item.time;
+  $("tackle").value=item.tackle||"Удочка";
+  $("fishingMethod").value=item.method||"С берега";
+  setCatchPlace(item.place||"");
+  setSelectedBaits(item.baits||[]);
   $("saveCatchBtn").textContent="Сохранить";
   $("cancelCatchEdit").classList.remove("hidden");
   $("catchFormTitle").textContent="Изменить запись улова";
   $("catchForm").scrollIntoView({behavior:"smooth",block:"center"});
 }
 function renderCatches(){
-  const day=ensureDay(selectedDateKey),catches=[...day.catches].sort((a,b)=>a.time.localeCompare(b.time));
+  const day=ensureDay(selectedDateKey),catches=[...day.catches].map(normalizeCatch).sort((a,b)=>a.time.localeCompare(b.time));
   $("totalQty").textContent=catches.reduce((s,c)=>s+Number(c.qty||0),0);
   $("speciesQty").textContent=new Set(catches.map(c=>c.fish)).size;
   $("firstCatch").textContent=catches.length?catches[0].time:"—";
@@ -316,7 +467,10 @@ function renderCatches(){
   const list=$("catchList");
   if(!catches.length){list.className="";list.innerHTML=`<div class="empty">${day.fishing?"Рыбалка отмечена. Улов не внесён.":"В выбранный день рыбалка не отмечена."}</div>`;return}
   list.className="catch-list";
-  list.innerHTML=catches.map(c=>`<div class="catch-row"><div class="catch-time">${escapeHtml(c.time)}</div><div class="catch-fish">${escapeHtml(c.fish)}</div><div class="catch-qty">${c.qty} шт.</div><button class="icon-btn edit-icon" data-edit="${c.id}" type="button" title="Изменить">✎</button><button class="icon-btn" data-delete="${c.id}" type="button" title="Удалить">×</button></div>`).join("");
+  list.innerHTML=catches.map(c=>{
+    const meta=[c.tackle,c.method,c.place,c.baits?.length?`Приманка: ${c.baits.join(", ")}`:""].filter(Boolean).join(" · ");
+    return `<div class="catch-row"><div class="catch-time">${escapeHtml(c.time)}</div><div><div class="catch-fish">${escapeHtml(c.fish)}</div><div class="catch-meta">${escapeHtml(meta||"Параметры ловли не указаны")}</div></div><div class="catch-qty">${c.qty} шт.</div><button class="icon-btn edit-icon" data-edit="${c.id}" type="button" title="Изменить">✎</button><button class="icon-btn" data-delete="${c.id}" type="button" title="Удалить">×</button></div>`;
+  }).join("");
   list.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>startCatchEditing(b.dataset.edit));
   list.querySelectorAll("[data-delete]").forEach(b=>b.onclick=()=>{
     day.catches=day.catches.filter(c=>c.id!==b.dataset.delete);
@@ -336,6 +490,7 @@ function selectDay(key,scrollToEditor=true){
   buildYearSelect();
   if([...$("yearSelect").options].some(o=>Number(o.value)===year))$("yearSelect").value=String(year);
   renderWeather();renderFishing();renderComment();renderCatches();renderYear();
+  if(!ensureDay(selectedDateKey).weather) fetchWeather();
   if(scrollToEditor)$("dayEditor").scrollIntoView({behavior:"smooth",block:"start"});
 }
 
@@ -402,21 +557,24 @@ function buildSyncPayload(){
     });
     const fishingDays=rows.filter(r=>r.fishing).length,total=rows.reduce((s,r)=>s+r.total,0);
     const species=new Set(),catches=[];
-    datesOfYear(year).forEach(key=>(state.days[key]?.catches||[]).forEach(c=>{species.add(c.fish);catches.push({date:key,time:c.time,fish:c.fish,qty:Number(c.qty||0)})}));
+    datesOfYear(year).forEach(key=>(state.days[key]?.catches||[]).forEach(c=>{species.add(c.fish);catches.push({date:key,time:c.time,fish:c.fish,qty:Number(c.qty||0),tackle:c.tackle||"",method:c.method||"",place:c.place||"",baits:Array.isArray(c.baits)?c.baits:[]})}));
     const best=rows.reduce((a,r)=>r.total>a.total?r:a,{date:"",total:0});
     return {year,rows,summary:{fishingDays,total,species:species.size,bestDay:best.date,bestTotal:best.total},catches};
   });
-  return {app:"Fishing Day MVP",version:5,syncedAt:new Date().toISOString(),years:yearData};
+  return {app:"Fishing Day MVP",version:7,syncedAt:new Date().toISOString(),years:yearData};
 }
 async function syncGoogleSheets(){
   const endpoint=$("sheetEndpoint").value.trim(),status=$("syncStatus");
   if(!endpoint || !endpoint.includes("script.google.com")){status.textContent="Сначала вставьте URL веб-приложения Apps Script вида .../exec.";return}
   localStorage.setItem(ENDPOINT_KEY,endpoint);
-  status.textContent="Отправляю данные в Google Таблицу…";
+  status.textContent="Перед выгрузкой заполняю отсутствующую погоду…";
   try{
+    const years=getYearsWithData();
+    for(const year of years){await fillWeatherForYear(year,false)}
+    status.textContent="Отправляю данные в Google Таблицу…";
     await fetch(endpoint,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(buildSyncPayload())});
-    status.textContent="Данные отправлены. Проверьте Google Таблицу: «Сводка», вкладки по годам и «Улов».";
-  }catch(e){status.textContent="Не удалось отправить данные. Проверьте URL Apps Script и интернет."}
+    status.textContent="Данные отправлены. Погода выгружена для всех прошедших календарных дней, независимо от рыбалки.";
+  }catch(e){status.textContent=`Не удалось завершить выгрузку: ${e.message||e}`}
 }
 function exportCsv(){
   const rows=[["Год","Дата","День","Рыбалка","Результат","Комментарий","Температура °C","Погода","Ветер","Скорость ветра км/ч"]];
@@ -445,12 +603,16 @@ $("dayComment").onblur=()=>{const current=ensureDay(selectedDateKey).comment||""
 $("catchForm").onsubmit=e=>{
   e.preventDefault();
   const q=Number($("qty").value);if(!Number.isInteger(q)||q<1)return;
+  const baits=selectedBaits();
+  if(!baits.length){alert("Выберите хотя бы одну приманку.");return}
+  if($("fishingPlace").value==="Другое" && !$("customPlace").value.trim()){alert("Укажите другое место ловли.");return}
   const d=ensureDay(selectedDateKey);d.fishing=true;
+  const values={fish:$("fish").value,qty:q,time:$("catchTime").value,tackle:$("tackle").value,method:$("fishingMethod").value,place:catchPlaceValue(),baits};
   if(editingCatchId){
     const item=d.catches.find(c=>c.id===editingCatchId);
-    if(item){item.fish=$("fish").value;item.qty=q;item.time=$("catchTime").value}
+    if(item)Object.assign(item,values);
   }else{
-    d.catches.push({id:crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random()}`,fish:$("fish").value,qty:q,time:$("catchTime").value});
+    d.catches.push({id:crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random()}`,...values});
   }
   saveData();cancelCatchEditing();renderAll();
 };
@@ -458,13 +620,18 @@ $("clearToday").onclick=()=>{
   const d=ensureDay(selectedDateKey);if(!d.catches.length)return;
   if(confirm(`Удалить весь улов за ${formatDate(selectedDateKey)}?`)){d.catches=[];cancelCatchEditing();saveData();renderAll()}
 };
-$("refreshWeather").onclick=fetchWeather;$("exportCsv").onclick=exportCsv;$("yearSelect").onchange=renderYear;
+$("refreshWeather").onclick=fetchWeather;$("fillYearWeather").onclick=()=>fillWeatherForYear(Number($("yearSelect").value));$("exportCsv").onclick=exportCsv;$("yearSelect").onchange=renderYear;
 $("prevYear").onclick=()=>{const s=$("yearSelect"),y=Number(s.value)-1;if(![...s.options].some(o=>Number(o.value)===y)){s.insertAdjacentHTML("beforeend",`<option value="${y}">${y}</option>`)}s.value=String(y);renderYear()};
 $("nextYear").onclick=()=>{const s=$("yearSelect"),y=Number(s.value)+1;if(![...s.options].some(o=>Number(o.value)===y)){s.insertAdjacentHTML("afterbegin",`<option value="${y}">${y}</option>`)}s.value=String(y);renderYear()};
 $("saveEndpoint").onclick=()=>{localStorage.setItem(ENDPOINT_KEY,$("sheetEndpoint").value.trim());$("syncStatus").textContent="URL сохранён на этом устройстве."};
 $("syncSheets").onclick=syncGoogleSheets;
+$("fishingPlace").onchange=updateCustomPlaceVisibility;
+document.querySelectorAll('input[name="bait"]').forEach(x=>x.onchange=updateBaitSummary);
+document.addEventListener("click",e=>{if(!$("baitSelect").contains(e.target))$("baitSelect").open=false});
 $("editingBanner").textContent="Сейчас редактируется сегодняшний день.";
-renderAll();fetchWeather();
+updateCustomPlaceVisibility();
+updateBaitSummary();
+renderAll();fetchWeather().then(autoBackfillCurrentYear);
 
 </script>
 </body>

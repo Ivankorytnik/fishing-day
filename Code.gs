@@ -1,6 +1,6 @@
 /**
  * Рыболовный дневник -> Google Sheets
- * Версия 5: комментарий к каждому календарному дню.
+ * Версия 7: снасть, способ ловли, место и приманки для каждой записи улова.
  */
 
 const SPREADSHEET_ID = "1H7H2AUwtfeqYaaWE0LCZq4QFm7o5Rp7M8eYg70uJLkM";
@@ -116,12 +116,12 @@ function writeYearSheets_(ss, years) {
 function writeCatches_(ss, years) {
   const sheet = getOrCreateSheet_(ss, "Улов");
   prepareSheet_(sheet);
-  const headers = [["Год", "Дата", "Время", "Рыба", "Количество"]];
+  const headers = [["Год", "Дата", "Время", "Рыба", "Количество", "Снасть", "Способ ловли", "Место ловли", "Приманка"]];
   const rows = [];
 
   years.forEach(function(y) {
     (Array.isArray(y.catches) ? y.catches : []).forEach(function(c) {
-      rows.push([y.year || "", parseDate_(c.date), c.time || "", c.fish || "", number_(c.qty)]);
+      rows.push([y.year || "", parseDate_(c.date), c.time || "", c.fish || "", number_(c.qty), c.tackle || "", c.method || "", c.place || "", Array.isArray(c.baits) ? c.baits.join(", ") : (c.baits || "")]);
     });
   });
 
