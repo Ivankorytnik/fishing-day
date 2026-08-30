@@ -1,0 +1,120 @@
+       <div class="field">
+         <label for="biteDate">Дата прогноза</label>
+         <input id="biteDate" type="date">
+       </div>
+-      <div class="field">
+-        <label for="biteFish">Рыба</label>
+-        <select id="biteFish">
+-          <option value="Общий">Общий клёв</option>
+-          <option>Карась</option><option>Лещ</option><option>Карп</option><option>Сазан</option>
+-          <option>Сом</option><option>Судак</option><option>Подлещик</option><option>Густера</option>
+-          <option>Ёрш</option><option>Щука</option><option>Окунь</option>
+-        </select>
+-      </div>
+-      <button class="btn" id="biteUseSelectedDay" type="button">Дата выбранного дня</button>
++      <button class="btn" id="biteUseSelectedDay" type="button">Взять выбранный день</button>
+     </div>
++    <div class="fish-context">
++      <strong id="biteFishContext">Карась</strong>
++      <span id="biteFishProfile">Расчёт по погоде, давлению и температурному профилю выбранного вида.</span>
++    </div>
+ 
+     <div class="bite-summary">
+-      <div class="mini"><b id="biteCityValue">—</b><span>город прогноза</span></div>
++      <div class="mini"><b id="biteFishValue">Карась</b><span id="biteCityValue">город прогноза</span></div>
++      <div class="mini"><b id="biteDayScore">—</b><span id="biteDayScoreLabel">индекс дня</span></div>
+       <div class="mini"><b id="biteBestHour">—</b><span>лучший час</span></div>
+       <div class="mini"><b id="biteBestWindow">—</b><span>лучшее окно 2 часа</span></div>
+-      <div class="mini"><b id="biteDayScore">—</b><span>средний индекс дня</span></div>
+     </div>
+-
+-    <div class="status" id="biteStatus">Прогноз рассчитывается по почасовой погоде выбранного города.</div>
+-
+-    <div class="table-wrap bite-table">
++    <div class="best-hours-wrap">
++      <div class="best-hours-label">Лучшие часы для выбранной рыбы</div>
++      <div class="best-hours" id="biteBestHours"><span class="status">Загрузка…</span></div>
++    </div>
++
++    <div class="status" id="biteStatus">Выберите вид рыбы. Прогноз пересчитывается по почасовой погоде выбранного города и профилю этого вида.</div>
++
++    <details class="forecast-details" open>
++      <summary>Подробный почасовой прогноз</summary>
++      <div class="table-wrap bite-table">
+       <table>
+         <thead>
+           <tr>
+@@ -187,10 +229,16 @@
+           <tr><td colspan="14">Загрузка прогноза…</td></tr>
+         </tbody>
+       </table>
++      </div>
++    </details>
++
++    <div class="forecast-help">
++      <div><b>12 часов</b><br>Что происходит с давлением непосредственно перед рыбалкой.</div>
++      <div><b>24 часа</b><br>Насколько давление было устойчивым в течение суток.</div>
++      <div><b>72 часа</b><br>Общий погодный фон за три дня до выбранного времени.</div>
+     </div>
+-
+     <div class="bite-note">
+-      Индекс 0–100% — эвристическая оценка условий для клёва, а не гарантия улова.
++      Индекс 0–100% — персональная эвристическая оценка условий для выбранного вида рыбы, а не гарантия улова.
+       Основной тренд давления считается ровно за 12 часов и переводится в мм рт. ст.
+       Используются 7 категорий: резко падает ↓↓↓, падает ↓↓, медленно падает ↓, стабильное →,
+       медленно растёт ↑, растёт ↑↑, резко растёт ↑↑↑. Дополнительно оценивается стабильность
+@@ -204,8 +252,28 @@
+     </div>
+   </section>
+ 
++
+   <section class="card">
+-    <div class="section-title"><h2>Была ли рыбалка в выбранный день?</h2></div>
++    <div class="section-title"><h2><span class="workflow-step">3</span>Условия выбранного дня</h2><button class="btn secondary" id="refreshWeather">Обновить погоду</button></div>
++    <div class="grid weather-grid">
++      <div class="stat"><div class="stat-label">Дата</div><div class="stat-value" id="dateValue">—</div><div class="stat-sub" id="locationValue"></div></div>
++      <div class="stat"><div class="stat-label">Температура</div><div class="stat-value" id="tempValue">—</div><div class="stat-sub" id="feelsValue"></div></div>
++      <div class="stat"><div class="stat-label">Погода</div><div class="stat-value" id="weatherValue">—</div><div class="stat-sub" id="cloudValue"></div></div>
++      <div class="stat"><div class="stat-label">Ветер</div><div class="stat-value" id="windValue">—</div><div class="stat-sub" id="windSpeedValue"></div></div>
++      <div class="stat"><div class="stat-label">Порывы</div><div class="stat-value" id="gustValue">—</div></div>
++      <div class="stat"><div class="stat-label">Влажность</div><div class="stat-value" id="humidityValue">—</div></div>
++      <div class="stat"><div class="stat-label">Давление</div><div class="stat-value" id="pressureValue">—</div><div class="stat-sub" id="pressureMmValue"></div></div>
++      <div class="stat pressure-stability-stat">
++        <div class="stat-label">Стабильность давления</div>
++        <div class="stat-value" id="pressureStabilityValue">Загрузка…</div>
++        <div class="stat-sub" id="pressureStabilitySub">Тренд за 12 ч и стабильность за 24 ч</div>
++      </div>
++    </div>
++    <div class="status" id="weatherStatus"></div>
++  </section>
++
++  <section class="card entry-card" id="fishingEntryCard">
++    <div class="section-title"><h2><span class="workflow-step">4</span>Факт рыбалки</h2></div>
+     <div class="fish-status">
+       <button class="choice yes" id="fishingYes" type="button">Да, была</button>
+       <button class="choice no" id="fishingNo" type="button">Нет</button>
+@@ -213,8 +281,8 @@
+     <div class="status" id="fishingStatus">Отметьте факт рыбалки отдельно от результата улова.</div>
+   </section>
+ 
+-  <section class="card">
+-    <div class="section-title"><h2>Комментарий к выбранному дню</h2></div>
++  <section class="card entry-card" id="commentCard">
++    <div class="section-title"><h2><span class="workflow-step">5</span>Комментарий</h2></div>
+     <div class="comment-box">
+       <div>
+         <label for="dayComment">Заметки о рыбалке</label>
+@@ -226,8 +294,8 @@
+     <div class="status" id="commentStatus">Комментарий привязан к выбранной дате.</div>
+   </section>
+ 
+-  <section class="card">
+-    <div class="section-title"><h2 id="catchFormTitle">Добавить улов</h2></div>
++  <section class="card entry-card" id="catchEntryCard">
++    <div class="section-title"><h2><span class="workflow-step">6</span><span id="catchFormTitle">Добавить улов</span></h2></div>
+     <form id="catchForm" class="form-grid">
+       <div class="city-field">
+         <label for="cityInput">Город</label>
+@@ -265,7 +333,7 @@
+     </form>
+   </section>
