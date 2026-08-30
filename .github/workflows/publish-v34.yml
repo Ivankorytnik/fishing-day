@@ -1,0 +1,35 @@
+name: Publish Fishing Day v34
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-v34.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Publish v34
+        run: |
+          cat deploy/v34.part00 deploy/v34.part01 deploy/v34.part02 | base64 -d > /tmp/v34.tar.xz
+          tar -xJf /tmp/v34.tar.xz
+          node -e 'const fs=require("fs"); const h=fs.readFileSync("index.html","utf8"); const m=[...h.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(x=>x[1]).join("\n"); fs.writeFileSync("/tmp/check.js",m)'
+          node --check /tmp/check.js
+          grep -q 'Версия 34' index.html
+          grep -q 'dayCpueValue' index.html
+          grep -q 'fetchHydrologyData' index.html
+          rm -f deploy/v34.part00 deploy/v34.part01 deploy/v34.part02
+          rm -f .github/workflows/publish-v34.yml .github/workflows/apply-v33.yml .github/workflows/apply-v33-parts.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Deploy Fishing Day v34 adaptive forecast"
+          git push
