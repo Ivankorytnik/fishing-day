@@ -1,0 +1,130 @@
+-  pressure72=pressure72hInfo(index,hours);
+-  if(pressure72){
+-    score+=pressure72.scoreAdj||0;
+-    if(pressure72.label==="Стабильно 3 суток")reasons.push("давление стабильно трое суток");
+-    else if(pressure72.label==="Почти стабильно")reasons.push("давление почти стабильно трое суток");
+-    else if(pressure72.label.includes("Резкий перепад"))reasons.push("резкий перепад давления за 3 суток");
+-  }
+-
+-  if(Number.isFinite(pressure)){
+-    if(pressure>=995&&pressure<=1025)score+=3;
+-    else if(pressure<985||pressure>1035)score-=5;
+-  }
+-
+-  if(Number.isFinite(wind)){
+-    if(wind>=5&&wind<=18){score+=9;reasons.push("умеренный ветер")}
+-    else if(wind>18&&wind<=26)score+=3;
+-    else if(wind<5)score+=3;
+-    else if(wind>35){score-=12;reasons.push("сильный ветер")}
+-    else score-=5;
+-  }
+-  if(Number.isFinite(gust)){
+-    if(gust>45){score-=10;reasons.push("сильные порывы")}
+-    else if(gust>35)score-=5;
+-  }
+-
+-  if(Number.isFinite(cloud)){
+-    if(cloud>=30&&cloud<=85){score+=6;reasons.push("подходящая облачность")}
+-    else if(cloud>85)score+=3;
+-  }
+-
+-  if(Number.isFinite(precip)){
+-    if(precip>4){score-=12;reasons.push("сильные осадки")}
+-    else if(precip>1){score-=4}
+-    else if(precip>0&&precip<=1){score+=4;reasons.push("лёгкие осадки")}
+-    else score+=1;
+-  }
+-  if(Number.isFinite(precipProb)){
+-    if(precipProb>=20&&precipProb<=60&&precip<=1)score+=3;
+-    if(precipProb>85&&precip>1)score-=4;
+-  }
+-
+-  if(Number.isFinite(humidity)&&humidity>=45&&humidity<=90)score+=2;
++  if(tScore>=10){strongSignals++;reasons.push("температурный фон оптимальный")}
++  else if(tScore<=-18){hardCap=Math.min(hardCap,30);reasons.push("температурный фон сильно вне оптимума")}
++  else if(tScore<0)reasons.push("температурный фон вне оптимума");
+ 
+   const hourMinutes=timeMinutes(hour.time);
+   const sunriseMinutes=timeMinutes(sunrise);
+@@ -1200,12 +1202,12 @@
+   const nearSunset=minuteDistance(hourMinutes,sunsetMinutes);
+   const dawnDistance=Math.min(nearSunrise,nearSunset);
+ 
++  let timeBonus=0;
+   if(dawnDistance<=60){
+-    const bonus=Math.round(16*profile.dawn);
+-    score+=bonus;
+-    reasons.push("восход/закат");
++    timeBonus=Math.round(8*profile.dawn);
++    if(timeBonus>=6){strongSignals++;reasons.push("кормовое окно около рассвета/заката")}
+   }else if(dawnDistance<=120){
+-    score+=Math.round(8*profile.dawn);
++    timeBonus=Math.round(4*profile.dawn);
+   }
+ 
+   const isNight=hour.isDay===0 || (
+@@ -1213,22 +1215,109 @@
+     (hourMinutes<sunriseMinutes||hourMinutes>sunsetMinutes)
+   );
+   if(isNight){
+-    score+=Math.round(10*profile.night);
+-    if(profile.night>0.5)reasons.push("вид активен ночью");
+-  }
++    timeBonus+=Math.round(6*profile.night);
++    if(profile.night>.6)reasons.push("вид активен ночью");
++  }
++  score+=timeBonus;
++
++  if(Number.isFinite(wind)){
++    if(wind>=profile.windMin&&wind<=profile.windMax){
++      score+=4;strongSignals++;reasons.push("ветер в рабочем диапазоне");
++    }else if(wind>profile.windMax&&wind<=28){
++      score-=2;
++    }else if(wind>28&&wind<=38){
++      score-=7;reasons.push("сильный ветер");
++    }else if(wind>38){
++      score-=14;hardCap=Math.min(hardCap,42);reasons.push("очень сильный ветер");
++    }
++  }
++  if(Number.isFinite(gust)){
++    if(gust>50){score-=10;hardCap=Math.min(hardCap,35);reasons.push("очень сильные порывы")}
++    else if(gust>38){score-=5;reasons.push("сильные порывы")}
++  }
++
++  if(Number.isFinite(cloud)){
++    if(cloud>=35&&cloud<=85)score+=2;
++    if((fishName==="Судак"||fishName==="Лещ"||fishName==="Подлещик")&&cloud>=65)score+=2;
++    if((fishName==="Щука"||fishName==="Окунь")&&cloud<15&&dawnDistance>120)score-=2;
++  }
++
++  if(Number.isFinite(precip)){
++    if(precip>5){score-=11;hardCap=Math.min(hardCap,40);reasons.push("сильные осадки")}
++    else if(precip>2){score-=5}
++    else if(precip>0&&precip<=1)score+=1;
++  }
++
++  let pressureDeltaMm=null;
++  let pressureTrend={key:"unknown",label:"Нет данных",arrow:"",level:"unknown",className:"bite-pressure-stable"};
++  let pressureDirectionDuration=0;
++  let pressureDay=null;
++  let pressure72=null;
++  let pressureAdj=0;
++
++  if(index>=12&&Number.isFinite(Number(hours[index-12]?.pressure))&&Number.isFinite(pressure)){
++    pressureDeltaMm=(pressure-Number(hours[index-12].pressure))*0.750062;
++    pressureTrend=pressureTrendInfo(pressureDeltaMm);
++    pressureDirectionDuration=pressureDirectionHours(index,hours);
++
++    if(pressureTrend.label==="Стабильное")pressureAdj+=2;
++    else if(pressureTrend.label==="Медленно падает"||pressureTrend.label==="Медленно растёт")pressureAdj+=1;
++    else if(pressureTrend.label==="Падает"||pressureTrend.label==="Растёт")pressureAdj-=2;
++    else if(pressureTrend.label==="Резко падает"||pressureTrend.label==="Резко растёт"){
++      pressureAdj-=5;reasons.push("резкий 12-часовой перепад давления");
++    }
++  }
++
++  pressureDay=pressure24hInfo(index,hours,pressureTrend);
++  if(pressureDay?.label?.startsWith("Очень хорошо"))pressureAdj+=1;
++  else if(pressureDay?.label?.startsWith("Нестабильно"))pressureAdj-=1;
++
++  pressure72=pressure72hInfo(index,hours);
