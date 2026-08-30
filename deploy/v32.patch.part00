@@ -1,0 +1,120 @@
+--- a/index.html
++++ b/index.html
+@@ -89,6 +89,45 @@
+     .condition-cold{background:#edf3f6;border-color:#d6e2e8;color:#365a6b}
+     .condition-warm{background:#fff0d8;border-color:#f0d3a7;color:#855814}
+ 
++    .hero{padding:17px 20px;border-radius:18px;margin-bottom:12px}
++    .hero h1{font-size:25px;margin:5px 0 3px}.hero p{font-size:13px;max-width:760px}.hero small{font-size:10px}
++    .workspace-nav{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
++    .workspace-nav a{display:inline-flex;align-items:center;min-height:38px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--accent2);text-decoration:none;font-size:12px;font-weight:700}
++    .workspace-nav a.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
++    .workflow-step{display:inline-flex;align-items:center;justify-content:center;width:25px;height:25px;margin-right:7px;border-radius:8px;background:var(--accent);color:#fff;font-size:12px;font-weight:700;vertical-align:middle}
++    #biteForecastCard{border-color:rgba(20,107,95,.22);box-shadow:0 10px 28px rgba(20,107,95,.08)}
++    #biteForecastCard .section-title{align-items:flex-start}
++    .forecast-kicker{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);font-weight:700;margin-bottom:5px}
++    .forecast-heading h2{font-size:22px;margin:0}.forecast-heading p{margin:5px 0 0;color:var(--muted);font-size:12px}
++    .bite-toolbar{grid-template-columns:minmax(220px,1.2fr) minmax(170px,.8fr) auto;gap:10px;padding:12px;background:#f3f7f3;border:1px solid var(--line);border-radius:14px}
++    .bite-toolbar label{font-weight:700;color:var(--text)}
++    .bite-toolbar select{border-color:#8fb7ae;font-weight:700;background:#fff}
++    .fish-context{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:12px 0 0;padding:10px 12px;border-left:3px solid var(--accent);background:#f7faf7;border-radius:0 10px 10px 0}
++    .fish-context strong{font-size:14px}.fish-context span{font-size:12px;color:var(--muted)}
++    .bite-summary{grid-template-columns:repeat(4,1fr)}
++    .bite-summary .mini{min-width:0}.bite-summary .mini b{font-size:18px;white-space:normal}.bite-summary .mini span{display:block;margin-top:3px}
++    .best-hours-wrap{margin:4px 0 14px}.best-hours-label{font-size:12px;color:var(--muted);margin-bottom:7px}.best-hours{display:flex;gap:7px;flex-wrap:wrap}
++    .best-hour-chip{display:inline-flex;gap:7px;align-items:center;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;font-size:12px}
++    .best-hour-chip b{color:var(--accent2)}
++    .forecast-details{border:1px solid var(--line);border-radius:14px;background:#fff;overflow:hidden}
++    .forecast-details>summary{cursor:pointer;padding:11px 13px;font-weight:700;background:#f7f8f4;list-style:none}
++    .forecast-details>summary::-webkit-details-marker{display:none}.forecast-details>summary:after{content:'Показать / скрыть';float:right;color:var(--muted);font-size:11px;font-weight:400}
++    .forecast-details .table-wrap{border:0;border-radius:0;margin:0}
++    .forecast-help{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
++    .forecast-help div{background:#f7f8f4;border-radius:10px;padding:9px 10px;font-size:11px;color:var(--muted);line-height:1.4}
++    .entry-card .section-title{margin-bottom:10px}
++    @media(max-width:760px){
++      .workspace-nav a{flex:1 1 calc(50% - 8px);justify-content:center}
++      .forecast-heading h2{font-size:19px}
++      .fish-context{align-items:flex-start;flex-direction:column}
++      .forecast-help{grid-template-columns:1fr}
++    }
++    @media(max-width:480px){
++      .workspace-nav a{flex:1 1 100%}.hero p{padding-right:70px}
++      .bite-toolbar{padding:10px}.bite-summary{grid-template-columns:1fr 1fr}
++      .best-hour-chip{flex:1 1 calc(50% - 7px);justify-content:space-between}
++    }
++
+ 
+     .footer-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+     @media(max-width:760px){.bite-toolbar{grid-template-columns:1fr 1fr}.bite-toolbar .btn{grid-column:1/-1}.bite-summary{grid-template-columns:1fr 1fr}.weather-grid{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr 1fr}.city-field,.fish-field,.tackle-field,.bait-field{grid-column:1/-1}.qty-field,.time-field,.method-field,.place-field,.custom-place-field{grid-column:span 1}.add-field{grid-column:1/-1}.add-field .btn{width:100%}.summary,.annual-stats{grid-template-columns:1fr 1fr}.sync-box,.comment-box{grid-template-columns:1fr}.sync-box .btn,.comment-box .btn{width:100%}}
+@@ -98,72 +137,75 @@
+ <body>
+ <main class="wrap">
+   <section class="hero">
+-    <div class="version-badge">Версия 31</div>
+-    <small>Дневник рыболова</small>
++    <div class="version-badge">Версия 32</div>
++    <small>Рабочий дневник рыбалки</small>
+     <h1>Рыболовный день</h1>
+-    <p>Учёт каждого дня года, улова, города, комментариев и погоды по выбранному городу.</p>
++    <p>Прогноз по конкретному виду рыбы, условия перед ловлей, фактический улов и статистика в одном месте.</p>
+   </section>
+ 
++  <nav class="workspace-nav" aria-label="Быстрые действия">
++    <a class="primary" href="#biteForecastCard">Прогноз по рыбе</a>
++    <a href="#catchEntryCard">Записать улов</a>
++    <a href="#dayResultCard">Результат дня</a>
++    <a href="#journalCard">Журнал 7 дней</a>
++  </nav>
++
+   <section class="card" id="dayEditor">
+-    <div class="section-title"><h2>Редактирование дня</h2><button class="btn secondary" id="todayBtn" type="button">Перейти к сегодня</button></div>
++    <div class="section-title"><h2><span class="workflow-step">1</span>Выберите день</h2><button class="btn secondary" id="todayBtn" type="button">Сегодня</button></div>
+     <div class="edit-toolbar">
+       <div class="field"><label for="editDate">Выберите дату</label><input id="editDate" type="date"></div>
+     </div>
+     <div class="editing-banner" id="editingBanner">Сейчас редактируется сегодняшний день.</div>
+-    <div class="status">Изменения за сегодня и предыдущие 7 дней синхронизируются с Google Таблицей. Более старые даты можно просматривать в журнале, но Google-история по ним не перезаписывается.</div>
+-  </section>
+-
+-  <section class="card">
+-    <div class="section-title"><h2>Условия выбранного дня</h2><button class="btn secondary" id="refreshWeather">Обновить погоду</button></div>
+-    <div class="grid weather-grid">
+-      <div class="stat"><div class="stat-label">Дата</div><div class="stat-value" id="dateValue">—</div><div class="stat-sub" id="locationValue"></div></div>
+-      <div class="stat"><div class="stat-label">Температура</div><div class="stat-value" id="tempValue">—</div><div class="stat-sub" id="feelsValue"></div></div>
+-      <div class="stat"><div class="stat-label">Погода</div><div class="stat-value" id="weatherValue">—</div><div class="stat-sub" id="cloudValue"></div></div>
+-      <div class="stat"><div class="stat-label">Ветер</div><div class="stat-value" id="windValue">—</div><div class="stat-sub" id="windSpeedValue"></div></div>
+-      <div class="stat"><div class="stat-label">Порывы</div><div class="stat-value" id="gustValue">—</div></div>
+-      <div class="stat"><div class="stat-label">Влажность</div><div class="stat-value" id="humidityValue">—</div></div>
+-      <div class="stat"><div class="stat-label">Давление</div><div class="stat-value" id="pressureValue">—</div><div class="stat-sub" id="pressureMmValue"></div></div>
+-      <div class="stat pressure-stability-stat">
+-        <div class="stat-label">Стабильность давления</div>
+-        <div class="stat-value" id="pressureStabilityValue">Загрузка…</div>
+-        <div class="stat-sub" id="pressureStabilitySub">Тренд за 12 ч и стабильность за 24 ч</div>
+-      </div>
+-    </div>
+-    <div class="status" id="weatherStatus"></div>
++    <div class="status">Выбранная дата управляет погодой, записью улова и журналом. Корректировка Google Таблицы доступна для сегодня и предыдущих 7 дней.</div>
+   </section>
+ 
+   <section class="card" id="biteForecastCard">
+     <div class="section-title">
+-      <h2>Вероятность клёва по часам</h2>
+-      <button class="btn secondary" id="refreshBiteForecast" type="button">Обновить прогноз</button>
++      <div class="forecast-heading">
++        <div class="forecast-kicker"><span class="workflow-step">2</span>Прогноз по конкретному виду рыбы</div>
++        <h2 id="biteForecastTitle">Прогноз клёва: Карась</h2>
++        <p>Выберите рыбу. Индекс и лучшие часы пересчитаются именно для неё.</p>
++      </div>
++      <button class="btn secondary" id="refreshBiteForecast" type="button">Обновить данные</button>
+     </div>
+     <div class="bite-toolbar">
++      <div class="field">
++        <label for="biteFish">Вид рыбы для прогноза</label>
++        <select id="biteFish">
++          <option value="Карась">Карась</option>
++          <option>Лещ</option><option>Карп</option><option>Сазан</option>
++          <option>Сом</option><option>Судак</option><option>Подлещик</option><option>Густера</option>
++          <option>Ёрш</option><option>Щука</option><option>Окунь</option>
++          <option value="Общий">Все виды / общий прогноз</option>
++        </select>
++      </div>
