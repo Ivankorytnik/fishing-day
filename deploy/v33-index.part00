@@ -1,0 +1,130 @@
+--- a/index.html
++++ b/index.html
+@@ -137,7 +137,7 @@
+ <body>
+ <main class="wrap">
+   <section class="hero">
+-    <div class="version-badge">Версия 32</div>
++    <div class="version-badge">Версия 33</div>
+     <small>Рабочий дневник рыбалки</small>
+     <h1>Рыболовный день</h1>
+     <p>Прогноз по конкретному виду рыбы, условия перед ловлей, фактический улов и статистика в одном месте.</p>
+@@ -187,7 +187,7 @@
+     </div>
+     <div class="fish-context">
+       <strong id="biteFishContext">Карась</strong>
+-      <span id="biteFishProfile">Расчёт по погоде, давлению и температурному профилю выбранного вида.</span>
++      <span id="biteFishProfile">Консервативная модель v33 с сезонностью и личной калибровкой по фактическим рыбалкам.</span>
+     </div>
+ 
+     <div class="bite-summary">
+@@ -210,7 +210,7 @@
+         <thead>
+           <tr>
+             <th>Время</th>
+-            <th>Клёв</th>
++            <th>Индекс</th>
+             <th>Оценка</th>
+             <th>Погодные условия</th>
+             <th>Температура</th>
+@@ -239,14 +239,12 @@
+     </div>
+     <div class="bite-note">
+       Индекс 0–100% — персональная эвристическая оценка условий для выбранного вида рыбы, а не гарантия улова.
+-      Основной тренд давления считается ровно за 12 часов и переводится в мм рт. ст.
+-      Используются 7 категорий: резко падает ↓↓↓, падает ↓↓, медленно падает ↓, стабильное →,
+-      медленно растёт ↑, растёт ↑↑, резко растёт ↑↑↑. Дополнительно оценивается стабильность
+-      за 24 часа и общий фон за 72 часа. Для 3 суток используются категории: стабильно,
+-      почти стабильно, медленно падает/растёт, заметно падает/растёт и резкий перепад.
+-      Отдельно показывается, сколько часов давление подряд сохраняет направление.
+-      В расчёте также учитываются температура, ветер, порывы, осадки, снег, облачность, влажность,
+-      восход/закат и особенности выбранного вида рыбы.
++      Главные факторы модели v33: сезон выбранного вида, температурный фон за 48 часов и время суток. Давление оставлено как слабый дополнительный фактор.
++      Давление 12/24/72 часа продолжает отображаться, но больше не способно само сделать прогноз высоким.
++      Сильный индекс появляется только при совпадении нескольких факторов. Реальные рыбалки из дневника
++      используются для мягкой персональной калибровки: серия пустых выездов снижает прогноз, подтверждённые
++      уловы могут немного его повысить. Ветер, порывы, осадки, облачность, гроза и время суток учитываются
++      как вторичные факторы.
+       В колонке «Погодные условия» используются 26 категорий: от солнечной погоды и тумана
+       до грозы, метели, шторма, жары, мороза и гололёда.
+     </div>
+@@ -729,30 +727,33 @@
+ }
+ 
+ const BITE_FISH_PROFILES={
+-  "Общий":{min:5,optMin:10,optMax:24,max:30,dawn:1,night:0},
+-  "Карась":{min:10,optMin:16,optMax:25,max:30,dawn:1.15,night:-0.15},
+-  "Лещ":{min:6,optMin:12,optMax:22,max:27,dawn:1.15,night:0.15},
+-  "Карп":{min:10,optMin:18,optMax:27,max:31,dawn:1.1,night:0.05},
+-  "Сазан":{min:10,optMin:18,optMax:28,max:32,dawn:1.05,night:0.05},
+-  "Сом":{min:12,optMin:19,optMax:28,max:32,dawn:0.8,night:1.25},
+-  "Судак":{min:3,optMin:10,optMax:20,max:25,dawn:1.3,night:0.65},
+-  "Подлещик":{min:5,optMin:11,optMax:22,max:27,dawn:1.15,night:0.1},
+-  "Густера":{min:4,optMin:10,optMax:22,max:27,dawn:1.05,night:0.05},
+-  "Ёрш":{min:0,optMin:5,optMax:17,max:22,dawn:0.9,night:0.2},
+-  "Щука":{min:0,optMin:6,optMax:18,max:24,dawn:1.2,night:-0.25},
+-  "Окунь":{min:2,optMin:8,optMax:20,max:26,dawn:1.15,night:-0.1}
++  "Общий":{base:23,min:3,optMin:9,optMax:22,max:29,dawn:1,night:0,windMin:3,windMax:18,season:[-9,-8,-4,2,7,8,8,7,6,2,-4,-8]},
++  "Карась":{base:20,min:9,optMin:16,optMax:25,max:30,dawn:1.15,night:-0.15,windMin:2,windMax:14,season:[-16,-16,-12,-3,7,10,10,8,4,-5,-12,-16]},
++  "Лещ":{base:22,min:5,optMin:11,optMax:21,max:27,dawn:1.15,night:0.15,windMin:3,windMax:16,season:[-10,-9,-5,3,8,9,8,7,7,3,-3,-8]},
++  "Карп":{base:18,min:10,optMin:18,optMax:26,max:31,dawn:1.1,night:0.05,windMin:2,windMax:14,season:[-18,-18,-14,-5,6,10,10,8,4,-7,-14,-18]},
++  "Сазан":{base:17,min:10,optMin:18,optMax:27,max:32,dawn:1.05,night:0.05,windMin:3,windMax:16,season:[-18,-18,-14,-5,6,10,10,9,5,-6,-14,-18]},
++  "Сом":{base:16,min:12,optMin:19,optMax:28,max:32,dawn:0.65,night:1.35,windMin:1,windMax:13,season:[-20,-20,-18,-9,3,9,10,9,4,-8,-17,-20]},
++  "Судак":{base:21,min:3,optMin:9,optMax:19,max:25,dawn:1.3,night:0.75,windMin:4,windMax:19,season:[-4,-3,0,4,5,3,1,2,6,8,5,0]},
++  "Подлещик":{base:23,min:5,optMin:10,optMax:21,max:27,dawn:1.15,night:0.1,windMin:3,windMax:16,season:[-9,-8,-4,4,8,9,8,7,7,3,-2,-7]},
++  "Густера":{base:23,min:4,optMin:9,optMax:21,max:27,dawn:1.05,night:0.05,windMin:3,windMax:17,season:[-8,-7,-3,4,8,8,7,7,6,3,-2,-6]},
++  "Ёрш":{base:24,min:-1,optMin:4,optMax:16,max:22,dawn:0.9,night:0.25,windMin:2,windMax:16,season:[3,3,3,2,0,-2,-4,-3,0,3,4,4]},
++  "Щука":{base:21,min:0,optMin:6,optMax:17,max:23,dawn:1.2,night:-0.25,windMin:5,windMax:23,season:[5,4,5,7,5,-2,-7,-5,3,8,8,6]},
++  "Окунь":{base:23,min:1,optMin:7,optMax:19,max:25,dawn:1.15,night:-0.1,windMin:3,windMax:19,season:[2,2,4,6,6,5,4,4,6,7,5,3]}
+ };
+ 
+-function renderFishForecastContext(fishName){
++function renderFishForecastContext(fishName,calibration=null){
+   const profile=BITE_FISH_PROFILES[fishName]||BITE_FISH_PROFILES["Общий"];
+   const title=fishName==="Общий"?"Все виды / общий прогноз":fishName;
+   if($("biteForecastTitle"))$("biteForecastTitle").textContent=`Прогноз клёва: ${title}`;
+   if($("biteFishContext"))$("biteFishContext").textContent=title;
+   if($("biteFishValue"))$("biteFishValue").textContent=title;
+   if($("biteFishProfile")){
++    const personal=calibration&&calibration.days>=3
++      ?` Личная статистика: ${calibration.success}/${calibration.days} результативных рыбалок, коррекция ${calibration.adjustment>0?"+":""}${calibration.adjustment}.`
++      :" Личных данных пока мало, используется нейтральная калибровка.";
+     $("biteFishProfile").textContent=fishName==="Общий"
+-      ?"Обобщённая модель без привязки к одному виду рыбы."
+-      :`Температурный профиль модели: лучший диапазон ${profile.optMin}–${profile.optMax} °C. Учитываются давление 12/24/72 ч, ветер, осадки, облачность и время суток.`;
++      ?`Консервативная модель v33: сезон, температурный фон, время суток и погода. Давление имеет небольшой вес.${personal}`
++      :`Модель v33: лучший температурный фон ${profile.optMin}–${profile.optMax} °C, сезонность ${title}, время суток и ветер. Давление имеет небольшой вес.${personal}`;
+   }
+ }
+ 
+@@ -766,17 +767,87 @@
+   return Math.abs(a-b);
+ }
+ function biteScoreClass(score){
+-  return score>=70?"bite-high":score>=45?"bite-mid":"bite-low";
++  return score>=65?"bite-high":score>=35?"bite-mid":"bite-low";
+ }
+ function biteScoreLabel(score){
+-  return score>=80?"Очень высокий":score>=70?"Высокий":score>=55?"Хороший":score>=45?"Средний":score>=30?"Слабый":"Низкий";
++  return score>=80?"Исключительный":score>=65?"Высокий":score>=50?"Выше среднего":score>=35?"Средний":score>=20?"Слабый":"Низкий";
+ }
+ function tempScoreForFish(temp,profile){
+   if(!Number.isFinite(temp))return 0;
+   if(temp>=profile.optMin&&temp<=profile.optMax)return 10;
+-  if(temp>=profile.min&&temp<=profile.max)return 4;
+-  if(temp<profile.min-5||temp>profile.max+5)return -12;
+-  return -5;
++  if(temp>=profile.min&&temp<=profile.max)return 2;
++  if(temp<profile.min-5||temp>profile.max+5)return -18;
++  return -8;
++}
++function forecastMonth(value){
++  const m=String(value||"").match(/^\d{4}-(\d{2})-/);
++  return m?clamp(Number(m[1]),1,12):new Date().getMonth()+1;
++}
++function seasonScoreForFish(value,profile){
++  const month=forecastMonth(value);
++  const score=Number(profile?.season?.[month-1]);
++  return Number.isFinite(score)?score:0;
++}
++function rollingTemperatureBackground(index,hours){
