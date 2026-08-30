@@ -1,0 +1,120 @@
+ 
+-  <section class="card">
++  <section class="card" id="dayResultCard">
+     <div class="section-title"><h2>Результат дня <span id="resultDateLabel"></span></h2></div>
+     <div class="summary">
+       <div class="mini"><b id="dayFishing">Нет</b><span>рыбалка</span></div>
+@@ -280,7 +348,7 @@
+     </div>
+   </section>
+ 
+-  <section class="card">
++  <section class="card" id="journalCard">
+     <div class="section-title"><h2>Журнал <span id="journalYearLabel">2026</span>: последние 7 дней</h2></div>
+     <div class="annual-toolbar">
+       <div class="field"><label for="yearSelect">Год</label><select id="yearSelect"></select></div>
+@@ -289,7 +357,7 @@
+       <button class="btn" id="fillYearWeather" type="button">Заполнить погоду за год</button>
+     </div>
+     <div class="status" id="yearWeatherStatus">Погода может быть заполнена для всех прошедших дней года, даже если рыбалки не было.</div>
+-    <div class="status">Для текущего года в таблице показываются даты от сегодня минус 7 дней до сегодняшнего дня. Строка с сегодняшней датой подсвечена.</div>
++    <div class="status">Для текущего года показываются 7 дней: сегодня и 6 предыдущих календарных дней. Строка с сегодняшней датой подсвечена.</div>
+     <div class="annual-stats">
+       <div class="mini"><b id="yearFishingDays">0</b><span>дней с рыбалкой</span></div>
+       <div class="mini"><b id="yearCatchTotal">0</b><span>рыб поймано</span></div>
+@@ -304,7 +372,7 @@
+     </div>
+   </section>
+ 
+-  <section class="card">
++  <section class="card" id="syncCard">
+     <div class="section-title"><h2>Google Таблица</h2></div>
+     <div class="sync-box">
+       <div>
+@@ -325,6 +393,7 @@
+ const GOOGLE_SHEET_URL="https://docs.google.com/spreadsheets/d/1H7H2AUwtfeqYaaWE0LCZq4QFm7o5Rp7M8eYg70uJLkM/edit";
+ const CITY_CACHE_KEY="fishing-day-city-cache-v1";
+ const WEATHER_BACKFILL_KEY="fishing-day-weather-backfill-v13-date";
++const FORECAST_FISH_KEY="fishing-day-forecast-fish-v1";
+ const DEFAULT_CITY_NAME="Конаково";
+ const POPULAR_RU_CITIES=[
+   "Конаково","Москва","Санкт-Петербург","Тверь","Дубна","Кимры","Ржев","Торжок",
+@@ -673,6 +742,19 @@
+   "Щука":{min:0,optMin:6,optMax:18,max:24,dawn:1.2,night:-0.25},
+   "Окунь":{min:2,optMin:8,optMax:20,max:26,dawn:1.15,night:-0.1}
+ };
++
++function renderFishForecastContext(fishName){
++  const profile=BITE_FISH_PROFILES[fishName]||BITE_FISH_PROFILES["Общий"];
++  const title=fishName==="Общий"?"Все виды / общий прогноз":fishName;
++  if($("biteForecastTitle"))$("biteForecastTitle").textContent=`Прогноз клёва: ${title}`;
++  if($("biteFishContext"))$("biteFishContext").textContent=title;
++  if($("biteFishValue"))$("biteFishValue").textContent=title;
++  if($("biteFishProfile")){
++    $("biteFishProfile").textContent=fishName==="Общий"
++      ?"Обобщённая модель без привязки к одному виду рыбы."
++      :`Температурный профиль модели: лучший диапазон ${profile.optMin}–${profile.optMax} °C. Учитываются давление 12/24/72 ч, ветер, осадки, облачность и время суток.`;
++  }
++}
+ 
+ function clamp(n,min,max){return Math.max(min,Math.min(max,n))}
+ function timeMinutes(value){
+@@ -1264,7 +1346,8 @@
+ 
+ function renderBiteForecast(){
+   if(!biteHourlyData)return;
+-  const fishName=$("biteFish").value||"Общий";
++  const fishName=$("biteFish").value||"Карась";
++  renderFishForecastContext(fishName);
+   const sourceHours=biteHourlyData.calculationHours;
+   const rows=biteHourlyData.hours.map((hour,i)=>{
+     const calcIndex=i+biteHourlyData.offset;
+@@ -1284,13 +1367,19 @@
+   }
+   const avg=Math.round(rows.reduce((s,r)=>s+r.score,0)/rows.length);
+ 
+-  $("biteCityValue").textContent=[
++  const cityText=[
+     biteForecastLocation?.city||DEFAULT_CITY_NAME,
+     biteForecastLocation?.region||""
+   ].filter(Boolean).join(", ");
++  $("biteCityValue").textContent=cityText;
+   $("biteBestHour").textContent=`${best.time.slice(11,16)} · ${best.score}%`;
+   $("biteBestWindow").textContent=`${bestWindow.start.time.slice(11,16)}–${bestWindow.end.time.slice(11,16)} · ${bestWindow.score}%`;
+   $("biteDayScore").textContent=`${avg}%`;
++  if($("biteDayScoreLabel"))$("biteDayScoreLabel").textContent=`${biteScoreLabel(avg).toLowerCase()} индекс дня`;
++  const topHours=[...rows].sort((a,b)=>b.score-a.score).slice(0,5).sort((a,b)=>a.time.localeCompare(b.time));
++  if($("biteBestHours")){
++    $("biteBestHours").innerHTML=topHours.map(r=>`<span class="best-hour-chip"><b>${r.time.slice(11,16)}</b><span>${r.score}% · ${biteScoreLabel(r.score)}</span></span>`).join("");
++  }
+ 
+   const currentHour=new Date().getHours();
+   $("biteTableBody").innerHTML=rows.map(r=>{
+@@ -1878,7 +1967,7 @@
+     const best=rows.reduce((a,r)=>r.total>a.total?r:a,{date:"",total:0});
+     return {year,rows,summary:{fishingDays,total,species:species.size,bestDay:best.date,bestTotal:best.total},catches};
+   });
+-  return {app:"Fishing Day MVP",version:31,clientToday:todayKey,selectedDate:selectedDateKey,syncedAt:new Date().toISOString(),years:yearData};
++  return {app:"Fishing Day MVP",version:32,clientToday:todayKey,selectedDate:selectedDateKey,syncedAt:new Date().toISOString(),years:yearData};
+ }
+ async function syncGoogleSheets(){
+   const endpoint=$("sheetEndpoint").value.trim(),status=$("syncStatus");
+@@ -2078,7 +2167,11 @@
+ $("syncSheets").onclick=syncGoogleSheets;
+ $("refreshBiteForecast").onclick=()=>fetchBiteForecast();
+ $("biteDate").onchange=()=>fetchBiteForecast();
+-$("biteFish").onchange=()=>{if(biteHourlyData)renderBiteForecast();else fetchBiteForecast();};
++$("biteFish").onchange=()=>{
++  localStorage.setItem(FORECAST_FISH_KEY,$("biteFish").value);
++  renderFishForecastContext($("biteFish").value);
++  if(biteHourlyData)renderBiteForecast();else fetchBiteForecast();
++};
+ $("biteUseSelectedDay").onclick=()=>{$("biteDate").value=selectedDateKey;fetchBiteForecast();};
+ $("fishingPlace").onchange=updateCustomPlaceVisibility;
+ $("cityInput").oninput=()=>{
+@@ -2111,6 +2204,10 @@
+ renderCityOptions(POPULAR_RU_CITIES);
+ updateCustomPlaceVisibility();
+ updateBaitSummary();
++const savedForecastFish=localStorage.getItem(FORECAST_FISH_KEY);
++if(savedForecastFish&&BITE_FISH_PROFILES[savedForecastFish])$("biteFish").value=savedForecastFish;
