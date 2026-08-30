@@ -137,7 +137,7 @@
 <body>
 <main class="wrap">
   <section class="hero">
-    <div class="version-badge">Версия 32</div>
+    <div class="version-badge">Версия 33</div>
     <small>Рабочий дневник рыбалки</small>
     <h1>Рыболовный день</h1>
     <p>Прогноз по конкретному виду рыбы, условия перед ловлей, фактический улов и статистика в одном месте.</p>
@@ -187,7 +187,7 @@
     </div>
     <div class="fish-context">
       <strong id="biteFishContext">Карась</strong>
-      <span id="biteFishProfile">Расчёт по погоде, давлению и температурному профилю выбранного вида.</span>
+      <span id="biteFishProfile">Консервативная модель v33 с сезонностью и личной калибровкой по фактическим рыбалкам.</span>
     </div>
 
     <div class="bite-summary">
@@ -210,7 +210,7 @@
         <thead>
           <tr>
             <th>Время</th>
-            <th>Клёв</th>
+            <th>Индекс</th>
             <th>Оценка</th>
             <th>Погодные условия</th>
             <th>Температура</th>
@@ -239,14 +239,12 @@
     </div>
     <div class="bite-note">
       Индекс 0–100% — персональная эвристическая оценка условий для выбранного вида рыбы, а не гарантия улова.
-      Основной тренд давления считается ровно за 12 часов и переводится в мм рт. ст.
-      Используются 7 категорий: резко падает ↓↓↓, падает ↓↓, медленно падает ↓, стабильное →,
-      медленно растёт ↑, растёт ↑↑, резко растёт ↑↑↑. Дополнительно оценивается стабильность
-      за 24 часа и общий фон за 72 часа. Для 3 суток используются категории: стабильно,
-      почти стабильно, медленно падает/растёт, заметно падает/растёт и резкий перепад.
-      Отдельно показывается, сколько часов давление подряд сохраняет направление.
-      В расчёте также учитываются температура, ветер, порывы, осадки, снег, облачность, влажность,
-      восход/закат и особенности выбранного вида рыбы.
+      Главные факторы модели v33: сезон выбранного вида, температурный фон за 48 часов и время суток. Давление оставлено как слабый дополнительный фактор.
+      Давление 12/24/72 часа продолжает отображаться, но больше не способно само сделать прогноз высоким.
+      Сильный индекс появляется только при совпадении нескольких факторов. Реальные рыбалки из дневника
+      используются для мягкой персональной калибровки: серия пустых выездов снижает прогноз, подтверждённые
+      уловы могут немного его повысить. Ветер, порывы, осадки, облачность, гроза и время суток учитываются
+      как вторичные факторы.
       В колонке «Погодные условия» используются 26 категорий: от солнечной погоды и тумана
       до грозы, метели, шторма, жары, мороза и гололёда.
     </div>
@@ -729,30 +727,33 @@ async function autoBackfillCurrentYear(){
 }
 
 const BITE_FISH_PROFILES={
-  "Общий":{min:5,optMin:10,optMax:24,max:30,dawn:1,night:0},
-  "Карась":{min:10,optMin:16,optMax:25,max:30,dawn:1.15,night:-0.15},
-  "Лещ":{min:6,optMin:12,optMax:22,max:27,dawn:1.15,night:0.15},
-  "Карп":{min:10,optMin:18,optMax:27,max:31,dawn:1.1,night:0.05},
-  "Сазан":{min:10,optMin:18,optMax:28,max:32,dawn:1.05,night:0.05},
-  "Сом":{min:12,optMin:19,optMax:28,max:32,dawn:0.8,night:1.25},
-  "Судак":{min:3,optMin:10,optMax:20,max:25,dawn:1.3,night:0.65},
-  "Подлещик":{min:5,optMin:11,optMax:22,max:27,dawn:1.15,night:0.1},
-  "Густера":{min:4,optMin:10,optMax:22,max:27,dawn:1.05,night:0.05},
-  "Ёрш":{min:0,optMin:5,optMax:17,max:22,dawn:0.9,night:0.2},
-  "Щука":{min:0,optMin:6,optMax:18,max:24,dawn:1.2,night:-0.25},
-  "Окунь":{min:2,optMin:8,optMax:20,max:26,dawn:1.15,night:-0.1}
+  "Общий":{base:23,min:3,optMin:9,optMax:22,max:29,dawn:1,night:0,windMin:3,windMax:18,season:[-9,-8,-4,2,7,8,8,7,6,2,-4,-8]},
+  "Карась":{base:20,min:9,optMin:16,optMax:25,max:30,dawn:1.15,night:-0.15,windMin:2,windMax:14,season:[-16,-16,-12,-3,7,10,10,8,4,-5,-12,-16]},
+  "Лещ":{base:22,min:5,optMin:11,optMax:21,max:27,dawn:1.15,night:0.15,windMin:3,windMax:16,season:[-10,-9,-5,3,8,9,8,7,7,3,-3,-8]},
+  "Карп":{base:18,min:10,optMin:18,optMax:26,max:31,dawn:1.1,night:0.05,windMin:2,windMax:14,season:[-18,-18,-14,-5,6,10,10,8,4,-7,-14,-18]},
+  "Сазан":{base:17,min:10,optMin:18,optMax:27,max:32,dawn:1.05,night:0.05,windMin:3,windMax:16,season:[-18,-18,-14,-5,6,10,10,9,5,-6,-14,-18]},
+  "Сом":{base:16,min:12,optMin:19,optMax:28,max:32,dawn:0.65,night:1.35,windMin:1,windMax:13,season:[-20,-20,-18,-9,3,9,10,9,4,-8,-17,-20]},
+  "Судак":{base:21,min:3,optMin:9,optMax:19,max:25,dawn:1.3,night:0.75,windMin:4,windMax:19,season:[-4,-3,0,4,5,3,1,2,6,8,5,0]},
+  "Подлещик":{base:23,min:5,optMin:10,optMax:21,max:27,dawn:1.15,night:0.1,windMin:3,windMax:16,season:[-9,-8,-4,4,8,9,8,7,7,3,-2,-7]},
+  "Густера":{base:23,min:4,optMin:9,optMax:21,max:27,dawn:1.05,night:0.05,windMin:3,windMax:17,season:[-8,-7,-3,4,8,8,7,7,6,3,-2,-6]},
+  "Ёрш":{base:24,min:-1,optMin:4,optMax:16,max:22,dawn:0.9,night:0.25,windMin:2,windMax:16,season:[3,3,3,2,0,-2,-4,-3,0,3,4,4]},
+  "Щука":{base:21,min:0,optMin:6,optMax:17,max:23,dawn:1.2,night:-0.25,windMin:5,windMax:23,season:[5,4,5,7,5,-2,-7,-5,3,8,8,6]},
+  "Окунь":{base:23,min:1,optMin:7,optMax:19,max:25,dawn:1.15,night:-0.1,windMin:3,windMax:19,season:[2,2,4,6,6,5,4,4,6,7,5,3]}
 };
 
-function renderFishForecastContext(fishName){
+function renderFishForecastContext(fishName,calibration=null){
   const profile=BITE_FISH_PROFILES[fishName]||BITE_FISH_PROFILES["Общий"];
   const title=fishName==="Общий"?"Все виды / общий прогноз":fishName;
   if($("biteForecastTitle"))$("biteForecastTitle").textContent=`Прогноз клёва: ${title}`;
   if($("biteFishContext"))$("biteFishContext").textContent=title;
   if($("biteFishValue"))$("biteFishValue").textContent=title;
   if($("biteFishProfile")){
+    const personal=calibration&&calibration.days>=3
+      ?` Личная статистика: ${calibration.success}/${calibration.days} результативных рыбалок, коррекция ${calibration.adjustment>0?"+":""}${calibration.adjustment}.`
+      :" Личных данных пока мало, используется нейтральная калибровка.";
     $("biteFishProfile").textContent=fishName==="Общий"
-      ?"Обобщённая модель без привязки к одному виду рыбы."
-      :`Температурный профиль модели: лучший диапазон ${profile.optMin}–${profile.optMax} °C. Учитываются давление 12/24/72 ч, ветер, осадки, облачность и время суток.`;
+      ?`Консервативная модель v33: сезон, температурный фон, время суток и погода. Давление имеет небольшой вес.${personal}`
+      :`Модель v33: лучший температурный фон ${profile.optMin}–${profile.optMax} °C, сезонность ${title}, время суток и ветер. Давление имеет небольшой вес.${personal}`;
   }
 }
 
@@ -766,17 +767,87 @@ function minuteDistance(a,b){
   return Math.abs(a-b);
 }
 function biteScoreClass(score){
-  return score>=70?"bite-high":score>=45?"bite-mid":"bite-low";
+  return score>=65?"bite-high":score>=35?"bite-mid":"bite-low";
 }
 function biteScoreLabel(score){
-  return score>=80?"Очень высокий":score>=70?"Высокий":score>=55?"Хороший":score>=45?"Средний":score>=30?"Слабый":"Низкий";
+  return score>=80?"Исключительный":score>=65?"Высокий":score>=50?"Выше среднего":score>=35?"Средний":score>=20?"Слабый":"Низкий";
 }
 function tempScoreForFish(temp,profile){
   if(!Number.isFinite(temp))return 0;
   if(temp>=profile.optMin&&temp<=profile.optMax)return 10;
-  if(temp>=profile.min&&temp<=profile.max)return 4;
-  if(temp<profile.min-5||temp>profile.max+5)return -12;
-  return -5;
+  if(temp>=profile.min&&temp<=profile.max)return 2;
+  if(temp<profile.min-5||temp>profile.max+5)return -18;
+  return -8;
+}
+function forecastMonth(value){
+  const m=String(value||"").match(/^\d{4}-(\d{2})-/);
+  return m?clamp(Number(m[1]),1,12):new Date().getMonth()+1;
+}
+function seasonScoreForFish(value,profile){
+  const month=forecastMonth(value);
+  const score=Number(profile?.season?.[month-1]);
+  return Number.isFinite(score)?score:0;
+}
+function rollingTemperatureBackground(index,hours){
+  const current=Number(hours[index]?.temperature);
+  const from=Math.max(0,index-48);
+  const recent=[],older=[];
+  for(let i=from;i<=index;i++){
+    const v=Number(hours[i]?.temperature);
+    if(!Number.isFinite(v))continue;
+    if(i>=index-23)recent.push(v); else older.push(v);
+  }
+  const avg=a=>a.length?a.reduce((s,v)=>s+v,0)/a.length:null;
+  const r=avg(recent),o=avg(older);
+  if(Number.isFinite(r)&&Number.isFinite(o))return r*.68+o*.32;
+  if(Number.isFinite(r))return r;
+  return Number.isFinite(current)?current:null;
+}
+function personalCatchCalibration(fishName,city,beforeDate){
+  const all=Object.entries(state?.days||{})
+    .filter(([key,d])=>key<beforeDate&&d&&d.fishing)
+    .sort((a,b)=>b[0].localeCompare(a[0]))
+    .slice(0,60);
+
+  const cityNorm=String(city||"").trim().toLocaleLowerCase("ru-RU");
+  const sameCity=all.filter(([,d])=>String(d.city||d.catches?.[0]?.city||"").trim().toLocaleLowerCase("ru-RU")===cityNorm);
+  const sample=(cityNorm&&sameCity.length>=5?sameCity:all).slice(0,40);
+
+  if(!sample.length)return {days:0,success:0,rate:null,adjustment:0,cap:88};
+
+  const anyCatch=sample.filter(([,d])=>(d.catches||[]).some(c=>Number(c.qty||0)>0)).length;
+  const selectedSuccess=sample.filter(([,d])=>{
+    const catches=d.catches||[];
+    if(fishName==="Общий")return catches.some(c=>Number(c.qty||0)>0);
+    return catches.some(c=>c.fish===fishName&&Number(c.qty||0)>0);
+  }).length;
+
+  const n=sample.length;
+  const overallRate=(anyCatch+3*.40)/(n+3);
+  const speciesPrior=fishName==="Общий"?.40:.18;
+  const speciesRate=(selectedSuccess+4*speciesPrior)/(n+4);
+
+  let adjustment=0;
+  if(n>=3){
+    adjustment+=clamp(Math.round((overallRate-.40)*18),-7,4);
+    if(fishName!=="Общий")adjustment+=clamp(Math.round((speciesRate-speciesPrior)*14),-4,4);
+  }
+  adjustment=clamp(adjustment,-10,7);
+
+  let cap=88;
+  if(n>=6&&overallRate<.22)cap=58;
+  else if(n>=6&&overallRate<.32)cap=66;
+  else if(n>=8&&overallRate<.40)cap=72;
+
+  return {
+    days:n,
+    success:fishName==="Общий"?anyCatch:selectedSuccess,
+    anyCatch,
+    rate:fishName==="Общий"?overallRate:speciesRate,
+    overallRate,
+    adjustment,
+    cap
+  };
 }
 function pressureHpaToMm(value){
   const n=Number(value);
@@ -1098,100 +1169,31 @@ function weatherConditionsHtml(hour){
     .join("");
 }
 
-function calculateBiteScore(hour,index,hours,sunrise,sunset,fishName){
+function calculateBiteScore(hour,index,hours,sunrise,sunset,fishName,calibration=null){
   const profile=BITE_FISH_PROFILES[fishName]||BITE_FISH_PROFILES["Общий"];
-  let score=45;
+  let score=profile.base;
   const reasons=[];
+  let strongSignals=0;
+  let hardCap=88;
 
   const temp=Number(hour.temperature);
+  const tempBackground=rollingTemperatureBackground(index,hours);
   const wind=Number(hour.windSpeed);
   const gust=Number(hour.windGusts);
   const cloud=Number(hour.cloudCover);
   const precip=Number(hour.precipitation);
-  const humidity=Number(hour.humidity);
   const pressure=Number(hour.pressure);
-  const precipProb=Number(hour.precipitationProbability);
 
-  const tScore=tempScoreForFish(temp,profile);
+  const seasonScore=seasonScoreForFish(hour.time,profile);
+  score+=seasonScore;
+  if(seasonScore>=7){strongSignals++;reasons.push("сезон вида благоприятный")}
+  else if(seasonScore<=-10){hardCap=Math.min(hardCap,36);reasons.push("сезон вида слабый")}
+
+  const tScore=tempScoreForFish(tempBackground,profile);
   score+=tScore;
-  if(tScore>=10)reasons.push("температура оптимальна");
-  else if(tScore<0)reasons.push("температура вне оптимума");
-
-  let pressureDeltaMm=null;
-  let pressureTrend={key:"unknown",label:"Нет данных",arrow:"",level:"unknown",className:"bite-pressure-stable"};
-  let pressureDirectionDuration=0;
-  let pressureDay=null;
-  let pressure72=null;
-
-  if(index>=12&&Number.isFinite(Number(hours[index-12]?.pressure))){
-    pressureDeltaMm=(pressure-Number(hours[index-12].pressure))*0.750062;
-    pressureTrend=pressureTrendInfo(pressureDeltaMm);
-    pressureDirectionDuration=pressureDirectionHours(index,hours);
-
-    if(pressureTrend.label==="Стабильное"){
-      score+=12;reasons.push("давление стабильно 12 часов");
-    }else if(pressureTrend.label==="Медленно падает"){
-      score+=8;reasons.push("давление медленно падает 12 часов");
-    }else if(pressureTrend.label==="Медленно растёт"){
-      score+=4;reasons.push("давление медленно растёт 12 часов");
-    }else if(pressureTrend.label==="Падает"||pressureTrend.label==="Растёт"){
-      score-=4;reasons.push(`заметный тренд давления: ${pressureTrend.label.toLowerCase()}`);
-    }else if(pressureTrend.label==="Резко падает"||pressureTrend.label==="Резко растёт"){
-      score-=12;reasons.push(`резкое изменение давления за 12 часов: ${pressureTrend.label.toLowerCase()}`);
-    }
-  }
-
-  // Суточная стабильность — дополнительный фактор, а не основной.
-  pressureDay=pressure24hInfo(index,hours,pressureTrend);
-  if(pressureDay){
-    score+=pressureDay.scoreAdj||0;
-    if(pressureDay.label.startsWith("Очень хорошо"))reasons.push("давление очень стабильно сутки");
-    else if(pressureDay.label.startsWith("Хорошо"))reasons.push("давление стабильно 12 часов");
-  }
-
-  // Общий фон за 72 часа имеет меньший вес, чем последние 12 часов.
-  pressure72=pressure72hInfo(index,hours);
-  if(pressure72){
-    score+=pressure72.scoreAdj||0;
-    if(pressure72.label==="Стабильно 3 суток")reasons.push("давление стабильно трое суток");
-    else if(pressure72.label==="Почти стабильно")reasons.push("давление почти стабильно трое суток");
-    else if(pressure72.label.includes("Резкий перепад"))reasons.push("резкий перепад давления за 3 суток");
-  }
-
-  if(Number.isFinite(pressure)){
-    if(pressure>=995&&pressure<=1025)score+=3;
-    else if(pressure<985||pressure>1035)score-=5;
-  }
-
-  if(Number.isFinite(wind)){
-    if(wind>=5&&wind<=18){score+=9;reasons.push("умеренный ветер")}
-    else if(wind>18&&wind<=26)score+=3;
-    else if(wind<5)score+=3;
-    else if(wind>35){score-=12;reasons.push("сильный ветер")}
-    else score-=5;
-  }
-  if(Number.isFinite(gust)){
-    if(gust>45){score-=10;reasons.push("сильные порывы")}
-    else if(gust>35)score-=5;
-  }
-
-  if(Number.isFinite(cloud)){
-    if(cloud>=30&&cloud<=85){score+=6;reasons.push("подходящая облачность")}
-    else if(cloud>85)score+=3;
-  }
-
-  if(Number.isFinite(precip)){
-    if(precip>4){score-=12;reasons.push("сильные осадки")}
-    else if(precip>1){score-=4}
-    else if(precip>0&&precip<=1){score+=4;reasons.push("лёгкие осадки")}
-    else score+=1;
-  }
-  if(Number.isFinite(precipProb)){
-    if(precipProb>=20&&precipProb<=60&&precip<=1)score+=3;
-    if(precipProb>85&&precip>1)score-=4;
-  }
-
-  if(Number.isFinite(humidity)&&humidity>=45&&humidity<=90)score+=2;
+  if(tScore>=10){strongSignals++;reasons.push("температурный фон оптимальный")}
+  else if(tScore<=-18){hardCap=Math.min(hardCap,30);reasons.push("температурный фон сильно вне оптимума")}
+  else if(tScore<0)reasons.push("температурный фон вне оптимума");
 
   const hourMinutes=timeMinutes(hour.time);
   const sunriseMinutes=timeMinutes(sunrise);
@@ -1200,12 +1202,12 @@ function calculateBiteScore(hour,index,hours,sunrise,sunset,fishName){
   const nearSunset=minuteDistance(hourMinutes,sunsetMinutes);
   const dawnDistance=Math.min(nearSunrise,nearSunset);
 
+  let timeBonus=0;
   if(dawnDistance<=60){
-    const bonus=Math.round(16*profile.dawn);
-    score+=bonus;
-    reasons.push("восход/закат");
+    timeBonus=Math.round(8*profile.dawn);
+    if(timeBonus>=6){strongSignals++;reasons.push("кормовое окно около рассвета/заката")}
   }else if(dawnDistance<=120){
-    score+=Math.round(8*profile.dawn);
+    timeBonus=Math.round(4*profile.dawn);
   }
 
   const isNight=hour.isDay===0 || (
@@ -1213,22 +1215,109 @@ function calculateBiteScore(hour,index,hours,sunrise,sunset,fishName){
     (hourMinutes<sunriseMinutes||hourMinutes>sunsetMinutes)
   );
   if(isNight){
-    score+=Math.round(10*profile.night);
-    if(profile.night>0.5)reasons.push("вид активен ночью");
+    timeBonus+=Math.round(6*profile.night);
+    if(profile.night>.6)reasons.push("вид активен ночью");
   }
+  score+=timeBonus;
+
+  if(Number.isFinite(wind)){
+    if(wind>=profile.windMin&&wind<=profile.windMax){
+      score+=4;strongSignals++;reasons.push("ветер в рабочем диапазоне");
+    }else if(wind>profile.windMax&&wind<=28){
+      score-=2;
+    }else if(wind>28&&wind<=38){
+      score-=7;reasons.push("сильный ветер");
+    }else if(wind>38){
+      score-=14;hardCap=Math.min(hardCap,42);reasons.push("очень сильный ветер");
+    }
+  }
+  if(Number.isFinite(gust)){
+    if(gust>50){score-=10;hardCap=Math.min(hardCap,35);reasons.push("очень сильные порывы")}
+    else if(gust>38){score-=5;reasons.push("сильные порывы")}
+  }
+
+  if(Number.isFinite(cloud)){
+    if(cloud>=35&&cloud<=85)score+=2;
+    if((fishName==="Судак"||fishName==="Лещ"||fishName==="Подлещик")&&cloud>=65)score+=2;
+    if((fishName==="Щука"||fishName==="Окунь")&&cloud<15&&dawnDistance>120)score-=2;
+  }
+
+  if(Number.isFinite(precip)){
+    if(precip>5){score-=11;hardCap=Math.min(hardCap,40);reasons.push("сильные осадки")}
+    else if(precip>2){score-=5}
+    else if(precip>0&&precip<=1)score+=1;
+  }
+
+  let pressureDeltaMm=null;
+  let pressureTrend={key:"unknown",label:"Нет данных",arrow:"",level:"unknown",className:"bite-pressure-stable"};
+  let pressureDirectionDuration=0;
+  let pressureDay=null;
+  let pressure72=null;
+  let pressureAdj=0;
+
+  if(index>=12&&Number.isFinite(Number(hours[index-12]?.pressure))&&Number.isFinite(pressure)){
+    pressureDeltaMm=(pressure-Number(hours[index-12].pressure))*0.750062;
+    pressureTrend=pressureTrendInfo(pressureDeltaMm);
+    pressureDirectionDuration=pressureDirectionHours(index,hours);
+
+    if(pressureTrend.label==="Стабильное")pressureAdj+=2;
+    else if(pressureTrend.label==="Медленно падает"||pressureTrend.label==="Медленно растёт")pressureAdj+=1;
+    else if(pressureTrend.label==="Падает"||pressureTrend.label==="Растёт")pressureAdj-=2;
+    else if(pressureTrend.label==="Резко падает"||pressureTrend.label==="Резко растёт"){
+      pressureAdj-=5;reasons.push("резкий 12-часовой перепад давления");
+    }
+  }
+
+  pressureDay=pressure24hInfo(index,hours,pressureTrend);
+  if(pressureDay?.label?.startsWith("Очень хорошо"))pressureAdj+=1;
+  else if(pressureDay?.label?.startsWith("Нестабильно"))pressureAdj-=1;
+
+  pressure72=pressure72hInfo(index,hours);
+  if(pressure72?.label==="Стабильно 3 суток")pressureAdj+=1;
+  else if(pressure72?.label?.includes("Резкий перепад"))pressureAdj-=2;
+
+  if(fishName==="Щука"||fishName==="Окунь")pressureAdj=Math.round(pressureAdj*.35);
+  score+=pressureAdj;
 
   const code=Number(hour.weatherCode);
   const conditions=hourlyWeatherConditions(hour);
-  if([95,96,99].includes(code)){score-=20;reasons.push("гроза")}
-  if([65,67,82,86].includes(code))score-=8;
-  if(conditions.includes("Град")){score-=8;reasons.push("град")}
-  if(conditions.includes("Метель")){score-=10;reasons.push("метель")}
-  if(conditions.includes("Шторм")){score-=12;reasons.push("шторм")}
-  if(conditions.includes("Ураган")){score-=25;reasons.push("ураган")}
-  if(conditions.includes("Гололёд")){score-=7;reasons.push("гололёд")}
+  if([95,96,99].includes(code)){
+    score-=18;hardCap=Math.min(hardCap,22);reasons.push("гроза");
+  }
+  if(conditions.includes("Град")){score-=10;hardCap=Math.min(hardCap,20);reasons.push("град")}
+  if(conditions.includes("Метель")){score-=12;hardCap=Math.min(hardCap,25);reasons.push("метель")}
+  if(conditions.includes("Шторм")){score-=15;hardCap=Math.min(hardCap,20);reasons.push("шторм")}
+  if(conditions.includes("Ураган")){score-=25;hardCap=Math.min(hardCap,10);reasons.push("ураган")}
 
-  score=clamp(Math.round(score),5,95);
-  return {score,pressureDeltaMm,pressureTrend,pressureDay,pressure72,pressureDirectionDuration,reasons};
+  if(strongSignals>=4){
+    score+=8;reasons.push("совпало несколько сильных факторов");
+  }else if(strongSignals===3){
+    score+=4;
+  }
+
+  if(calibration){
+    score+=calibration.adjustment||0;
+    hardCap=Math.min(hardCap,calibration.cap||88);
+    if(calibration.days>=3&&calibration.adjustment<0)reasons.push("дневник снижает завышенный прогноз");
+    if(calibration.days>=3&&calibration.adjustment>0)reasons.push("дневник подтверждает хорошие условия");
+  }
+
+  score=Math.min(score,hardCap);
+  score=clamp(Math.round(score),3,88);
+
+  return {
+    score,
+    tempBackground,
+    seasonScore,
+    pressureDeltaMm,
+    pressureTrend,
+    pressureDay,
+    pressure72,
+    pressureDirectionDuration,
+    strongSignals,
+    calibration,
+    reasons
+  };
 }
 
 async function fetchJsonWithTimeout(url,timeoutMs=15000){
@@ -1326,7 +1415,8 @@ async function fetchBiteHourlyInternet(date,location){
   for(let i=Math.max(0,targetIndexes[0]-72);i<targetIndexes[0];i++)previousIndexes.push(i);
   const previousHours=previousIndexes.map(i=>({
     time:data.hourly.time[i],
-    pressure:data.hourly.pressure_msl?.[i]
+    pressure:data.hourly.pressure_msl?.[i],
+    temperature:data.hourly.temperature_2m?.[i]
   }));
 
   const dayIndex=(data.daily?.time||[]).findIndex(d=>d===date);
@@ -1347,12 +1437,17 @@ async function fetchBiteHourlyInternet(date,location){
 function renderBiteForecast(){
   if(!biteHourlyData)return;
   const fishName=$("biteFish").value||"Карась";
-  renderFishForecastContext(fishName);
+  const calibration=personalCatchCalibration(
+    fishName,
+    biteForecastLocation?.city||DEFAULT_CITY_NAME,
+    biteHourlyData.date
+  );
+  renderFishForecastContext(fishName,calibration);
   const sourceHours=biteHourlyData.calculationHours;
   const rows=biteHourlyData.hours.map((hour,i)=>{
     const calcIndex=i+biteHourlyData.offset;
     const calc=calculateBiteScore(
-      hour,calcIndex,sourceHours,biteHourlyData.sunrise,biteHourlyData.sunset,fishName
+      hour,calcIndex,sourceHours,biteHourlyData.sunrise,biteHourlyData.sunset,fishName,calibration
     );
     return {...hour,...calc};
   });
@@ -1372,13 +1467,13 @@ function renderBiteForecast(){
     biteForecastLocation?.region||""
   ].filter(Boolean).join(", ");
   $("biteCityValue").textContent=cityText;
-  $("biteBestHour").textContent=`${best.time.slice(11,16)} · ${best.score}%`;
-  $("biteBestWindow").textContent=`${bestWindow.start.time.slice(11,16)}–${bestWindow.end.time.slice(11,16)} · ${bestWindow.score}%`;
-  $("biteDayScore").textContent=`${avg}%`;
-  if($("biteDayScoreLabel"))$("biteDayScoreLabel").textContent=`${biteScoreLabel(avg).toLowerCase()} индекс дня`;
+  $("biteBestHour").textContent=`${best.time.slice(11,16)} · ${best.score}/100`;
+  $("biteBestWindow").textContent=`${bestWindow.start.time.slice(11,16)}–${bestWindow.end.time.slice(11,16)} · ${bestWindow.score}/100`;
+  $("biteDayScore").textContent=`${avg}/100`;
+  if($("biteDayScoreLabel"))$("biteDayScoreLabel").textContent=`${biteScoreLabel(avg).toLowerCase()} · консервативный индекс`;
   const topHours=[...rows].sort((a,b)=>b.score-a.score).slice(0,5).sort((a,b)=>a.time.localeCompare(b.time));
   if($("biteBestHours")){
-    $("biteBestHours").innerHTML=topHours.map(r=>`<span class="best-hour-chip"><b>${r.time.slice(11,16)}</b><span>${r.score}% · ${biteScoreLabel(r.score)}</span></span>`).join("");
+    $("biteBestHours").innerHTML=topHours.map(r=>`<span class="best-hour-chip"><b>${r.time.slice(11,16)}</b><span>${r.score}/100 · ${biteScoreLabel(r.score)}</span></span>`).join("");
   }
 
   const currentHour=new Date().getHours();
@@ -1397,10 +1492,10 @@ function renderBiteForecast(){
     const rainProb=Number.isFinite(Number(r.precipitationProbability))
       ?`${Math.round(r.precipitationProbability)}% · `
       :"";
-    const reasons=r.reasons.length?`Причины: ${r.reasons.join(", ")}`:"";
+    const reasons=[`Температурный фон 48ч: ${Number.isFinite(Number(r.tempBackground))?Number(r.tempBackground).toFixed(1)+" °C":"нет данных"}`,r.reasons.length?`Факторы: ${r.reasons.join(", ")}`:""].filter(Boolean).join(" · ");
     return `<tr class="${isNow?"bite-row-now ":""}${isBest?"bite-row-best":""}" title="${escapeHtml(reasons)}">
       <td><b>${r.time.slice(11,16)}</b>${isNow?' <span class="yes-badge">сейчас</span>':""}</td>
-      <td><span class="bite-score ${biteScoreClass(r.score)}">${r.score}%</span></td>
+      <td><span class="bite-score ${biteScoreClass(r.score)}">${r.score}</span></td>
       <td>${biteScoreLabel(r.score)}</td>
       <td><div class="condition-list">${weatherConditionsHtml(r)}</div></td>
       <td>${Number.isFinite(Number(r.temperature))?`${Math.round(r.temperature)} °C`:"—"}</td>
@@ -1967,7 +2062,7 @@ function buildSyncPayload(){
     const best=rows.reduce((a,r)=>r.total>a.total?r:a,{date:"",total:0});
     return {year,rows,summary:{fishingDays,total,species:species.size,bestDay:best.date,bestTotal:best.total},catches};
   });
-  return {app:"Fishing Day MVP",version:32,clientToday:todayKey,selectedDate:selectedDateKey,syncedAt:new Date().toISOString(),years:yearData};
+  return {app:"Fishing Day MVP",version:33,clientToday:todayKey,selectedDate:selectedDateKey,syncedAt:new Date().toISOString(),years:yearData};
 }
 async function syncGoogleSheets(){
   const endpoint=$("sheetEndpoint").value.trim(),status=$("syncStatus");
