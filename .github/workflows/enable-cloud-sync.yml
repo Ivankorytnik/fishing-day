@@ -1,0 +1,48 @@
+name: Enable Fishing Day cloud sync
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/enable-cloud-sync.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  enable:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inject cloud sync loader
+        shell: bash
+        run: |
+          set -e
+          if grep -q 'cloud-sync.js' index.html; then
+            echo 'Cloud sync loader already present.'
+            exit 0
+          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          text = p.read_text(encoding='utf-8')
+          marker = '</body>'
+          if marker not in text:
+              raise SystemExit('Closing body tag not found')
+          text = text.replace(marker, '  <script src="cloud-sync.js?v=1"></script>\n' + marker, 1)
+          p.write_text(text, encoding='utf-8')
+          PY
+      - name: Commit loader
+        shell: bash
+        run: |
+          set -e
+          if git diff --quiet; then
+            echo 'No changes.'
+            exit 0
+          fi
+          git config user.name 'korytnik-hub-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Load shared cloud sync in Fishing Day'
+          git pull --rebase origin main
+          git push origin main
