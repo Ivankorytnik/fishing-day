@@ -8,6 +8,20 @@
   let syncing = false;
   let ready = false;
 
+  function ensureTenchOption() {
+    const select = document.getElementById("fish");
+    if (!select) return;
+    const exists = Array.from(select.options).some(option =>
+      option.value === "Линь" || option.textContent.trim() === "Линь"
+    );
+    if (exists) return;
+
+    const option = document.createElement("option");
+    option.value = "Линь";
+    option.textContent = "Линь";
+    select.appendChild(option);
+  }
+
   function dayJson(day) {
     try { return JSON.stringify(day || {}); } catch { return "{}"; }
   }
@@ -141,6 +155,7 @@
   }
 
   async function start() {
+    ensureTenchOption();
     setCloudStatus("подключаю облако…");
     try {
       wrapLocalSave();
